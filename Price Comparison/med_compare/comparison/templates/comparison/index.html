@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedPrice // Neural Engine</title>
+    <link rel="stylesheet" href="{% static 'comparison/css/style.css' %}">
+</head>
+<body>
+    <div class="search-card">
+        <h1>Med<span style="color: var(--accent);">Price</span></h1>
+        <p>Scan the market. Lock in the best deal. Save on every prescription.</p>
+
+        <form id="searchForm" action="{% url 'search_medicine' %}" method="POST" onsubmit="showLoading()">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" name="medicine_name" placeholder="Search medication (e.g. Dolo 650mg)" required autofocus>
+            </div>
+            <button type="submit">OPTIMIZE PRICING</button>
+        </form>
+
+        <div id="loading" style="display:none; text-align: center; margin-top: 30px;">
+            <div class="bar-loader">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <p style="font-size: 0.75rem; margin-top: 15px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent);">
+                Syncing live market price...
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('searchForm').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        // Ensures UI resets if user hits 'Back' in browser
+        window.onpageshow = function(event) {
+            if (event.persisted) {
+                document.getElementById('searchForm').style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>

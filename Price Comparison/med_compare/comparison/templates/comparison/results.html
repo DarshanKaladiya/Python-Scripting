@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Analysis // {{ medicine }}</title>
+    <link rel="stylesheet" href="{% static 'comparison/css/style.css' %}">
+</head>
+<body>
+    <div class="results-grid">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; padding: 0 10px;">
+            <div>
+                <h1 style="margin: 0; font-size: 2rem;">{{ medicine }}</h1>
+                <p style="margin: 0; font-size: 0.9rem;">Market analysis complete. Prices verified live.</p>
+            </div>
+            <a href="{% url 'home' %}" style="color: var(--text-secondary); text-decoration: none; font-size: 0.8rem; border: 1px solid #27272a; padding: 12px 24px; border-radius: 12px; transition: 0.3s;">
+                New Search
+            </a>
+        </div>
+
+        <div class="bento-container">
+            {% for item in results %}
+            <div class="bento-item {% if item.price == cheapest_price %}best-deal{% endif %}">
+                
+                <div class="pharmacy-header">
+                    <div class="logo-box">
+                        {% if item.pharmacy == "Apollo" %}
+                            <img src="https://www.apollopharmacy.in/favicon.ico" alt="Apollo">
+                        {% elif item.pharmacy == "PharmEasy" %}
+                            <img src="https://pharmeasy.in/favicon.ico" alt="PharmEasy">
+                        {% else %}
+                            <img src="https://www.netmeds.com/favicon.ico" alt="NetMeds">
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 1.1rem;">{{ item.pharmacy }}</div>
+                        {% if item.price == cheapest_price %}
+                            <div style="font-size: 0.65rem; color: var(--success); font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
+                                ✓ OPTIMIZED MARKET RATE
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: baseline; gap: 12px; margin: 20px 0;">
+                    <div class="price-display" style="margin: 0;">
+                        {% if item.price %}₹{{ item.price }}{% else %}---{% endif %}
+                    </div>
+                    
+                    {% if item.savings_percent > 0 %}
+                        <div style="background: rgba(16, 185, 129, 0.15); color: var(--success); padding: 5px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(16, 185, 129, 0.2);">
+                            SAVE {{ item.savings_percent }}%
+                        </div>
+                    {% endif %}
+                </div>
+
+                <a href="{{ item.link }}" target="_blank" class="shop-btn">
+                    Access Store
+                </a>
+            </div>
+            {% empty %}
+            <div class="bento-item" style="grid-column: 1 / -1; text-align: center; padding: 60px;">
+                <p>No pharmaceutical liquidities located for this query.</p>
+                <a href="{% url 'home' %}" style="color: var(--accent); font-weight: 600;">Try a different search</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
