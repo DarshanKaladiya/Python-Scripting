@@ -22,7 +22,7 @@ def get_data():
         return pd.DataFrame()
 
 # 2. UI Setup
-st.set_page_config(page_title="APMC Market Analysis", layout="wide")
+st.set_page_config(page_title="Market Analysis", layout="wide")
 st.title("🚜 Marketing Yard Comparison Dashboard")
 
 df = get_data()
