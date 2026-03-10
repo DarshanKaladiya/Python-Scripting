@@ -19,8 +19,10 @@ def get_daily_update(district: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Advanced Multi-District Search
-@app.get("/api/search/", tags=["Market Analysis"])
+# Updated main.py with Intelligent Multilingual Search
+# main.py (FastAPI)
+
+@app.get("/api/search/")
 def filter_market_data(
     commodity: str = Query(..., example="Cotton"),
     start_year: int = Query(2021),
@@ -30,17 +32,36 @@ def filter_market_data(
     try:
         conn = get_connection('internship_analysis')
         cursor = conn.cursor(dictionary=True)
-        query = "SELECT * FROM unified_market_data WHERE commodity_name LIKE %s AND year >= %s AND year <= %s"
-        params = [f"%{commodity}%", start_year, end_year]
 
+        # WRITE THE QUERY HERE:
+        # This subquery finds all 'raw_names' from your mapping table 
+        # that match the user's search term.
+        query = """
+            SELECT * FROM unified_market_data 
+            WHERE commodity_name IN (
+                SELECT raw_name FROM commodity_mapping WHERE standard_name = %s
+            )
+            AND year >= %s AND year <= %s
+        """
+        params = [commodity, start_year, end_year]
+
+        # Add the district filter to the query if the user selected any
         if district:
             placeholders = ', '.join(['%s'] * len(district))
             query += f" AND district_name IN ({placeholders})"
             params.extend(district)
 
-        cursor.execute(query, tuple(params))
+        cursor.execute(query, params)
         results = cursor.fetchall()
         conn.close()
+
+        # Format dates for JSON safety
+        for row in results:
+            row['price_date'] = str(row['price_date'])
+
+        # Return the data to Django
         return {"data": results}
+
     except Exception as e:
+        print(f"SQL Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
