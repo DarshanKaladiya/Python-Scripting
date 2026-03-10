@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Marketing Yard Dashboard</title>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="mb-4">Gujarat Marketing Yard Analysis</h2>
+        
+        <form method="GET" class="row g-3 mb-5 p-4 bg-white shadow-sm rounded">
+            <div class="col-md-4">
+                <input type="text" name="commodity" class="form-control" placeholder="Crop Name (e.g. Wheat)">
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="start_year" class="form-control" placeholder="From Year">
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="end_year" class="form-control" placeholder="To Year">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+
+        <table class="table table-hover bg-white shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>District</th>
+                    <th>Commodity</th>
+                    <th>Date</th>
+                    <th>Min Price</th>
+                    <th>Max Price</th>
+                    <th>Avg Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in records %}
+                <tr>
+                    <td>{{ item.district_name }}</td>
+                    <td>{{ item.commodity_name }}</td>
+                    <td>{{ item.price_date }}</td>
+                    <td>₹{{ item.min_price }}</td>
+                    <td>₹{{ item.max_price }}</td>
+                    <td class="fw-bold">₹{{ item.average_price }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center">No data found for this selection.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriLens Pro Terminal | Market Intelligence</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    
+    <style>
+        :root { 
+            --sidebar-bg: #11141d; 
+            --content-bg: #0b0e14; 
+            --card-bg: #161a25;
+            --accent-blue: #3b82f6; 
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        /* 1. LAYOUT ENGINE (Fixes Overlap) */
+        body { 
+            margin: 0; display: flex; height: 100vh; width: 100vw; 
+            background: var(--content-bg); color: var(--text-main); 
+            font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden;
+        }
+
+        .sidebar { 
+            width: 300px; min-width: 300px; height: 100%; 
+            background: var(--sidebar-bg); border-right: 1px solid var(--border); 
+            padding: 2.5rem; display: flex; flex-direction: column; overflow-y: auto;
+        }
+
+        .content { 
+            flex-grow: 1; height: 100%; overflow-y: auto; 
+            padding: 2.5rem; background: var(--content-bg);
+        }
+
+        /* 2. BLACK LABEL FIX (Forced Global Visibility) */
+        label, .form-label, .form-check-label, .small-muted {
+            color: var(--text-main) !important;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        /* 3. PREMIUM CARDS */
+        .premium-card { 
+            background: var(--card-bg); border: 1px solid var(--border); 
+            border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;
+        }
+
+        .arbitrage-banner {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e1b4b 100%);
+            border: 1px solid var(--accent-blue);
+        }
+
+        /* 4. INTERACTIVE ELEMENTS */
+        .form-control { 
+            background: #0b0e14 !important; border: 1px solid var(--border) !important; 
+            color: white !important; border-radius: 10px; padding: 0.6rem;
+        }
+        
+        .btn-execute { 
+            background: var(--accent-blue); border: none; padding: 0.8rem; 
+            font-weight: 800; border-radius: 12px; color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-execute:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
+
+        /* 5. DATA TABLES */
+        .table { color: var(--text-main) !important; }
+        .table thead th { border-bottom: 1px solid var(--border); color: var(--text-muted) !important; font-size: 0.7rem; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="mb-5 text-center">
+            <h3 class="fw-800 text-primary mb-0">AGRI<span class="text-white">LENS</span></h3>
+            <div style="color: var(--text-muted); font-size: 0.6rem; font-weight: 800; letter-spacing: 2px;">ENTERPRISE TERMINAL</div>
+        </div>
+
+        <form method="GET">
+            <div class="mb-4">
+                <label class="form-label">Commodity</label>
+                <input type="text" name="commodity" class="form-control" value="{{ commodity }}" placeholder="e.g. Cotton">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Market Nodes</label>
+                {% for d in all_districts %}
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="districts" value="{{ d }}" id="chk_{{ d }}" {% if d in selected_districts %}checked{% endif %}>
+                    <label class="form-check-label text-white" for="chk_{{ d }}">{{ d }} Yard</label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-6">
+                    <label class="form-label">Start</label>
+                    <input type="number" name="start_year" class="form-control" value="{{ start_year }}">
+                </div>
+                <div class="col-6">
+                    <label class="form-label">End</label>
+                    <input type="number" name="end_year" class="form-control" value="{{ end_year }}">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-execute w-100 mt-auto">
+                <i class="bi bi-cpu-fill me-2"></i>RUN ANALYSIS
+            </button>
+        </form>
+    </div>
+
+    <div class="content">
+        
+        {% if arbitrage %}
+        <div class="premium-card arbitrage-banner">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span style="color: var(--accent-blue); font-weight: 800; font-size: 0.7rem;">PROFIT OPPORTUNITY FOUND</span>
+                    <h3 class="fw-bold mb-0 text-white mt-1">Buy: {{ arbitrage.buy }} <i class="bi bi-arrow-right mx-2 text-muted"></i> Sell: {{ arbitrage.sell }}</h3>
+                </div>
+                <div class="text-end">
+                    <h2 class="fw-bold text-white mb-0">₹{{ arbitrage.profit }}</h2>
+                    <div style="color: var(--text-muted); font-size: 0.7rem; font-weight: bold;">SPREAD PER 20KG</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="premium-card">
+            <h6 style="color: var(--text-muted); font-size: 0.75rem; letter-spacing: 1px;" class="mb-4 fw-bold">MARKET SUMMARY SNAPSHOT</h6>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>YARD LOCATION</th>
+                            <th>AVG PRICE</th>
+                            <th>PEAK</th>
+                            <th>FLOOR</th>
+                            <th>LATEST</th>
+                        </tr>
+                    </thead>
+                    <tbody class="mono">
+                        {% for s in summary_stats %}
+                        <tr>
+                            <td class="fw-bold text-white">{{ s.district }}</td>
+                            <td>₹{{ s.avg }}</td>
+                            <td class="text-danger">₹{{ s.max }}</td>
+                            <td class="text-success">₹{{ s.min }}</td>
+                            <td class="text-primary fw-bold">₹{{ s.last }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="premium-card">
+            <h6 style="color: var(--text-muted); font-size: 0.75rem; letter-spacing: 1px;" class="mb-4 fw-bold">VOLATILITY WAVEFORM ANALYSIS</h6>
+            <div style="height: 400px; width: 100%; position: relative;">
+                <canvas id="marketChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            const ctx = document.getElementById('marketChart').getContext('2d');
+            
+            // Generate Master Labels (All unique dates across all districts)
+            const labels = [...new Set([
+                {% for d, r in chart_data.items %}{% for i in r %}"{{ i.price_date }}",{% endfor %}{% endfor %}
+            ])].sort();
+
+            const colors = { 'Rajkot': '#3b82f6', 'Gondal': '#10b981', 'Ahmedabad': '#f59e0b' };
+            const datasets = [];
+
+            {% for d, r in chart_data.items %}
+            datasets.push({
+                label: '{{ d }} Yard',
+                borderColor: colors['{{ d }}'] || '#ffffff',
+                borderWidth: 3,
+                tension: 0.4,
+                pointRadius: 0,
+                spanGaps: true,
+                data: labels.map(date => {
+                    const match = [
+                        {% for i in r %}{x:"{{i.price_date}}", y:{{i.average_price}}},{% endfor %}
+                    ].find(v => v.x === date);
+                    return match ? match.y : null;
+                })
+            });
+            {% endfor %}
+
+            new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { ticks: { color: '#64748b', maxTicksLimit: 10 }, grid: { display: false } },
+                        y: { ticks: { color: '#64748b', callback: v => '₹' + v }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
