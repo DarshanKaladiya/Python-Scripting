@@ -1,16 +1,26 @@
 from fastapi import FastAPI, Query, HTTPException
 from db_utils import get_connection
 from typing import List, Optional
+from fastapi.middleware.cors import CORSMiddleware
 
+# STEP 1: Initialize the App ONCE with your title
 app = FastAPI(title="AgriLens Enterprise API")
 
-# RESTORED: Daily Price Option
+# STEP 2: Configure CORS (Crucial for the UI Suggestions to work)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- ENDPOINT 1: REAL-TIME DATA ---
 @app.get("/api/today/{district}", tags=["Real-Time Data"])
 def get_daily_update(district: str):
     try:
         conn = get_connection('internship_analysis')
         cursor = conn.cursor(dictionary=True) 
-        # Fetches only the latest record for today
         query = "SELECT * FROM unified_market_data WHERE district_name = %s AND price_date = CURDATE()"
         cursor.execute(query, (district,))
         results = cursor.fetchall()
@@ -19,10 +29,8 @@ def get_daily_update(district: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Updated main.py with Intelligent Multilingual Search
-# main.py (FastAPI)
-
-@app.get("/api/search/")
+# --- ENDPOINT 2: INTELLIGENT SEARCH (For Graphs) ---
+@app.get("/api/search/", tags=["Market Analysis"])
 def filter_market_data(
     commodity: str = Query(..., example="Cotton"),
     start_year: int = Query(2021),
@@ -33,9 +41,7 @@ def filter_market_data(
         conn = get_connection('internship_analysis')
         cursor = conn.cursor(dictionary=True)
 
-        # WRITE THE QUERY HERE:
-        # This subquery finds all 'raw_names' from your mapping table 
-        # that match the user's search term.
+        # Uses the bridge table to map "Cotton" to "Cotton B.T.", "Kapas", etc.
         query = """
             SELECT * FROM unified_market_data 
             WHERE commodity_name IN (
@@ -45,7 +51,6 @@ def filter_market_data(
         """
         params = [commodity, start_year, end_year]
 
-        # Add the district filter to the query if the user selected any
         if district:
             placeholders = ', '.join(['%s'] * len(district))
             query += f" AND district_name IN ({placeholders})"
@@ -59,9 +64,38 @@ def filter_market_data(
         for row in results:
             row['price_date'] = str(row['price_date'])
 
-        # Return the data to Django
         return {"data": results}
 
     except Exception as e:
-        print(f"SQL Error: {e}")
+        print(f"SQL Error in Search: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# --- ENDPOINT 3: DYNAMIC SUGGESTIONS (For UI Dropdown) ---
+@app.get("/api/suggestions/", tags=["UI Helpers"])
+def get_commodity_suggestions(district: Optional[List[str]] = Query(None)):
+    try:
+        conn = get_connection('internship_analysis')
+        cursor = conn.cursor(dictionary=True)
+
+        # Joins bridge table with real data to only suggest what is in stock
+        query = """
+            SELECT DISTINCT m.standard_name 
+            FROM commodity_mapping m
+            JOIN unified_market_data u ON m.raw_name = u.commodity_name
+        """
+        params = []
+
+        if district:
+            placeholders = ', '.join(['%s'] * len(district))
+            query += f" WHERE u.district_name IN ({placeholders})"
+            params.extend(district)
+
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+        conn.close()
+
+        # Return clean list of strings: ["Cotton", "Wheat", etc.]
+        return [row['standard_name'] for row in results]
+    except Exception as e:
+        print(f"SQL Error in Suggestions: {e}")
+        return []
