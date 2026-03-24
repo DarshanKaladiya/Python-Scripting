@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="animate-fade">
+    <!-- Back Header -->
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+        <a href="{% url 'crops_list' %}" style="color: var(--primary); text-decoration: none; font-size: 1.5rem;">←</a>
+        <div>
+            <h2 style="margin: 0;">{{ crop.crop_name }} <span style="font-weight: normal; opacity: 0.6; font-size: 1rem;">({{ crop.scientific_name }})</span></h2>
+            <p style="margin: 0; opacity: 0.7; font-size: 0.9rem;">Technical Crop Intelligence & stage-wise advisories</p>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
+        <!-- Technical Advisories Timeline -->
+        <div class="glass-card" style="padding: 2rem;">
+            <h3 style="margin-top: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.2rem;">🛡️</span> Technical Advisories
+            </h3>
+            
+            {% if advisories %}
+            <div style="position: relative; margin-left: 20px; border-left: 2px solid rgba(255,255,255,0.1); padding-left: 30px; margin-top: 2rem;">
+                {% for adv in advisories %}
+                <div style="margin-bottom: 2.5rem; position: relative;">
+                    <!-- Timeline Dot -->
+                    <div style="position: absolute; left: -41px; top: 0; width: 20px; height: 20px; background: var(--secondary); border: 4px solid var(--bg); border-radius: 50%;"></div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h4 style="margin: 0; color: var(--primary);">{{ adv.growth_stage }}</h4>
+                        <span style="background: rgba(255,255,255,0.05); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                            {{ adv.requirement_type }}
+                        </span>
+                    </div>
+                    
+                    <div style="margin-top: 0.8rem; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 1rem;">
+                        <p style="margin: 0; font-weight: bold; font-size: 1rem;">{{ adv.technical_recommendation }}</p>
+                        <p style="margin: 0.5rem 0 0; opacity: 0.8; font-size: 0.9rem;"><b>Dosage:</b> {{ adv.dosage_per_acre }}</p>
+                        {% if adv.notes %}
+                        <p style="margin: 0.5rem 0 0; font-size: 0.85rem; opacity: 0.6;"><i>Note: {{ adv.notes }}</i></p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="opacity: 0.6; font-style: italic;">No technical advisories currently available for this crop.</p>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar: Meta & Market Context -->
+        <div style="display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Crop Specs -->
+            <div class="glass-card" style="padding: 1.5rem;">
+                <h4 style="margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Specifications</h4>
+                <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; font-size: 0.9rem;">
+                    <div>
+                        <p style="margin: 0; opacity: 0.5; font-size: 0.8rem;">BEST SEASON</p>
+                        <p style="margin: 0;">{{ crop.best_season }}</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; opacity: 0.5; font-size: 0.8rem;">SOIL TYPE</p>
+                        <p style="margin: 0;">{{ crop.best_soil_types }}</p>
+                    </div>
+                    <div>
+                        <p style="margin: 0; opacity: 0.5; font-size: 0.8rem;">GROWTH DURATION</p>
+                        <p style="margin: 0;">{{ crop.growth_duration_days }} Days</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Market Context -->
+            <div class="glass-card" style="padding: 1.5rem;">
+                <h4 style="margin-top: 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem;">Recent Mandi Rates</h4>
+                {% if mandi_data %}
+                <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.8rem;">
+                    {% for rate in mandi_data %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+                            <span>{{ rate.mandi_name }}</span>
+                            <span style="color: var(--secondary); font-weight: bold;">₹{{ rate.modal_price }} / {{ rate.units|default:"Qtl" }}</span>
+                        </div>
+                        {% if rate.retail_min_price %}
+                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem;">
+                            <span>Retail: ₹{{ rate.retail_min_price }}-{{ rate.retail_max_price }}</span>
+                            <span>Mall: ₹{{ rate.mall_min_price }}-{{ rate.mall_max_price }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    <a href="{% url 'mandi_rates' %}?crop_id={{ crop.id }}" style="text-align: center; font-size: 0.7rem; color: var(--primary); text-decoration: none; margin-top: 0.5rem;">View All Trends →</a>
+                </div>
+                {% else %}
+                <p style="opacity: 0.6; font-size: 0.8rem; font-style: italic;">No recent market data.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

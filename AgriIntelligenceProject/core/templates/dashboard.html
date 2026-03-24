@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="animate-up">
+    <!-- Super Hero Section -->
+    <div style="margin-bottom: 5rem; text-align: left; padding-top: 2rem;">
+        <div style="display: inline-flex; align-items: center; gap: 0.8rem; background: rgba(0, 255, 136, 0.08); padding: 0.6rem 1.2rem; border-radius: 100px; color: var(--primary); font-size: 0.85rem; font-weight: 600; margin-bottom: 2rem; border: 1px solid rgba(0, 255, 136, 0.15);">
+            <i data-lucide="sparkles" style="width: 16px;"></i> Next-Gen Agriculture Platform
+        </div>
+        <h1 style="font-size: 4.5rem; font-weight: 800; letter-spacing: -3px; line-height: 1.05; margin-bottom: 1.5rem;">
+            Empowering Your <br><span style="color: var(--primary);">Agricultural</span> Journey
+        </h1>
+        <p style="color: var(--text-dim); font-size: 1.25rem; max-width: 650px; line-height: 1.7;">
+            Your command center for real-time market drift, technical crop guidlines, and data-driven product comparisons. Built for modern Indian agriculture.
+        </p>
+    </div>
+
+    <!-- Stats Matrix -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.8rem; margin-bottom: 5rem;">
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
+            <div style="background: rgba(0, 255, 136, 0.12); padding: 1.1rem; border-radius: 20px; color: var(--primary);">
+                <i data-lucide="sprout"></i>
+            </div>
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">ACTIVE CROPS</p>
+                <h2 style="margin: 0; font-size: 1.8rem;">{{ crops_count }}</h2>
+            </div>
+        </div>
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
+            <div style="background: rgba(0, 189, 255, 0.12); padding: 1.1rem; border-radius: 20px; color: var(--secondary);">
+                <i data-lucide="activity"></i>
+            </div>
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">MARKET DATA</p>
+                <h2 style="margin: 0; font-size: 1.8rem;">11.2K+</h2>
+            </div>
+        </div>
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
+            <div style="background: rgba(112, 0, 255, 0.12); padding: 1.1rem; border-radius: 20px; color: var(--accent);">
+                <i data-lucide="globe"></i>
+            </div>
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">NETWORKS</p>
+                <h2 style="margin: 0; font-size: 1.8rem;">{{ comp_count }}</h2>
+            </div>
+        </div>
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
+            <div style="background: rgba(255, 255, 255, 0.08); padding: 1.1rem; border-radius: 20px; color: #fff;">
+                <i data-lucide="verified"></i>
+            </div>
+            <div>
+                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">VERIFIED GUIDES</p>
+                <h2 style="margin: 0; font-size: 1.8rem;">48+</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Pulse Section -->
+    <div style="margin-bottom: 5rem;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: rgba(255, 189, 0, 0.12); padding: 0.8rem; border-radius: 15px; color: #ffbd00;">
+                <i data-lucide="zap"></i>
+            </div>
+            <h2 style="font-size: 2rem; font-weight: 700; margin: 0;">Market Pulse</h2>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            <!-- Top Gainers -->
+            <div class="glass-card" style="padding: 2rem; border-color: rgba(0, 255, 136, 0.2);">
+                <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem; color: var(--primary);">
+                    <i data-lucide="trending-up"></i> Top Gainers
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    {% for item in gainers %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div>
+                            <div style="font-weight: 600; font-size: 1rem;">{{ item.crop_name }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">{{ item.category }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: var(--primary);">+{{ item.pct_change|stringformat:".2f" }}%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">₹{{ item.current_price }}/q</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color: var(--text-dim); font-style: italic;">Monitoring market fluctuations...</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Top Losers -->
+            <div class="glass-card" style="padding: 2rem; border-color: rgba(255, 61, 113, 0.2);">
+                <h3 style="font-size: 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.8rem; color: #ff3d71;">
+                    <i data-lucide="trending-down"></i> Top Losers
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                    {% for item in losers %}
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div>
+                            <div style="font-weight: 600; font-size: 1rem;">{{ item.crop_name }}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">{{ item.category }}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 700; color: #ff3d71;">{{ item.pct_change|stringformat:".2f" }}%</div>
+                            <div style="font-size: 0.75rem; color: var(--text-dim);">₹{{ item.current_price }}/q</div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p style="color: var(--text-dim); font-style: italic;">Stability detected in market...</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategy Hub -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem;">
+        <div class="glass-card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="width: 60px; height: 60px; background: rgba(0, 255, 136, 0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 2rem;">
+                    <i data-lucide="book" style="width: 28px; height: 28px;"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Crop Guide</h3>
+                <p style="color: var(--text-dim); line-height: 1.7;">
+                    Explore a complete encyclopedia of crops. Learn about optimal soil, stage-wise fertilization, and professional protection strategies.
+                </p>
+            </div>
+            <a href="{% url 'crops_list' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center;">
+                Read the Guide <i data-lucide="chevron-right" style="width: 20px;"></i>
+            </a>
+        </div>
+
+        <div class="glass-card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(0, 189, 255, 0.3);">
+            <div>
+                <div style="width: 60px; height: 60px; background: rgba(0, 189, 255, 0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--secondary); margin-bottom: 2rem;">
+                    <i data-lucide="bar-chart-big" style="width: 28px; height: 28px;"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Mandi Prices</h3>
+                <p style="color: var(--text-dim); line-height: 1.7;">
+                    Stay ahead with real-time price monitoring across Indian markets. Filter by crop, region, and date to maximize your profit.
+                </p>
+            </div>
+            <a href="{% url 'mandi_rates' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center;">
+                Check Today's Rates <i data-lucide="chevron-right" style="width: 20px;"></i>
+            </a>
+        </div>
+
+        <div class="glass-card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="width: 60px; height: 60px; background: rgba(112, 0, 255, 0.1); border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--accent); margin-bottom: 2rem;">
+                    <i data-lucide="compare" style="width: 28px; height: 28px;"></i>
+                </div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Product Insights</h3>
+                <p style="color: var(--text-dim); line-height: 1.7;">
+                    Not sure which fertilizer or pesticide to use? Compare thousands of agricultural products and choose what's best for your farm.
+                </p>
+            </div>
+            <a href="{% url 'compare_products' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center;">
+                Find Better Products <i data-lucide="chevron-right" style="width: 20px;"></i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

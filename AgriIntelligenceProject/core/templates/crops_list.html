@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="animate-up">
+<div class="animate-up">
+    <!-- Knowledge Header -->
+    <div style="margin-bottom: 4rem; display: flex; justify-content: space-between; align-items: center; gap: 4rem;">
+        <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 0.8rem; color: var(--primary); font-weight: 700; font-size: 0.8rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 1rem;">
+                <i data-lucide="book" style="width: 18px;"></i> Technical Registry
+            </div>
+            <h1 style="font-size: 4rem; font-weight: 800; letter-spacing: -2px; line-height: 1; margin-bottom: 1.5rem;">
+                Crop <span style="color: var(--primary);">Guide</span>
+            </h1>
+            <p style="color: var(--text-dim); font-size: 1.25rem; max-width: 500px; line-height: 1.7;">
+                Deep-dive into verified scientific metadata, stage-wise fertilizer dosages, and professional protection strategies.
+            </p>
+        </div>
+        
+        <div class="glass-card" style="padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; border-radius: 20px; flex: 0.8; height: fit-content;">
+            <i data-lucide="search" style="width: 20px; opacity: 0.5;"></i>
+            <input type="text" placeholder="Search technical database..." style="background: transparent; border: none; color: white; outline: none; font-family: inherit; font-size: 1.1rem; width: 100%;">
+        </div>
+    </div>
+
+    <!-- Varieties Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 2.5rem;">
+        {% for crop in crops %}
+        <div class="glass-card" style="padding: 0; display: flex; flex-direction: column; border-color: rgba(255,255,255,0.05);">
+            <div style="height: 160px; background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,189,255,0.05)); position: relative; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="leaf" style="width: 60px; height: 60px; color: var(--primary); opacity: 0.2;"></i>
+                <div style="position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(0, 255, 136, 0.15); color: var(--primary); padding: 0.4rem 0.8rem; border-radius: 10px; font-size: 0.75rem; font-weight: 700; border: 1px solid rgba(0, 255, 136, 0.2);">
+                    {{ crop.best_season|upper }}
+                </div>
+            </div>
+
+            <div style="padding: 2.5rem; flex: 1; display: flex; flex-direction: column;">
+                <h3 style="margin: 0; color: #fff; font-size: 1.6rem; letter-spacing: -0.5px;">{{ crop.crop_name }}</h3>
+                <p style="margin: 0.3rem 0 1.5rem; font-size: 0.9rem; color: var(--secondary); font-weight: 500; font-style: italic;">
+                    {{ crop.scientific_name }}
+                </p>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: rgba(255,255,255,0.03); padding: 0.8rem 1.2rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);">
+                        <span style="display: block; opacity: 0.5; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.4rem; text-transform: uppercase;">Growth Term</span>
+                        <b style="font-size: 1.1rem; color: #fff;">{{ crop.growth_duration_days }} Days</b>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); padding: 0.8rem 1.2rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);">
+                        <span style="display: block; opacity: 0.5; font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 0.4rem; text-transform: uppercase;">Best Soil</span>
+                        <b style="font-size: 1.1rem; color: #fff;">{{ crop.best_soil_types|truncatechars:10 }}</b>
+                    </div>
+                </div>
+
+                <p style="font-size: 1rem; line-height: 1.7; color: var(--text-dim); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 2rem; flex: 1;">
+                    {{ crop.description }}
+                </p>
+
+                <div style="display: flex; gap: 1.2rem;">
+                    <a href="{% url 'crop_detail' crop.id %}" class="btn-premium" style="flex: 1; justify-content: center; font-size: 0.85rem;">
+                        View Analysis <i data-lucide="arrow-right" style="width: 16px;"></i>
+                    </a>
+                    <a href="{% url 'mandi_rates' %}?crop_id={{ crop.id }}" class="btn-premium" style="flex: 0.3; justify-content: center; background: rgba(255,255,255,0.06); color: white;">
+                        <i data-lucide="trending-up" style="width: 20px;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+</div>
+{% endblock %}

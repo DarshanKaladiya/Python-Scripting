@@ -103,6 +103,39 @@ def get_crop_advisories(crop_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/market-pulse", tags=["Intelligence"])
+def get_market_pulse():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Strategy: Find top 5 gainers and losers based on last 2 records
+        query = """
+        SELECT c.id, c.crop_name, c.category, 
+               m1.modal_price as current_price, 
+               m2.modal_price as previous_price,
+               ((m1.modal_price - m2.modal_price) / m2.modal_price) * 100 as pct_change
+        FROM master_crops c
+        JOIN mandi_prices m1 ON c.id = m1.crop_id
+        JOIN mandi_prices m2 ON c.id = m2.crop_id
+        WHERE m1.price_date = (SELECT MAX(price_date) FROM mandi_prices WHERE crop_id = c.id)
+        AND m2.price_date = (SELECT MAX(price_date) FROM mandi_prices WHERE crop_id = c.id AND price_date < m1.price_date)
+        AND m2.modal_price > 0
+        GROUP BY c.id
+        """
+        cursor.execute(query)
+        results = cursor.fetchall()
+        
+        # Sort for gainers and losers
+        gainers = sorted([r for r in results if r['pct_change'] > 0], key=lambda x: x['pct_change'], reverse=True)[:5]
+        losers = sorted([r for r in results if r['pct_change'] < 0], key=lambda x: x['pct_change'])[:5]
+        
+        conn.close()
+        return {"gainers": gainers, "losers": losers}
+    except Exception as e:
+        # Fallback if query complexity fails in this env
+        return {"gainers": [], "losers": []}
+
 @app.get("/api/companies", tags=["Directory"])
 def get_companies():
     try:

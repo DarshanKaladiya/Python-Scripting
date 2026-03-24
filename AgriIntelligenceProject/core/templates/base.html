@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriIntelligence Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #00ff88;
+            --secondary: #00bdff;
+            --accent: #7000ff;
+            --bg: #030303;
+            --glass: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.65);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Enhanced Mesh Gradient Background */
+        .mesh-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(at 0% 0%, rgba(0, 255, 136, 0.12) 0px, transparent 55%),
+                radial-gradient(at 100% 0%, rgba(0, 189, 255, 0.12) 0px, transparent 55%),
+                radial-gradient(at 80% 80%, rgba(112, 0, 255, 0.12) 0px, transparent 55%),
+                radial-gradient(at 20% 80%, rgba(255, 0, 136, 0.08) 0px, transparent 55%);
+            filter: blur(80px);
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 8%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: linear-gradient(to right, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.8rem;
+        }
+
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            opacity: 1;
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 4rem 8%;
+        }
+
+        .btn-premium {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #000;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            text-decoration: none;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.4);
+        }
+
+        footer {
+            margin-top: 8rem;
+            padding: 4rem 8% 2rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
+        }
+
+        .footer-col h4 {
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-col ul li a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .footer-col ul li a:hover {
+            color: var(--primary);
+            padding-left: 5px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+            border: 3px solid var(--bg);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-dim);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-up {
+            animation: slideUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="mesh-bg"></div>
+    <nav class="navbar">
+        <div class="logo">
+            <i data-lucide="sprout"></i> AgriIntelligence
+        </div>
+        <div class="nav-links">
+            <a href="{% url 'dashboard' %}"><i data-lucide="layout-dashboard" style="width: 18px;"></i> Dashboard</a>
+            <a href="{% url 'crops_list' %}"><i data-lucide="book-open" style="width: 18px;"></i> Crop Guide</a>
+            <a href="{% url 'compare_products' %}"><i data-lucide="sliders" style="width: 18px;"></i> Product Insights</a>
+            <a href="{% url 'mandi_rates' %}"><i data-lucide="trending-up" style="width: 18px;"></i> Mandi Prices</a>
+            <a href="{% url 'partners_list' %}"><i data-lucide="building" style="width: 18px;"></i> Agri Networks</a>
+        </div>
+        <button class="btn-premium">
+            <i data-lucide="zap" style="width: 16px;"></i> Live Updates
+        </button>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <div class="logo" style="margin-bottom: 1.5rem;">AgriIntelligence</div>
+                <p style="color: var(--text-dim); font-size: 0.9rem; max-width: 400px;">
+                    Democratizing agricultural data through AI-driven insights and real-time market drift monitoring. Empowering Indian farmers with precise technical metadata.
+                </p>
+            </div>
+            <div class="footer-col">
+                <h4>Platform</h4>
+                <ul>
+                    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li><a href="{% url 'crops_list' %}">Crop Guide</a></li>
+                    <li><a href="{% url 'mandi_rates' %}">Real-time Prices</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Data Sources</h4>
+                <ul>
+                    <li><a href="#">ICAR Registry</a></li>
+                    <li><a href="#">TNAU Guidelines</a></li>
+                    <li><a href="#">Agmarknet API</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Farmer Helpdesk</a></li>
+                    <li><a href="#">Technical Docs</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div style="padding-top: 2rem; border-top: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center; color: var(--text-dim); font-size: 0.85rem;">
+            <p>&copy; 2026 AgriIntelligence Project. All rights reserved.</p>
+            <div style="display: flex; gap: 2rem;">
+                <a href="#" style="color: inherit; text-decoration: none;"><i data-lucide="twitter" style="width: 18px;"></i></a>
+                <a href="#" style="color: inherit; text-decoration: none;"><i data-lucide="linkedin" style="width: 18px;"></i></a>
+                <a href="#" style="color: inherit; text-decoration: none;"><i data-lucide="github" style="width: 18px;"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
