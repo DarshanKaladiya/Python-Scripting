@@ -2,8 +2,8 @@
 
 {% block extra_css %}
 <style>
-    .rank-first { opacity: 1; color: var(--primary); }
-    .rank-other { opacity: 0.3; color: white; }
+    .rank-first { opacity: 1; color: var(--primary); font-weight: 800; }
+    .rank-other { opacity: 0.6; color: var(--text-dim); }
 </style>
 {% endblock %}
 
@@ -11,10 +11,10 @@
 <div class="animate-up">
     <!-- Header Section -->
     <div style="margin-bottom: 3rem;">
-        <h1 style="font-size: 3.5rem; font-weight: 700; letter-spacing: -2px; line-height: 1.1; margin-bottom: 1rem;">
+        <h1 style="font-size: 3.5rem; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 1rem; color: var(--text-main);">
             Market <span style="color: var(--secondary);">Intelligence</span>
         </h1>
-        <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">
+        <p style="color: var(--text-dim); font-size: 1.15rem; font-weight: 500; max-width: 600px;">
             Cross-provider price analysis and efficiency ranking for agricultural technicals.
         </p>
     </div>
@@ -22,39 +22,39 @@
     <div style="display: grid; grid-template-columns: 350px 1fr; gap: 2.5rem; align-items: start;">
         <!-- Left: Search & Analysis Sidebar -->
         <div style="display: flex; flex-direction: column; gap: 2rem; position: sticky; top: 120px;">
-            <div class="glass-card" style="padding: 2rem;">
-                <h4 style="margin-top: 0; display: flex; align-items: center; gap: 0.5rem; color: var(--secondary);">
-                    <i data-lucide="search" style="width: 18px;"></i> Technical Search
+            <div class="glass-card" style="padding: 2.5rem; border-color: rgba(217, 119, 6, 0.1);">
+                <h4 style="margin-top: 0; display: flex; align-items: center; gap: 0.6rem; color: var(--secondary); font-weight: 800; font-size: 1.1rem;">
+                    <i data-lucide="search" style="width: 20px;"></i> Technical Search
                 </h4>
                 <form method="GET" style="margin-top: 1.5rem;">
-                    <div style="position: relative; margin-bottom: 1rem;">
+                    <div style="position: relative; margin-bottom: 1.5rem;">
                         <input type="text" name="technical" value="{{ tech_name }}" 
                                placeholder="e.g. Urea, DAP, Generic"
-                               style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: white; padding: 1rem 1rem 1rem 3rem; border-radius: 14px; outline: none; transition: 0.3s; font-family: inherit;">
-                        <i data-lucide="microscope" style="position: absolute; left: 1rem; top: 1.1rem; width: 18px; opacity: 0.4;"></i>
+                               style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: var(--text-main); padding: 1.2rem 1.2rem 1.2rem 3.5rem; border-radius: 14px; outline: none; transition: 0.3s; font-family: inherit; font-size: 0.95rem; font-weight: 500;">
+                        <i data-lucide="microscope" style="position: absolute; left: 1.2rem; top: 1.3rem; width: 20px; color: var(--secondary);"></i>
                     </div>
-                    <button type="submit" class="btn-premium" style="width: 100%; justify-content: center; background: linear-gradient(135deg, var(--secondary), var(--accent));">
+                    <button type="submit" class="btn-premium" style="width: 100%; justify-content: center; background: var(--secondary); box-shadow: 0 4px 15px rgba(217, 119, 6, 0.2);">
                         Run Fresh Analysis
                     </button>
                 </form>
                 
-                <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
-                    <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 1rem; letter-spacing: 1px;">TRENDING TECHNICALS</p>
+                <div style="margin-top: 2rem; border-top: 1px solid var(--surface-border); padding-top: 1.5rem;">
+                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem; letter-spacing: 1px; font-weight: 700;">TRENDING TECHNICALS</p>
                     <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
-                        <a href="?technical=Generic" style="background: rgba(255,255,255,0.05); color: white; text-decoration: none; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; border: 1px solid var(--glass-border);">Generic</a>
-                        <a href="?technical=Soil" style="background: rgba(255,255,255,0.05); color: white; text-decoration: none; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; border: 1px solid var(--glass-border);">Soil</a>
-                        <a href="?technical=VAM" style="background: rgba(255,255,255,0.05); color: white; text-decoration: none; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; border: 1px solid var(--glass-border);">VAM</a>
+                        <a href="?technical=Generic" style="background: var(--bg); color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; border: 1px solid var(--surface-border); transition: 0.3s;" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--surface-border)'">Generic</a>
+                        <a href="?technical=Soil" style="background: var(--bg); color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; border: 1px solid var(--surface-border); transition: 0.3s;" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--surface-border)'">Soil</a>
+                        <a href="?technical=VAM" style="background: var(--bg); color: var(--text-main); text-decoration: none; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; border: 1px solid var(--surface-border); transition: 0.3s;" onmouseover="this.style.borderColor='var(--secondary)'" onmouseout="this.style.borderColor='var(--surface-border)'">VAM</a>
                     </div>
                 </div>
             </div>
 
             <!-- Analysis Insight Card -->
             {% if products %}
-            <div class="glass-card" style="padding: 1.5rem; border-color: rgba(0, 255, 136, 0.2); background: linear-gradient(135deg, rgba(0,255,136,0.05), transparent);">
-                <h4 style="margin-top: 0; color: var(--primary);">Intelligence Insight</h4>
-                <p style="font-size: 0.85rem; color: var(--text-dim); margin: 0.5rem 0 0;">
-                    We found <b>{{ products|length }} options</b> for "{{ tech_name }}". 
-                    The most efficient option saves approximately <b>18%</b> compared to the market average price.
+            <div class="glass-card" style="padding: 2rem; border-color: rgba(15, 81, 50, 0.15); background: var(--primary-light);">
+                <h4 style="margin-top: 0; color: var(--primary); font-weight: 800; font-size: 1.1rem;">Intelligence Insight</h4>
+                <p style="font-size: 0.95rem; color: var(--text-main); margin: 0.8rem 0 0; font-weight: 500; line-height: 1.6;">
+                    We found <b style="color: var(--primary);">{{ products|length }} options</b> for "{{ tech_name }}". 
+                    The most efficient option saves approximately <b style="color: var(--primary);">18%</b> compared to the market average.
                 </p>
             </div>
             {% endif %}
@@ -64,76 +64,76 @@
         <div style="display: flex; flex-direction: column; gap: 2rem;">
             {% if products %}
                 <!-- Top Recommendation Highlight -->
-                <div class="glass-card" style="padding: 2.5rem; display: grid; grid-template-columns: 1fr 250px; gap: 2rem; border: 2px solid var(--primary); background: radial-gradient(at top left, rgba(0,255,136,0.1), transparent);">
+                <div class="glass-card" style="padding: 2.5rem; display: grid; grid-template-columns: 1fr 250px; gap: 2rem; border: 2px solid var(--primary); background: var(--surface); box-shadow: var(--shadow-md);">
                     <div>
-                        <span style="background: var(--primary); color: #000; padding: 0.3rem 1rem; border-radius: 50px; font-weight: 700; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 1.5rem;">
+                        <span style="background: var(--primary-light); color: var(--primary); padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 800; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
                             <i data-lucide="crown" style="width: 14px;"></i> SYSTEM RECOMMENDATION
                         </span>
-                        <h2 style="margin: 0; font-size: 2rem;">{{ products.0.product_name }}</h2>
-                        <p style="margin: 0.5rem 0 1.5rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.5rem;">
-                            <i data-lucide="building-2" style="width: 16px;"></i> Manufactured by {{ products.0.brand_name }}
+                        <h2 style="margin: 0; font-size: 2.2rem; font-weight: 800; color: var(--text-main);">{{ products.0.product_name }}</h2>
+                        <p style="margin: 0.5rem 0 1.5rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.5rem; font-weight: 600;">
+                            <i data-lucide="building-2" style="width: 18px;"></i> Manufactured by {{ products.0.brand_name }}
                         </p>
-                        <div style="display: flex; gap: 2rem;">
+                        <div style="display: flex; gap: 3rem;">
                             <div>
-                                <p style="font-size: 0.75rem; color: var(--text-dim); margin: 0;">TECHNICAL STRENGTH</p>
-                                <p style="font-size: 1.2rem; font-weight: 700; margin: 0;">98% Match</p>
+                                <p style="font-size: 0.8rem; color: var(--text-dim); margin: 0; font-weight: 700;">TECHNICAL STRENGTH</p>
+                                <p style="font-size: 1.3rem; font-weight: 800; margin: 0.2rem 0 0; color: var(--text-main);">98% Match</p>
                             </div>
                             <div>
-                                <p style="font-size: 0.75rem; color: var(--text-dim); margin: 0;">PRICE PER UNIT</p>
-                                <p style="font-size: 1.2rem; font-weight: 700; margin: 0; color: var(--primary);">₹{{ products.0.price }}</p>
+                                <p style="font-size: 0.8rem; color: var(--text-dim); margin: 0; font-weight: 700;">PRICE PER UNIT</p>
+                                <p style="font-size: 1.3rem; font-weight: 800; margin: 0.2rem 0 0; color: var(--primary);">₹{{ products.0.price }}</p>
                             </div>
                         </div>
                     </div>
                     <div style="display: flex; flex-direction: column; justify-content: center; gap: 1rem;">
-                        <a href="{{ products.0.source_url }}" target="_blank" class="btn-premium" style="justify-content: center; background: var(--primary); color: #000;">
+                        <a href="{{ products.0.source_url }}" target="_blank" class="btn-premium" style="justify-content: center; padding: 1rem;">
                             Go to Store <i data-lucide="shopping-cart" style="width: 18px;"></i>
                         </a>
-                        <p style="text-align: center; font-size: 0.7rem; opacity: 0.5;">Verified Listing via AgriBegri</p>
+                        <p style="text-align: center; font-size: 0.8rem; color: var(--text-dim); font-weight: 600;">Verified Listing via AgriBegri</p>
                     </div>
                 </div>
 
                 <!-- Comparison Matrix -->
-                <div class="glass-card" style="padding: 0; overflow: hidden;">
-                    <div style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-                        <h4 style="margin: 0;">Comparative Analysis Matrix</h4>
-                        <span style="font-size: 0.75rem; opacity: 0.5;">Sorted by Price Efficiency</span>
+                <div class="glass-card" style="padding: 0; overflow: hidden; border-color: var(--surface-border);">
+                    <div style="padding: 1.8rem 2.5rem; border-bottom: 2px solid var(--surface-border); display: flex; justify-content: space-between; align-items: center; background: var(--bg);">
+                        <h4 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--text-main);">Comparative Analysis Matrix</h4>
+                        <span style="font-size: 0.8rem; color: var(--text-dim); font-weight: 600;">Sorted by Price Efficiency</span>
                     </div>
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
-                            <tr style="background: rgba(255,255,255,0.02); color: var(--text-dim); font-size: 0.75rem; border-bottom: 1px solid var(--glass-border);">
-                                <th style="padding: 1.2rem 2rem; font-weight: 500; letter-spacing: 1px;">RANK</th>
-                                <th style="padding: 1.2rem 2rem; font-weight: 500; letter-spacing: 1px;">PRODUCT DETAILS</th>
-                                <th style="padding: 1.2rem 2rem; font-weight: 500; letter-spacing: 1px;">PRICING</th>
-                                <th style="padding: 1.2rem 2rem; font-weight: 500; letter-spacing: 1px;">SPECIFICATIONS</th>
-                                <th style="padding: 1.2rem 2rem; font-weight: 500; letter-spacing: 1px;">EFFICIENCY SCORE</th>
+                            <tr style="background: var(--surface); color: var(--text-dim); font-size: 0.8rem; border-bottom: 1px solid var(--surface-border);">
+                                <th style="padding: 1.5rem 2.5rem; font-weight: 700; letter-spacing: 1px;">RANK</th>
+                                <th style="padding: 1.5rem 2.5rem; font-weight: 700; letter-spacing: 1px;">PRODUCT DETAILS</th>
+                                <th style="padding: 1.5rem 2.5rem; font-weight: 700; letter-spacing: 1px;">PRICING</th>
+                                <th style="padding: 1.5rem 2.5rem; font-weight: 700; letter-spacing: 1px;">SPECIFICATIONS</th>
+                                <th style="padding: 1.5rem 2.5rem; font-weight: 700; letter-spacing: 1px;">EFFICIENCY SCORE</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for prod in products %}
-                            <tr style="border-bottom: 1px solid rgba(255,255,255,0.03); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                                <td style="padding: 1.5rem 2rem;">
-                                    <span class="{% if forloop.first %}rank-first{% else %}rank-other{% endif %}" style="font-weight: 700; font-size: 1.2rem;">
-                                        {{ forloop.counter }}
+                            <tr style="border-bottom: 1px solid var(--surface-border); transition: 0.3s;" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='transparent'">
+                                <td style="padding: 1.5rem 2.5rem;">
+                                    <span class="{% if forloop.first %}rank-first{% else %}rank-other{% endif %}" style="font-size: 1.3rem;">
+                                        #{{ forloop.counter }}
                                     </span>
                                 </td>
-                                <td style="padding: 1.5rem 2rem;">
-                                    <div style="font-weight: 600; font-size: 1rem;">{{ prod.product_name }}</div>
-                                    <div style="font-size: 0.8rem; color: var(--text-dim);">{{ prod.brand_name }}</div>
+                                <td style="padding: 1.5rem 2.5rem;">
+                                    <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">{{ prod.product_name }}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-dim); font-weight: 500; margin-top: 0.2rem;">{{ prod.brand_name }}</div>
                                 </td>
-                                <td style="padding: 1.5rem 2rem;">
-                                    <div style="font-weight: 700; color: var(--primary); font-size: 1.1rem;">₹{{ prod.price }}</div>
-                                    <div style="font-size: 0.7rem; opacity: 0.5;">Market Price (AgriBegri)</div>
+                                <td style="padding: 1.5rem 2.5rem;">
+                                    <div style="font-weight: 800; color: var(--primary); font-size: 1.2rem;">₹{{ prod.price }}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-dim); font-weight: 600; margin-top: 0.2rem;">Market Price (AgriBegri)</div>
                                 </td>
-                                <td style="padding: 1.5rem 2rem;">
-                                    <div style="font-size: 0.9rem;">{{ prod.unit_value }} {{ prod.unit_measure }}</div>
-                                    <div style="font-size: 0.7rem; opacity: 0.5;">Stock Packaging</div>
+                                <td style="padding: 1.5rem 2.5rem;">
+                                    <div style="font-size: 1rem; font-weight: 700; color: var(--text-main);">{{ prod.unit_value }} {{ prod.unit_measure }}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-dim); font-weight: 600; margin-top: 0.2rem;">Stock Packaging</div>
                                 </td>
-                                <td style="padding: 1.5rem 2rem;">
-                                    <div style="display: flex; flex-direction: column; gap: 0.4rem;">
-                                        <div style="width: 120px; height: 4px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
-                                            <div style="height: 100%; background: linear-gradient(to right, var(--primary), var(--secondary)); width: {{ forloop.revcounter0|add:5 }}0%;"></div>
+                                <td style="padding: 1.5rem 2.5rem;">
+                                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                        <div style="width: 140px; height: 6px; background: #E5E7EB; border-radius: 10px; overflow: hidden;">
+                                            <div style="height: 100%; background: var(--secondary); width: {{ forloop.revcounter0|add:5 }}0%;"></div>
                                         </div>
-                                        <span style="font-size: 0.7rem; font-weight: 700; opacity: 0.6;">{{ forloop.revcounter0|add:5 }}0% SCORE</span>
+                                        <span style="font-size: 0.75rem; font-weight: 800; color: var(--text-main);">{{ forloop.revcounter0|add:5 }}0% SCORE</span>
                                     </div>
                                 </td>
                             </tr>
@@ -143,17 +143,17 @@
                 </div>
             {% else %}
                 <!-- Empty State: Polished -->
-                <div class="glass-card" style="padding: 5rem 2rem; text-align: center; border-style: dashed; border-width: 2px;">
-                    <div style="width: 100px; height: 100px; background: rgba(255,255,255,0.03); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--text-dim);">
-                        <i data-lucide="flask-round" style="width: 40px; height: 40px; opacity: 0.3;"></i>
+                <div class="glass-card" style="padding: 5rem 2rem; text-align: center; border: 2px dashed var(--surface-border); background: var(--bg);">
+                    <div style="width: 100px; height: 100px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--secondary); box-shadow: var(--shadow-sm);">
+                        <i data-lucide="flask-round" style="width: 40px; height: 40px; opacity: 0.8;"></i>
                     </div>
-                    <h2 style="font-size: 2rem; margin-bottom: 1rem;">No technical data present.</h2>
-                    <p style="color: var(--text-dim); max-width: 450px; margin: 0 auto 2rem;">
-                        We couldn't find a direct comparative match for <b>"{{ tech_name }}"</b>. Our intelligence engine recommends searching for broad categories or standardized technical names.
+                    <h2 style="font-size: 2rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-main);">No technical data present.</h2>
+                    <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 500px; margin: 0 auto 2rem; font-weight: 500;">
+                        We couldn't find a direct comparative match for <b style="color: var(--text-main);">"{{ tech_name }}"</b>. Our intelligence engine recommends searching for broad categories or standardized technical names.
                     </p>
                     <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <a href="?technical=Generic" class="btn-premium" style="background: transparent; border: 1px solid var(--glass-border); color: white;">Try "Generic"</a>
-                        <a href="?technical=Soil" class="btn-premium" style="background: transparent; border: 1px solid var(--glass-border); color: white;">Try "Soil"</a>
+                        <a href="?technical=Generic" class="btn-premium" style="background: white; border: 1px solid var(--surface-border); color: var(--text-main); box-shadow: var(--shadow-sm);">Try "Generic"</a>
+                        <a href="?technical=Soil" class="btn-premium" style="background: white; border: 1px solid var(--surface-border); color: var(--text-main); box-shadow: var(--shadow-sm);">Try "Soil"</a>
                     </div>
                 </div>
             {% endif %}

@@ -18,7 +18,7 @@ class GovernmentAPIClient:
             "commodity_price": os.getenv("COMMODITY_RESOURCE_ID")
         }
 
-    def get_data(self, resource_type, limit=100, retries=3, delay=5):
+    def get_data(self, resource_type, limit=100, date_filter=None, retries=3, delay=5):
         if not self.api_key:
             print("ERROR: DATA_GOV_API_KEY not found in .env")
             return None
@@ -29,7 +29,10 @@ class GovernmentAPIClient:
             return None
 
         url = f"{self.base_url}{res_id}?api-key={self.api_key}&format=json&limit={limit}"
-        print(f"Fetching {resource_type} from API (ID: {res_id})...")
+        if date_filter:
+            url += f"&filters[arrival_date]={date_filter}"
+        
+        print(f"Fetching {resource_type} from API (ID: {res_id}, Date: {date_filter or 'Latest'})...")
         
         for attempt in range(retries):
             try:
@@ -48,9 +51,11 @@ class GovernmentAPIClient:
                 else: return None
         return None
 
-    def sync_market_prices(self):
+    def sync_market_prices(self, date_filter=None):
         """Sync specifically for real-time market prices"""
-        data = self.get_data("market_price", limit=500)
+        # Use COMMODITY_RESOURCE_ID for historical data as it supports filtering by date
+        resource = "market_price" if not date_filter else "commodity_price"
+        data = self.get_data(resource, limit=2000, date_filter=date_filter)
         if not data or "records" not in data: return
         
         records = data["records"]
@@ -64,20 +69,27 @@ class GovernmentAPIClient:
         
         count = 0
         for r in records:
-            commodity_name = r.get("commodity", "").lower()
-            crop_id = None
-            for cname, cid in crop_map.items():
-                if cname in commodity_name or commodity_name in cname:
-                    crop_id = cid; break
-            
-            if not crop_id: continue
-            
             try:
-                state, mandi = r.get("state", "National"), r.get("market", "API Source")
-                p_mod = float(r.get("modal_price", 0))
-                p_date_raw = r.get("arrival_date")
+                # Support both lowercase and Title_Case field names
+                state = r.get("state") or r.get("State") or "National"
+                mandi = r.get("market") or r.get("Market") or "API Source"
+                commodity = r.get("commodity") or r.get("Commodity") or ""
+                p_mod_raw = r.get("modal_price") or r.get("Modal_Price") or 0
+                p_mod = float(p_mod_raw)
+                p_date_raw = r.get("arrival_date") or r.get("Arrival_Date")
+                
+                if not commodity: continue
+                
+                commodity_name = commodity.lower()
+                crop_id = None
+                for cname, cid in crop_map.items():
+                    if cname in commodity_name or commodity_name in cname:
+                        crop_id = cid; break
+                
+                if not crop_id: continue
+
                 try:
-                    p_date = datetime.strptime(p_date_raw, "%d/%m/%Y").strftime("%Y-%m-%d")
+                    p_date = datetime.strptime(p_date_raw.strip(), "%d/%m/%Y").strftime("%Y-%m-%d")
                 except:
                     p_date = datetime.now().strftime("%Y-%m-%d")
                 
@@ -90,7 +102,8 @@ class GovernmentAPIClient:
         conn.commit()
         cursor.close()
         conn.close()
-        print(f"Successfully synced {count} market price records via API.")
+        print(f"Successfully synced {count} market price records via API for {date_filter or 'latest'}.")
+        return count
 
     def sync_commodity_prices(self):
         """Sync specifically for real-time commodity prices (Simplified placeholder)"""

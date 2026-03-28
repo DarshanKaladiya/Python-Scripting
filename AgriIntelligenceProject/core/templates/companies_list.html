@@ -3,32 +3,32 @@
 {% block extra_css %}
 <style>
     .link-active { opacity: 1; pointer-events: auto; }
-    .link-disabled { opacity: 0.5; pointer-events: none; }
+    .link-disabled { opacity: 0.5; pointer-events: none; background: #E5E7EB !important; color: #9CA3AF !important; border-color: #E5E7EB !important; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="animate-up">
-    <div style="margin-bottom: 3rem;">
-        <h1 style="font-size: 2.5rem; font-weight: 700;">Corporate Directory</h1>
-        <p style="color: var(--text-dim);">Verified partners in Indian Seeds, Fertilizers, and Crop Protection.</p>
+    <div style="margin-bottom: 4rem;">
+        <h1 style="font-size: 3rem; font-weight: 800; letter-spacing: -1px; color: var(--text-main); margin-bottom: 0.5rem;">Corporate <span style="color: var(--primary);">Directory</span></h1>
+        <p style="color: var(--text-dim); font-size: 1.1rem; font-weight: 500;">Verified partners in Indian Seeds, Fertilizers, and Crop Protection.</p>
     </div>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem;">
         {% for company in companies %}
-        <div class="glass-card" style="padding: 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
-            <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; color: var(--secondary);">
-                <i data-lucide="building-2"></i>
+        <div class="glass-card" style="padding: 2.5rem 2rem; display: flex; flex-direction: column; align-items: center; text-align: center;">
+            <div style="width: 70px; height: 70px; background: var(--secondary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; color: var(--secondary); box-shadow: var(--shadow-sm);">
+                <i data-lucide="building-2" style="width: 30px; height: 30px;"></i>
             </div>
-            <h3 style="margin: 0; font-size: 1.1rem; height: 3rem; display: flex; align-items: center;">{{ company.name }}</h3>
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-main); height: 3.5rem; display: flex; align-items: center; justify-content: center;">{{ company.name }}</h3>
             
-            <div style="margin: 1.5rem 0; width: 100%; height: 1px; background: rgba(255,255,255,0.1);"></div>
+            <div style="margin: 1.5rem 0; width: 100%; height: 1px; background: var(--surface-border);"></div>
             
             <a href="{% if company.website_url %}{{ company.website_url }}{% else %}#{% endif %}" 
                target="_blank" 
                class="btn-premium {% if company.website_url %}link-active{% else %}link-disabled{% endif %}" 
-               style="width: 100%; justify-content: center; font-size: 0.8rem; background: transparent; border: 1px solid var(--glass-border); color: white;">
-                {% if company.website_url %}Official Website <i data-lucide="external-link" style="width: 14px;"></i>{% else %}Website Pending <i data-lucide="clock" style="width: 14px;"></i>{% endif %}
+               style="width: 100%; justify-content: center; font-size: 0.9rem; background: var(--bg); border: 2px solid var(--surface-border); color: var(--text-main); box-shadow: none;">
+                {% if company.website_url %}Official Website <i data-lucide="external-link" style="width: 16px;"></i>{% else %}Website Pending <i data-lucide="clock" style="width: 16px;"></i>{% endif %}
             </a>
         </div>
         {% endfor %}
