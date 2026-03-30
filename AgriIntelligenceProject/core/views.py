@@ -80,6 +80,7 @@ def compare_products(request):
 
 def mandi_rates(request):
     crop_id = request.GET.get('crop_id', 1)
+    state = request.GET.get('state', '')
     start_date = request.GET.get('start_date', '')
     end_date = request.GET.get('end_date', '')
     
@@ -88,24 +89,36 @@ def mandi_rates(request):
         crops_res = requests.get(f"{API_URL}/crops")
         crops = crops_res.json() if crops_res.status_code == 200 else []
         
-        # Fetch mandi rates for the selected crop with temporal filters
-        params = {'start_date': start_date, 'end_date': end_date}
+        # Fetch mandi rates for the selected crop with filters
+        params = {'state': state, 'start_date': start_date, 'end_date': end_date}
         response = requests.get(f"{API_URL}/mandi/{crop_id}", params=params)
         rates = response.json() if response.status_code == 200 else []
         
         # Find selected crop name for UI
         selected_crop = next((c for c in crops if str(c['id']) == str(crop_id)), None)
+        
+        best_mandi = None
+        worst_mandi = None
+        if rates:
+            valid_rates = [r for r in rates if r.get("modal_price", 0) > 0]
+            if valid_rates:
+                best_mandi = max(valid_rates, key=lambda x: x["modal_price"])
+                worst_mandi = min(valid_rates, key=lambda x: x["modal_price"])
     except Exception:
         crops = []
         rates = []
         selected_crop = None
+        best_mandi = None
+        worst_mandi = None
         
     return render(request, 'mandi_rates.html', {
         'rates': rates, 
         'crops': crops,
         'selected_crop': selected_crop,
         'start_date': start_date,
-        'end_date': end_date
+        'end_date': end_date,
+        'best_mandi': best_mandi,
+        'worst_mandi': worst_mandi
     })
 
 def partners_list(request):

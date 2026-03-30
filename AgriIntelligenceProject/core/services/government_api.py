@@ -18,7 +18,7 @@ class GovernmentAPIClient:
             "commodity_price": os.getenv("COMMODITY_RESOURCE_ID")
         }
 
-    def get_data(self, resource_type, limit=100, date_filter=None, retries=3, delay=5):
+    def get_data(self, resource_type, limit=100, date_filter=None, commodity_filter=None, retries=3, delay=5):
         if not self.api_key:
             print("ERROR: DATA_GOV_API_KEY not found in .env")
             return None
@@ -31,6 +31,8 @@ class GovernmentAPIClient:
         url = f"{self.base_url}{res_id}?api-key={self.api_key}&format=json&limit={limit}"
         if date_filter:
             url += f"&filters[arrival_date]={date_filter}"
+        if commodity_filter:
+            url += f"&filters[commodity]={commodity_filter}"
         
         print(f"Fetching {resource_type} from API (ID: {res_id}, Date: {date_filter or 'Latest'})...")
         

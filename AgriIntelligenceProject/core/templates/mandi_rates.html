@@ -17,7 +17,7 @@
         </div>
         
         <!-- Interactive Filter Form -->
-        <div class="glass-card" style="padding: 2.5rem; border-radius: 32px; flex: 1.2; border-color: rgba(15, 81, 50, 0.1);">
+        <div class="glass-card" style="padding: 2.5rem; border-radius: 32px; flex: 1.2;">
             <form method="GET" style="display: flex; flex-direction: column; gap: 1.8rem;">
                 <h4 style="font-size: 1.1rem; font-weight: 800; margin-bottom: -0.5rem; display: flex; align-items: center; gap: 0.6rem; color: var(--text-main);">
                     <i data-lucide="search" style="width: 18px; color: var(--primary);"></i> Customize Your Search
@@ -27,9 +27,9 @@
                     <div style="display: flex; flex-direction: column; gap: 0.7rem; position: relative;">
                         <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-dim);">Which crop?</span>
                         <div style="position: relative;">
-                            <select name="crop_id" id="cropSelect" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: var(--text-main); padding: 1rem; border-radius: 14px; outline: none; cursor: pointer; font-family: inherit; font-size: 0.95rem; appearance: auto; font-weight: 600;">
+                            <select name="crop_id" id="cropSelect" style="width: 100%; padding: 1rem; border-radius: 14px; outline: none; cursor: pointer; font-family: inherit; font-size: 0.95rem; appearance: auto; font-weight: 600;">
                                 {% for crop in crops %}
-                                <option value="{{ crop.id }}" style="background: white; color: black;" {% if crop.id|slugify == request.GET.crop_id|default:"1" %}selected{% endif %}>
+                                <option value="{{ crop.id }}" style="background: #1a1d21; color: white;" {% if crop.id|slugify == request.GET.crop_id|default:"1" %}selected{% endif %}>
                                     {{ crop.crop_name }}
                                 </option>
                                 {% endfor %}
@@ -38,18 +38,18 @@
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.7rem;">
                         <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-dim);">Specify State</span>
-                        <input type="text" name="state" value="{{ request.GET.state|default:'' }}" placeholder="e.g. Maharashtra" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: var(--text-main); padding: 1rem; border-radius: 14px; outline: none; font-family: inherit; font-size: 0.95rem; font-weight: 500;">
+                        <input type="text" name="state" value="{{ request.GET.state|default:'' }}" placeholder="e.g. Maharashtra" style="width: 100%; padding: 1rem; border-radius: 14px; outline: none; font-family: inherit; font-size: 0.95rem; font-weight: 500;">
                     </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 100px; gap: 1.5rem; align-items: flex-end;">
                     <div style="display: flex; flex-direction: column; gap: 0.7rem;">
                         <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-dim);">From Date</span>
-                        <input type="date" name="start_date" value="{{ start_date }}" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: var(--text-main); padding: 1rem; border-radius: 14px; outline: none; font-family: inherit; font-weight: 500;">
+                        <input type="date" name="start_date" value="{{ start_date }}" style="width: 100%; padding: 1rem; border-radius: 14px; outline: none; font-family: inherit; font-weight: 500;">
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.7rem;">
                         <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-dim);">To Date</span>
-                        <input type="date" name="end_date" value="{{ end_date }}" style="width: 100%; background: var(--bg); border: 1px solid var(--surface-border); color: var(--text-main); padding: 1rem; border-radius: 14px; outline: none; font-family: inherit; font-weight: 500;">
+                        <input type="date" name="end_date" value="{{ end_date }}" style="width: 100%; padding: 1rem; border-radius: 14px; outline: none; font-family: inherit; font-weight: 500;">
                     </div>
                     <button type="submit" class="btn-premium" style="height: 3.8rem; justify-content: center; width: 100%; padding: 0;">
                         <i data-lucide="arrow-right" style="width: 22px;"></i>
@@ -58,39 +58,46 @@
             </form>
         </div>
     </div>
+    
+    <div style="margin-top: -2rem; margin-bottom: 3rem; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem 1.5rem; border-radius: 12px; display: flex; align-items: center; gap: 1rem;">
+        <i data-lucide="info" style="color: #ef4444; width: 22px;"></i>
+        <p style="margin: 0; color: #ef4444; font-size: 0.9rem; font-weight: 600;">
+            Note: This data is sourced strictly authentically from the Government's Agmarknet. Records may trail the exact current date due to standard national reporting delays. Leave dates blank for the most recently available verified data.
+        </p>
+    </div>
 
     {% if rates %}
     <!-- Summary Stats Matrix -->
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; margin-bottom: 4rem;">
-        <div class="glass-card" style="padding: 2.5rem; border: 1px solid rgba(15, 81, 50, 0.15); background: var(--primary-light);">
+        <div class="glass-card" style="padding: 2.5rem; border: 1px solid rgba(0, 255, 136, 0.2); background: rgba(0, 255, 136, 0.05);">
             <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem;">
-                <div style="background: var(--primary); color: #fff; padding: 0.6rem; border-radius: 12px;">
+                <div style="background: var(--primary); color: #000; padding: 0.6rem; border-radius: 12px;">
                     <i data-lucide="leaf" style="width: 20px;"></i>
                 </div>
                 <span style="font-size: 0.8rem; color: var(--primary); letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase;">Selected Crop</span>
             </div>
-            <h2 style="margin: 0; font-size: 2.2rem; font-weight: 800; color: var(--primary); letter-spacing: -1px;">{{ selected_crop.crop_name|default:"Selected Product" }}</h2>
+            <h2 style="margin: 0; font-size: 2.2rem; font-weight: 800; color: var(--text-main); letter-spacing: -1px;">{{ selected_crop.crop_name|default:"Selected Product" }}</h2>
             <div style="margin-top: 1.2rem; display: flex; align-items: center; gap: 0.6rem; color: var(--primary); font-weight: 700; font-size: 0.95rem;">
                 <i data-lucide="check-circle" style="width: 18px;"></i> Technical Registry Active
             </div>
         </div>
         
-        <div class="glass-card" style="padding: 2.5rem; border: 1px solid rgba(217, 119, 6, 0.15); background: var(--secondary-light);">
+        <div class="glass-card" style="padding: 2.5rem; border: 1px solid rgba(251, 191, 36, 0.2); background: rgba(251, 191, 36, 0.05);">
             <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem;">
-                <div style="background: var(--secondary); color: #fff; padding: 0.6rem; border-radius: 12px;">
+                <div style="background: var(--secondary); color: #000; padding: 0.6rem; border-radius: 12px;">
                     <i data-lucide="indian-rupee" style="width: 20px;"></i>
                 </div>
                 <span style="font-size: 0.8rem; color: var(--secondary); letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase;">Average Market Price</span>
             </div>
-            <h2 style="margin: 0; font-size: 2.8rem; color: var(--secondary); font-weight: 800; letter-spacing: -1.5px;">₹{{ rates.0.modal_price }}</h2>
-            <p style="font-size: 0.95rem; margin-top: 1.2rem; color: #059669; display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
+            <h2 style="margin: 0; font-size: 2.8rem; color: var(--text-main); font-weight: 800; letter-spacing: -1.5px;">₹{{ rates.0.modal_price }}</h2>
+            <p style="font-size: 0.95rem; margin-top: 1.2rem; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; font-weight: 700;">
                 <i data-lucide="trending-up" style="width: 18px;"></i> +2.4% Weekly Drift
             </p>
         </div>
 
-        <div class="glass-card" style="padding: 2.5rem; border: 1px solid #E5E7EB;">
+        <div class="glass-card" style="padding: 2.5rem; border: 1px solid var(--surface-border);">
             <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem;">
-                <div style="background: var(--bg); border: 1px solid var(--surface-border); color: var(--text-main); padding: 0.6rem; border-radius: 12px;">
+                <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--surface-border); color: var(--text-main); padding: 0.6rem; border-radius: 12px;">
                     <i data-lucide="map-pin" style="width: 20px;"></i>
                 </div>
                 <span style="font-size: 0.8rem; color: var(--text-dim); letter-spacing: 1.5px; font-weight: 800; text-transform: uppercase;">Geographic Reach</span>
@@ -101,6 +108,37 @@
             </p>
         </div>
     </div>
+
+    <!-- Best/Worst Market Prices -->
+    {% if best_mandi and worst_mandi %}
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-bottom: 4rem;">
+        <div class="glass-card" style="padding: 2.5rem; border: 1px solid rgba(0, 255, 136, 0.2); background: linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(0, 255, 136, 0.05) 100%);">
+            <h4 style="margin: 0 0 1rem 0; font-size: 0.85rem; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Highest Yield Market (Best Price)</h4>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h2 style="margin: 0; font-size: 2.8rem; color: var(--text-main); font-weight: 800; letter-spacing: -1px; text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);">₹{{ best_mandi.modal_price }}</h2>
+                    <p style="margin: 0.5rem 0 0 0; color: var(--text-dim); font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="map-pin" style="width: 18px;"></i> {{ best_mandi.mandi_name }}, {{ best_mandi.state }}</p>
+                </div>
+                <div style="background: var(--primary-light); padding: 1.2rem; border-radius: 50%; box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);">
+                    <i data-lucide="trending-up" style="color: var(--primary); width: 32px; height: 32px;"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card" style="padding: 2.5rem; border: 1px solid rgba(239, 68, 68, 0.2); background: linear-gradient(145deg, rgba(255,255,255,0.02) 0%, rgba(239, 68, 68, 0.05) 100%);">
+            <h4 style="margin: 0 0 1rem 0; font-size: 0.85rem; color: #ef4444; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Lowest Yield Market (Worst Price)</h4>
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <h2 style="margin: 0; font-size: 2.8rem; color: var(--text-main); font-weight: 800; letter-spacing: -1px; text-shadow: 0 0 20px rgba(239, 68, 68, 0.3);">₹{{ worst_mandi.modal_price }}</h2>
+                    <p style="margin: 0.5rem 0 0 0; color: var(--text-dim); font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="map-pin" style="width: 18px;"></i> {{ worst_mandi.mandi_name }}, {{ worst_mandi.state }}</p>
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.1); padding: 1.2rem; border-radius: 50%; box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);">
+                    <i data-lucide="trending-down" style="color: #ef4444; width: 32px; height: 32px;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Data Matrix -->
     <div class="glass-card" style="padding: 0; overflow: hidden; border-color: var(--surface-border);">
@@ -119,8 +157,6 @@
                 <tr style="color: var(--text-dim); font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; background: rgba(0,0,0,0.01);">
                     <th style="padding: 1.5rem 2.5rem; font-weight: 800;">Mandi Location</th>
                     <th style="padding: 1.5rem 2.5rem; font-weight: 800;">Key Modal Price</th>
-                    <th style="padding: 1.5rem 2.5rem; font-weight: 800;">Market Range</th>
-                    <th style="padding: 1.5rem 2.5rem; font-weight: 800;">Retail Range</th>
                     <th style="padding: 1.5rem 2.5rem; font-weight: 800;">Analysis</th>
                     <th style="padding: 1.5rem 2.5rem; font-weight: 800;">Reporting Date</th>
                 </tr>
@@ -139,24 +175,12 @@
                         <div style="font-size: 0.75rem; color: var(--text-dim); font-weight: 700;">PER {{ rate.units|default:"QUINTAL"|upper }}</div>
                     </td>
                     <td style="padding: 2rem 2.5rem;">
-                        <div style="font-size: 1.05rem; color: var(--text-main); font-weight: 700;">₹{{ rate.min_price }} - {{ rate.max_price }}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase;">Standard Drift</div>
-                    </td>
-                    <td style="padding: 2rem 2.5rem;">
-                        {% if rate.retail_min_price and rate.retail_max_price %}
-                        <div style="font-size: 1.05rem; color: var(--secondary); font-weight: 800;">₹{{ rate.retail_min_price }} - {{ rate.retail_max_price }}</div>
-                        <div style="font-size: 0.75rem; color: var(--secondary); opacity: 0.8; font-weight: 700; text-transform: uppercase;">Retail Pulse</div>
-                        {% else %}
-                        <div style="font-size: 1rem; color: var(--text-dim); opacity: 0.5; font-weight: 500;">---</div>
-                        {% endif %}
-                    </td>
-                    <td style="padding: 2rem 2.5rem;">
                         {% if forloop.counter|divisibleby:3 %}
-                        <div style="background: #FEE2E2; color: #DC2626; padding: 0.5rem 1rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800;">
+                        <div style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 0.5rem 1rem; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800;">
                             <i data-lucide="trending-down" style="width: 16px;"></i> BEARISH
                         </div>
                         {% else %}
-                        <div style="background: var(--primary-light); color: var(--primary); padding: 0.5rem 1rem; border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800;">
+                        <div style="background: var(--primary-light); color: var(--primary); padding: 0.5rem 1rem; border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 12px; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800;">
                             <i data-lucide="trending-up" style="width: 16px;"></i> BULLISH
                         </div>
                         {% endif %}
@@ -173,16 +197,16 @@
         </table>
     </div>
     {% else %}
-    <div class="glass-card" style="padding: 6rem 2rem; text-align: center; border: 2px dashed var(--surface-border); background: var(--bg);">
-        <div style="width: 100px; height: 100px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--text-dim); box-shadow: var(--shadow-sm);">
+    <div class="glass-card" style="padding: 6rem 2rem; text-align: center; border: 2px dashed var(--surface-border);">
+        <div style="width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--text-dim); box-shadow: var(--shadow-sm);">
             <i data-lucide="bar-chart-3" style="width: 40px; height: 40px; opacity: 0.5;"></i>
         </div>
-        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: var(--text-main); font-weight: 800;">No market drift detected.</h2>
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: var(--text-main); font-weight: 800;">No records found for these parameters.</h2>
         <p style="color: var(--text-dim); max-width: 450px; margin: 0 auto 2rem; font-weight: 500; font-size: 1.1rem;">
-            We currently don't have verified Mandi records for this specific crop variety. Our crawlers are continuously indexing market fluctuations.
+            No authentic Government API records exist for this crop within your chosen date filters. Due to standard reporting delays, exact searches for today's date will typically return empty.
         </p>
-        <a href="?" class="btn-premium" style="background: white; border: 1px solid var(--surface-border); color: var(--text-main); display: inline-flex; box-shadow: var(--shadow-sm);">
-            Reset Analysis
+        <a href="?" class="btn-premium" style="display: inline-flex;">
+            Clear Dates & Reset Search
         </a>
     </div>
     {% endif %}

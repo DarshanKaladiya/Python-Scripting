@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS master_crops (
     best_season ENUM('Kharif', 'Rabi', 'Zaid', 'Perennial'),
     ideal_temperature_range VARCHAR(50),
     best_soil_types TEXT,
+    growing_months VARCHAR(100),
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

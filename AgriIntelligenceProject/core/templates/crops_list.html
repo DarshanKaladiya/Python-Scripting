@@ -26,11 +26,14 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 2.5rem;">
         {% for crop in crops %}
         <div class="glass-card" style="padding: 0; display: flex; flex-direction: column;">
-            <div style="height: 160px; background: var(--primary-light); position: relative; display: flex; align-items: center; justify-content: center;">
-                <div class="crop-animated-img" data-crop="{{ crop.crop_name|lower }}" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
-                    <i data-lucide="leaf" style="width: 60px; height: 60px; color: var(--primary); opacity: 0.3;"></i>
+            <div style="height: 180px; background: rgba(0, 255, 136, 0.03); border-bottom: 1px solid var(--surface-border); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                <div class="crop-animated-img" data-crop="{{ crop.crop_name|lower }}" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; z-index: 2;">
+                    <i data-lucide="leaf" style="width: 60px; height: 60px; color: var(--primary); opacity: 0.2;"></i>
                 </div>
-                <div style="position: absolute; top: 1.5rem; right: 1.5rem; background: #ffffff; color: var(--primary); padding: 0.4rem 0.8rem; border-radius: 12px; font-size: 0.75rem; font-weight: 800; box-shadow: var(--shadow-sm);">
+                <!-- Dynamic Glow behind icon -->
+                <div style="position: absolute; width: 120px; height: 120px; background: var(--primary); filter: blur(60px); opacity: 0.1; z-index: 1;"></div>
+                
+                <div style="position: absolute; top: 1.5rem; right: 1.5rem; background: rgba(255,255,255,0.05); color: var(--primary); border: 1px solid rgba(0, 255, 136, 0.3); padding: 0.5rem 1rem; border-radius: 12px; font-size: 0.75rem; font-weight: 900; letter-spacing: 1px; backdrop-filter: blur(5px); z-index: 3;">
                     {{ crop.best_season|upper }}
                 </div>
             </div>
@@ -42,12 +45,12 @@
                 </p>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-                    <div style="background: var(--bg); padding: 1rem; border-radius: 14px; border: 1px solid var(--surface-border);">
-                        <span style="display: block; color: var(--text-dim); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.4rem; text-transform: uppercase;">Growth Term</span>
-                        <b style="font-size: 1.1rem; color: var(--text-main); font-weight: 800;">{{ crop.growth_duration_days }} Days</b>
+                    <div style="background: rgba(255,255,255,0.02); padding: 1.2rem; border-radius: 16px; border: 1px solid var(--surface-border);">
+                        <span style="display: block; color: var(--text-dim); font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 0.5rem; text-transform: uppercase;">Growth Term</span>
+                        <b style="font-size: 1.1rem; color: var(--text-main); font-weight: 800;">{{ crop.growth_duration_days }} <span style="font-size: 0.8rem; opacity: 0.7;">Days</span></b>
                     </div>
-                    <div style="background: var(--bg); padding: 1rem; border-radius: 14px; border: 1px solid var(--surface-border);">
-                        <span style="display: block; color: var(--text-dim); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 0.4rem; text-transform: uppercase;">Best Soil</span>
+                    <div style="background: rgba(255,255,255,0.02); padding: 1.2rem; border-radius: 16px; border: 1px solid var(--surface-border);">
+                        <span style="display: block; color: var(--text-dim); font-size: 0.7rem; font-weight: 800; letter-spacing: 1.5px; margin-bottom: 0.5rem; text-transform: uppercase;">Best Soil</span>
                         <b style="font-size: 1.1rem; color: var(--text-main); font-weight: 800;">{{ crop.best_soil_types|truncatechars:10 }}</b>
                     </div>
                 </div>
@@ -56,11 +59,11 @@
                     {{ crop.description }}
                 </p>
 
-                <div style="display: flex; gap: 1.2rem;">
-                    <a href="{% url 'crop_detail' crop.id %}" class="btn-premium" style="flex: 1; justify-content: center; font-size: 0.9rem;">
-                        View Analysis <i data-lucide="arrow-right" style="width: 16px;"></i>
+                <div style="display: flex; gap: 1rem; margin-top: auto;">
+                    <a href="{% url 'crop_detail' crop.id %}" class="btn-premium" style="flex: 1; justify-content: center; font-size: 0.9rem; padding: 0.9rem;">
+                        View Analysis <i data-lucide="arrow-right" style="width: 18px;"></i>
                     </a>
-                    <a href="{% url 'mandi_rates' %}?crop_id={{ crop.id }}" class="btn-premium" style="flex: 0.3; justify-content: center; background: var(--secondary-light); color: var(--secondary); box-shadow: none;">
+                    <a href="{% url 'mandi_rates' %}?crop_id={{ crop.id }}" class="btn-premium" style="flex: 0.3; justify-content: center; background: rgba(251, 191, 36, 0.1); color: var(--secondary); box-shadow: none; border: 1px solid rgba(251, 191, 36, 0.2);">
                         <i data-lucide="trending-up" style="width: 20px;"></i>
                     </a>
                 </div>

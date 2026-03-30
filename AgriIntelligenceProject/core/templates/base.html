@@ -8,18 +8,19 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --primary: #0F5132;
-            --primary-light: #E8F5E9;
-            --secondary: #D97706;
-            --secondary-light: #FEF3C7;
-            --bg: #FDFBF7;
-            --surface: #FFFFFF;
-            --surface-border: rgba(15, 81, 50, 0.08);
-            --text-main: #1A1D1A;
-            --text-dim: #6B7280;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
-            --shadow-md: 0 8px 16px rgba(15,81,50,0.06);
-            --shadow-lg: 0 20px 40px rgba(15,81,50,0.08);
+            --primary: #00ff88;
+            --primary-light: rgba(0, 255, 136, 0.1);
+            --secondary: #fbbf24;
+            --secondary-light: rgba(251, 191, 36, 0.1);
+            --bg: #0a0c12;
+            --surface: rgba(255, 255, 255, 0.03);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+            --neon-glow: 0 0 15px rgba(0, 255, 136, 0.3);
         }
 
         * {
@@ -46,10 +47,9 @@
             height: 100%;
             z-index: -1;
             background: 
-                radial-gradient(circle at 10% 20%, var(--primary-light) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, var(--secondary-light) 0%, transparent 40%);
-            filter: blur(60px);
-            opacity: 0.8;
+                radial-gradient(circle at 10% 20%, rgba(0, 255, 136, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(251, 191, 36, 0.05) 0%, transparent 40%),
+                #0a0c12;
         }
 
         .navbar {
@@ -57,7 +57,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 1.2rem 8%;
-            background: rgba(253, 251, 247, 0.85);
+            background: rgba(10, 12, 18, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--surface-border);
@@ -74,6 +74,7 @@
             align-items: center;
             gap: 0.6rem;
             color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
         }
 
         .nav-links {
@@ -103,10 +104,11 @@
             background-color: var(--primary);
             transition: width 0.3s ease;
             border-radius: 2px;
+            box-shadow: 0 0 8px var(--primary);
         }
 
         .nav-links a:hover, .nav-links a.active {
-            color: var(--primary);
+            color: var(--text-main);
         }
 
         .nav-links a:hover::after, .nav-links a.active::after {
@@ -115,9 +117,11 @@
 
         .glass-card {
             background: var(--surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--surface-border);
-            border-radius: 24px;
-            box-shadow: var(--shadow-sm);
+            border-radius: 28px;
+            box-shadow: var(--shadow-md);
             transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
@@ -126,7 +130,8 @@
         .glass-card:hover {
             transform: translateY(-6px);
             box-shadow: var(--shadow-lg);
-            border-color: rgba(15, 81, 50, 0.15);
+            border-color: rgba(0, 255, 136, 0.2);
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .container {
@@ -137,11 +142,11 @@
 
         .btn-premium {
             background: var(--primary);
-            color: #ffffff;
+            color: #000000;
             border: none;
             padding: 0.8rem 1.8rem;
             border-radius: 12px;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 0.95rem;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -149,21 +154,21 @@
             align-items: center;
             gap: 0.6rem;
             text-decoration: none;
-            box-shadow: 0 4px 10px rgba(15, 81, 50, 0.2);
+            box-shadow: var(--neon-glow);
         }
 
         .btn-premium:hover {
-            background: #0b4027;
             transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(15, 81, 50, 0.3);
+            box-shadow: 0 0 25px rgba(0, 255, 136, 0.5);
+            background: #20ff96;
         }
 
         footer {
             margin-top: 8rem;
             padding: 4rem 8% 2rem;
-            background: var(--surface);
+            background: rgba(0, 0, 0, 0.3);
             border-top: 1px solid var(--surface-border);
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.02);
+            backdrop-filter: blur(10px);
         }
 
         .footer-grid {
@@ -175,9 +180,11 @@
 
         .footer-col h4 {
             margin-bottom: 1.5rem;
-            font-weight: 700;
+            font-weight: 800;
             color: var(--text-main);
             font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .footer-col ul {
@@ -209,7 +216,7 @@
             background: var(--bg);
         }
         ::-webkit-scrollbar-thumb {
-            background: #D1D5DB;
+            background: #334155;
             border-radius: 8px;
         }
         ::-webkit-scrollbar-thumb:hover {
@@ -237,6 +244,17 @@
         .badge-primary {
             background: var(--primary-light);
             color: var(--primary);
+        }
+        
+        /* Modern Inputs */
+        input, select {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid var(--surface-border) !important;
+            color: var(--text-main) !important;
+        }
+        input:focus, select:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.1) !important;
         }
     </style>
     {% block extra_css %}{% endblock %}

@@ -3,54 +3,57 @@
 {% block content %}
 <div class="animate-up">
     <!-- Super Hero Section -->
-    <div style="margin-bottom: 5rem; text-align: left; padding-top: 2rem;">
-        <div style="display: inline-flex; align-items: center; gap: 0.8rem; background: var(--primary-light); padding: 0.6rem 1.2rem; border-radius: 100px; color: var(--primary); font-size: 0.85rem; font-weight: 700; margin-bottom: 2rem;">
+    <div style="margin-bottom: 5rem; text-align: left; padding-top: 4rem; position: relative;">
+        <!-- Glowing background orb -->
+        <div style="position: absolute; top: -100px; left: -100px; width: 400px; height: 400px; background: var(--primary); filter: blur(150px); opacity: 0.1; z-index: -1;"></div>
+        
+        <div style="display: inline-flex; align-items: center; gap: 0.8rem; background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.2); padding: 0.7rem 1.4rem; border-radius: 100px; color: var(--primary); font-size: 0.85rem; font-weight: 800; margin-bottom: 2.5rem; letter-spacing: 1px; text-transform: uppercase;">
             <i data-lucide="sparkles" style="width: 16px;"></i> Next-Gen Agriculture Platform
         </div>
-        <h1 style="font-size: 4.5rem; font-weight: 800; letter-spacing: -2px; line-height: 1.1; margin-bottom: 1.5rem; color: var(--text-main);">
-            Growing Your <br><span style="color: var(--primary);">Agricultural</span> Future
+        <h1 style="font-size: 5rem; font-weight: 800; letter-spacing: -3px; line-height: 1; margin-bottom: 2rem; color: var(--text-main);">
+            Growing Your <br><span style="color: var(--primary); text-shadow: 0 0 30px rgba(0, 255, 136, 0.3);">Agricultural</span> Future
         </h1>
-        <p style="color: var(--text-dim); font-size: 1.25rem; max-width: 650px; line-height: 1.7;">
+        <p style="color: var(--text-dim); font-size: 1.3rem; max-width: 650px; line-height: 1.8; font-weight: 500;">
             Your command center for real-time market insights, verified crop intelligence, and data-driven product comparisons. Built for the modern ecosystem.
         </p>
     </div>
 
     <!-- Stats Matrix -->
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.8rem; margin-bottom: 5rem;">
-        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
-            <div style="background: var(--primary-light); padding: 1.1rem; border-radius: 20px; color: var(--primary);">
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem; border-color: rgba(0, 255, 136, 0.1);">
+            <div style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.2); padding: 1.1rem; border-radius: 20px; color: var(--primary);">
                 <i data-lucide="sprout"></i>
             </div>
             <div>
-                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">ACTIVE CROPS</p>
-                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800;">{{ crops_count }}</h2>
+                <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 800; letter-spacing: 1.5px;">ACTIVE CROPS</p>
+                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text-main);">{{ crops_count }}</h2>
             </div>
         </div>
-        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
-            <div style="background: var(--secondary-light); padding: 1.1rem; border-radius: 20px; color: var(--secondary);">
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem; border-color: rgba(251, 191, 36, 0.1);">
+            <div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); padding: 1.1rem; border-radius: 20px; color: var(--secondary);">
                 <i data-lucide="activity"></i>
             </div>
             <div>
-                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">MARKET DATA</p>
-                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800;">11.2K+</h2>
+                <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 800; letter-spacing: 1.5px;">MARKET DATA</p>
+                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text-main);">11.2K+</h2>
             </div>
         </div>
-        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
-            <div style="background: #E0E7FF; padding: 1.1rem; border-radius: 20px; color: #4338CA;">
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem; border-color: rgba(129, 140, 248, 0.1);">
+            <div style="background: rgba(129, 140, 248, 0.1); border: 1px solid rgba(129, 140, 248, 0.2); padding: 1.1rem; border-radius: 20px; color: #818cf8;">
                 <i data-lucide="globe"></i>
             </div>
             <div>
-                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">NETWORKS</p>
-                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800;">{{ comp_count }}</h2>
+                <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 800; letter-spacing: 1.5px;">NETWORKS</p>
+                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text-main);">{{ comp_count }}</h2>
             </div>
         </div>
-        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem;">
-            <div style="background: #FCE7F3; padding: 1.1rem; border-radius: 20px; color: #BE185D;">
+        <div class="glass-card" style="padding: 1.8rem; display: flex; align-items: center; gap: 1.2rem; border-color: rgba(244, 114, 182, 0.1);">
+            <div style="background: rgba(244, 114, 182, 0.1); border: 1px solid rgba(244, 114, 182, 0.2); padding: 1.1rem; border-radius: 20px; color: #f472b6;">
                 <i data-lucide="verified"></i>
             </div>
             <div>
-                <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 700; letter-spacing: 1px;">VERIFIED GUIDES</p>
-                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800;">48+</h2>
+                <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.3rem; font-weight: 800; letter-spacing: 1.5px;">VERIFIED GUIDES</p>
+                <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--text-main);">48+</h2>
             </div>
         </div>
     </div>
@@ -123,46 +126,46 @@
     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem;">
         <div class="glass-card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <div style="width: 60px; height: 60px; background: var(--primary-light); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 2rem;">
+                <div style="width: 60px; height: 60px; background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary); margin-bottom: 2rem;">
                     <i data-lucide="book" style="width: 28px; height: 28px;"></i>
                 </div>
-                <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Crop Guide</h3>
-                <p style="color: var(--text-dim); line-height: 1.7;">
+                <h3 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 1.2rem; color: var(--text-main);">Crop Guide</h3>
+                <p style="color: var(--text-dim); line-height: 1.8; font-weight: 500;">
                     Explore a comprehensive encyclopedia of crops. Learn about optimal soil conditions, state-wise fertilization, and expert protection strategies.
                 </p>
             </div>
-            <a href="{% url 'crops_list' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center; font-weight: 700;">
-                Read the Guide <i data-lucide="chevron-right" style="width: 20px;"></i>
+            <a href="{% url 'crops_list' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center;">
+                Read the Guide <i data-lucide="arrow-right" style="width: 20px;"></i>
             </a>
         </div>
 
         <div class="glass-card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <div style="width: 60px; height: 60px; background: var(--secondary-light); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--secondary); margin-bottom: 2rem;">
+                <div style="width: 60px; height: 60px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--secondary); margin-bottom: 2rem;">
                     <i data-lucide="bar-chart-big" style="width: 28px; height: 28px;"></i>
                 </div>
-                <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Mandi Prices</h3>
-                <p style="color: var(--text-dim); line-height: 1.7;">
+                <h3 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 1.2rem; color: var(--text-main);">Mandi Prices</h3>
+                <p style="color: var(--text-dim); line-height: 1.8; font-weight: 500;">
                     Stay ahead with real-time price monitoring across Indian markets. Filter by crop, region, and date to maximize your profitability.
                 </p>
             </div>
-            <a href="{% url 'mandi_rates' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center; background: var(--text-main); color: #fff;">
-                Check Today's Rates <i data-lucide="chevron-right" style="width: 20px;"></i>
+            <a href="{% url 'mandi_rates' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center;">
+                Check Today's Rates <i data-lucide="trending-up" style="width: 20px;"></i>
             </a>
         </div>
 
         <div class="glass-card" style="padding: 3rem; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <div style="width: 60px; height: 60px; background: #E0E7FF; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #4338CA; margin-bottom: 2rem;">
-                    <i data-lucide="compare" style="width: 28px; height: 28px;"></i>
+                <div style="width: 60px; height: 60px; background: rgba(129, 140, 248, 0.1); border: 1px solid rgba(129, 140, 248, 0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #818cf8; margin-bottom: 2rem;">
+                    <i data-lucide="layers" style="width: 28px; height: 28px;"></i>
                 </div>
-                <h3 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem;">Product Insights</h3>
-                <p style="color: var(--text-dim); line-height: 1.7;">
+                <h3 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 1.2rem; color: var(--text-main);">Product Insights</h3>
+                <p style="color: var(--text-dim); line-height: 1.8; font-weight: 500;">
                     Not sure which fertilizer or pesticide to use? Compare thousands of agricultural products to choose what's best for your farm's success.
                 </p>
             </div>
-            <a href="{% url 'compare_products' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center; background: #4338CA;">
-                Find Better Products <i data-lucide="chevron-right" style="width: 20px;"></i>
+            <a href="{% url 'compare_products' %}" class="btn-premium" style="margin-top: 2.5rem; justify-content: center; background: #818cf8; box-shadow: 0 0 15px rgba(129, 140, 248, 0.3);">
+                Find Better Products <i data-lucide="arrow-right" style="width: 20px;"></i>
             </a>
         </div>
     </div>
