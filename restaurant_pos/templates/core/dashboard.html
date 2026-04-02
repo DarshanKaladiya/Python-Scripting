@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Restaurant POS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Operations Dashboard</h1>
+        <p class="text-muted mb-0">Live view of sales, tables, low stock, and recent activity.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'orders:pos' %}">Open Billing Screen</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Today's Sales</div><div class="metric-value">Rs. {{ today_sales }}</div></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Completed Orders</div><div class="metric-value">{{ orders_today }}</div></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Open Tables</div><div class="metric-value">{{ open_tables }}</div></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Low Stock Items</div><div class="metric-value">{{ low_stock_items|length }}</div></div></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white"><strong>Recent Orders</strong></div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead><tr><th>Order</th><th>Type</th><th>Table</th><th>Status</th><th>Total</th></tr></thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.get_order_type_display }}</td>
+                                <td>{{ order.table.name|default:"-" }}</td>
+                                <td><span class="badge text-bg-secondary">{{ order.get_status_display }}</span></td>
+                                <td>Rs. {{ order.total_amount }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted py-4">No orders yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white"><strong>Low Stock Alerts</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for ingredient in low_stock_items %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ ingredient.name }}</span>
+                        <span class="text-danger">{{ ingredient.current_stock }} {{ ingredient.unit.short_code }}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">All ingredient levels are healthy.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Table Status Snapshot</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for row in table_status %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ row.status|title }}</span>
+                        <span>{{ row.total }}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No floor tables created yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

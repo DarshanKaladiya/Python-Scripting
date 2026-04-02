@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Reports | Restaurant POS{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Sales and Stock Reports</h1>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Today's Sales</div><div class="metric-value">Rs. {{ today_sales }}</div></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">All-Time Sales</div><div class="metric-value">Rs. {{ total_sales }}</div></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Completed Orders</div><div class="metric-value">{{ total_orders }}</div></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Tax Collected</div><div class="metric-value">Rs. {{ tax_collected }}</div></div></div></div>
+</div>
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Low Stock</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for item in low_stock_items %}
+                    <li class="list-group-item d-flex justify-content-between"><span>{{ item.name }}</span><span>{{ item.current_stock }}</span></li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No low stock items.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white"><strong>Recent Stock Activity</strong></div>
+            <ul class="list-group list-group-flush">
+                {% for item in recent_stock_activity %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ item.ingredient.name }} | {{ item.txn_type }}</span>
+                        <span>{{ item.quantity_change }}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">No stock transactions yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

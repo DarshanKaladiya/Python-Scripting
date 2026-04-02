@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}POS Billing | Restaurant POS{% endblock %}
+{% block content %}
+<section class="pos-shell">
+    <div class="pos-hero">
+        <div>
+            <p class="pos-eyebrow mb-2">Counter Billing Console</p>
+            <h1 class="pos-title mb-2">Fast restaurant billing built for rush hour.</h1>
+            <p class="pos-subtitle mb-0">Tap category, tap item, send KOT or settle the bill. Everything important stays one reach away.</p>
+        </div>
+        <div class="pos-hero-meta">
+            <div class="pos-hero-chip">
+                <span class="pos-hero-label">Current Order</span>
+                <strong id="order-number">Not started</strong>
+            </div>
+            <div class="pos-hero-chip">
+                <span class="pos-hero-label">Ticket Status</span>
+                <strong id="order-status-text">Draft</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="pos-workspace">
+                <div class="pos-toolbar">
+                    <div class="pos-toolbar-left">
+                        <label class="pos-field">
+                            <span>Search menu</span>
+                            <input id="menu-search" class="form-control pos-search-input" type="search" placeholder="Type item name">
+                        </label>
+                        <label class="pos-field pos-table-field">
+                            <span>Table</span>
+                            <select id="table-id" class="form-select">
+                                <option value="">No Table</option>
+                                {% for table in tables %}
+                                    <option value="{{ table.id }}">{{ table.section.name }} - {{ table.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                    </div>
+                    <div class="pos-order-type-switch" role="group" aria-label="Order type">
+                        <button type="button" class="order-type-chip active" data-value="dine_in">Dine In</button>
+                        <button type="button" class="order-type-chip" data-value="takeaway">Takeaway</button>
+                        <button type="button" class="order-type-chip" data-value="delivery">Delivery</button>
+                    </div>
+                    <select id="order-type" class="d-none">
+                        <option value="dine_in">Dine In</option>
+                        <option value="takeaway">Takeaway</option>
+                        <option value="delivery">Delivery</option>
+                    </select>
+                </div>
+
+                <div class="pos-main-grid">
+                    <aside class="pos-category-rail">
+                        <div class="pos-rail-header">
+                            <span>Categories</span>
+                            <small id="visible-items-count">{{ categories|length }} groups</small>
+                        </div>
+                        <div class="pos-category-list">
+                            <button class="category-filter active" data-category="" type="button">
+                                <span class="category-name">All Items</span>
+                                <span class="category-meta">Full menu</span>
+                            </button>
+                            {% for category in categories %}
+                                <button class="category-filter" data-category="{{ category.id }}" type="button" style="--category-accent: {{ category.color_code|default:'#f97316' }};">
+                                    <span class="category-name">{{ category.name }}</span>
+                                    <span class="category-meta">{{ category.items.count }} items</span>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </aside>
+
+                    <div class="pos-menu-board">
+                        <div class="pos-board-header">
+                            <div>
+                                <p class="mb-1 text-muted small">Selected section</p>
+                                <h2 id="selected-category-label" class="h4 mb-0">All Items</h2>
+                            </div>
+                            <button id="new-order-btn" class="btn pos-primary-btn" type="button">Start New Order</button>
+                        </div>
+
+                        <div class="row g-3" id="item-grid">
+                            {% for category in categories %}
+                                {% for item in category.items.all %}
+                                    <div class="col-sm-6 col-lg-4 item-card" data-category="{{ category.id }}" data-category-name="{{ category.name }}" data-name="{{ item.name|lower }}">
+                                        <button class="pos-item-btn" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" type="button">
+                                            <div class="pos-item-top">
+                                                <span class="pos-item-category" style="background: {{ category.color_code|default:'#fff2e8' }};">{{ category.name }}</span>
+                                                <span class="pos-item-code">{{ item.short_name|default:item.sku }}</span>
+                                            </div>
+                                            <div class="pos-item-middle">
+                                                <h3>{{ item.name }}</h3>
+                                                <p>{{ item.description|default:"Touch to add instantly to the bill."|truncatechars:80 }}</p>
+                                            </div>
+                                            <div class="pos-item-footer">
+                                                <strong>Rs. {{ item.base_price }}</strong>
+                                                <span>Add</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                {% endfor %}
+                            {% empty %}
+                                <div class="col-12">
+                                    <div class="alert alert-light border">Add menu categories and items from Django admin to start billing.</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <aside class="pos-ticket pos-sidebar">
+                <div class="pos-ticket-header">
+                    <div>
+                        <p class="mb-1 text-muted small">Live Ticket</p>
+                        <h2 class="h4 mb-0">Current Order</h2>
+                    </div>
+                    <span id="cart-count" class="pos-cart-badge">0</span>
+                </div>
+
+                <div class="pos-ticket-service">
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label class="pos-field mb-0">
+                                <span>Customer Phone</span>
+                                <input id="customer-phone" class="form-control" type="text" placeholder="9876543210">
+                            </label>
+                        </div>
+                        <div class="col-5">
+                            <label class="pos-field mb-0">
+                                <span>Customer Name</span>
+                                <input id="customer-name" class="form-control" type="text" placeholder="Walk-in">
+                            </label>
+                        </div>
+                    </div>
+                    <div class="pos-service-summary">
+                        <div>
+                            <span>Mode</span>
+                            <strong id="service-mode-label">Dine In</strong>
+                        </div>
+                        <div>
+                            <span>Table</span>
+                            <strong id="service-table-label">No Table</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pos-ticket-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Bill Items</strong>
+                        <span class="text-muted small">Live sync</span>
+                    </div>
+                    <div id="cart-items" class="cart-items">
+                        <div class="pos-empty-cart">
+                            <strong>No items added yet</strong>
+                            <span>Tap a category and select items to build the bill.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pos-ticket-totals">
+                    <div><span>Subtotal</span><strong id="subtotal-amount">Rs. 0.00</strong></div>
+                    <div><span>Tax</span><strong id="tax-amount">Rs. 0.00</strong></div>
+                    <div class="pos-total-line"><span>Total</span><strong id="total-amount">Rs. 0.00</strong></div>
+                </div>
+
+                <div class="pos-payment-panel">
+                    <label class="pos-field mb-0">
+                        <span>Payment Method</span>
+                        <select id="payment-method-id" class="form-select">
+                            {% for method in payment_methods %}
+                                <option value="{{ method.id }}">{{ method.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                </div>
+
+                <div class="pos-action-grid">
+                    <button id="send-kot-btn" class="btn pos-soft-btn" type="button" disabled>Send KOT</button>
+                    <button id="hold-order-btn" class="btn pos-soft-btn" type="button" disabled>Hold</button>
+                    <button id="cancel-order-btn" class="btn pos-danger-btn" type="button" disabled>Cancel</button>
+                    <button id="settle-order-btn" class="btn pos-success-btn" type="button" disabled>Settle & Print</button>
+                </div>
+
+                <div class="pos-running-orders">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Running Orders</strong>
+                        <span class="text-muted small">Tap to reopen</span>
+                    </div>
+                    <div class="pos-running-list">
+                        {% for order in active_orders %}
+                            <button class="active-order-btn" data-order-id="{{ order.id }}" type="button">
+                                <div>
+                                    <strong>{{ order.order_number }}</strong>
+                                    <span>{{ order.get_order_type_display }}</span>
+                                </div>
+                                <div class="text-end">
+                                    <strong>Rs. {{ order.total_amount }}</strong>
+                                    <span>{{ order.get_status_display }}</span>
+                                </div>
+                            </button>
+                        {% empty %}
+                            <div class="text-muted small">No active orders.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<script>
+    window.POS_CONFIG = {
+        createOrderUrl: "{% url 'orders:create-order' %}",
+        addItemUrlTemplate: "{% url 'orders:add-item' 0 %}",
+        sendKotUrlTemplate: "{% url 'orders:send-kot' 0 %}",
+        settleOrderUrlTemplate: "{% url 'orders:settle-order' 0 %}",
+        holdOrderUrlTemplate: "{% url 'orders:hold-order' 0 %}",
+        cancelOrderUrlTemplate: "{% url 'orders:cancel-order' 0 %}",
+        orderStatusUrlTemplate: "{% url 'orders:order-status' 0 %}",
+        receiptUrlTemplate: "{% url 'orders:receipt' 0 %}",
+    };
+</script>
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/pos.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Kitchen Display | Restaurant POS{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">Kitchen Display System</h1>
+        <p class="text-muted mb-0">Track tickets from new to served.</p>
+    </div>
+</div>
+<div class="row g-3">
+    {% for item in kot_items %}
+        <div class="col-md-6 col-xl-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="text-muted small">{{ item.kot.kot_number }} | {{ item.kot.order.order_number }}</div>
+                            <h2 class="h5 mt-2">{{ item.order_item.item_name_snapshot }}</h2>
+                        </div>
+                        <span class="badge text-bg-dark">{{ item.status }}</span>
+                    </div>
+                    <p class="mb-2">Qty: {{ item.quantity }}</p>
+                    <p class="small text-muted">Notes: {{ item.order_item.notes|default:"No notes" }}</p>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button class="btn btn-outline-secondary btn-sm kds-status-btn" data-id="{{ item.id }}" data-status="preparing">Preparing</button>
+                        <button class="btn btn-outline-success btn-sm kds-status-btn" data-id="{{ item.id }}" data-status="ready">Ready</button>
+                        <button class="btn btn-outline-primary btn-sm kds-status-btn" data-id="{{ item.id }}" data-status="served">Served</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="alert alert-light border">No active KOT items.</div>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+function getCsrfToken() {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : "";
+}
+
+document.querySelectorAll(".kds-status-btn").forEach((button) => {
+    button.addEventListener("click", async () => {
+        const response = await fetch(`/kitchen/api/items/${button.dataset.id}/status/`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json", "X-CSRFToken": getCsrfToken()},
+            body: JSON.stringify({status: button.dataset.status}),
+        });
+        if (response.ok) {
+            window.location.reload();
+        }
+    });
+});
+</script>
+{% endblock %}
