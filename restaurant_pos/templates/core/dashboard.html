@@ -1,72 +1,167 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Dashboard | Restaurant POS{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 mb-1">Operations Dashboard</h1>
-        <p class="text-muted mb-0">Live view of sales, tables, low stock, and recent activity.</p>
+<section class="pos-shell dashboard-shell">
+    <div class="pos-hero dashboard-hero">
+        <div>
+            <p class="pos-eyebrow mb-2">Operations Command</p>
+            <h1 class="pos-title mb-2">Restaurant Ops Dashboard</h1>
+            <p class="pos-subtitle mb-0">Monitor sales, floor movement, stock risk, and kitchen pressure from one compact control surface.</p>
+            <div class="dashboard-hero-actions">
+                <a class="btn pos-primary-btn" href="{% url 'orders:pos' %}">Billing</a>
+                <a class="btn pos-soft-btn" href="{% url 'kitchen:screen' %}">Kitchen</a>
+                <a class="btn pos-soft-btn" href="{% url 'reporting:summary' %}">Reports</a>
+            </div>
+        </div>
+        <div class="pos-hero-meta">
+            <div class="pos-hero-chip">
+                <span class="pos-hero-label">Sales Today</span>
+                <strong id="dashboard-hero-sales">Rs. {{ today_sales }}</strong>
+            </div>
+            <div class="pos-hero-chip">
+                <span class="pos-hero-label">Open Tables</span>
+                <strong id="dashboard-hero-open-tables">{{ open_tables }}</strong>
+            </div>
+        </div>
     </div>
-    <a class="btn btn-primary" href="{% url 'orders:pos' %}">Open Billing Screen</a>
-</div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Today's Sales</div><div class="metric-value">Rs. {{ today_sales }}</div></div></div></div>
-    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Completed Orders</div><div class="metric-value">{{ orders_today }}</div></div></div></div>
-    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Open Tables</div><div class="metric-value">{{ open_tables }}</div></div></div></div>
-    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Low Stock Items</div><div class="metric-value">{{ low_stock_items|length }}</div></div></div></div>
-</div>
+    <div class="row g-3 dashboard-metrics-row">
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-metric-card dashboard-metric-card--sales">
+                <span class="dashboard-metric-label">Today's Sales</span>
+                <strong class="dashboard-metric-value" id="dashboard-sales-value">Rs. {{ today_sales }}</strong>
+                <p class="dashboard-metric-meta">Completed order revenue booked today.</p>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-metric-card dashboard-metric-card--orders">
+                <span class="dashboard-metric-label">Completed Orders</span>
+                <strong class="dashboard-metric-value" id="dashboard-orders-value">{{ orders_today }}</strong>
+                <p class="dashboard-metric-meta">Orders closed and settled this service day.</p>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-metric-card dashboard-metric-card--tables">
+                <span class="dashboard-metric-label">Open Tables</span>
+                <strong class="dashboard-metric-value" id="dashboard-open-tables-value">{{ open_tables }}</strong>
+                <p class="dashboard-metric-meta">Dining tables currently marked occupied.</p>
+            </article>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <article class="dashboard-metric-card dashboard-metric-card--stock">
+                <span class="dashboard-metric-label">Low Stock Items</span>
+                <strong class="dashboard-metric-value" id="dashboard-low-stock-value">{{ low_stock_items|length }}</strong>
+                <p class="dashboard-metric-meta">Ingredients at or below reorder level.</p>
+            </article>
+        </div>
+    </div>
 
-<div class="row g-4">
-    <div class="col-lg-7">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white"><strong>Recent Orders</strong></div>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead><tr><th>Order</th><th>Type</th><th>Table</th><th>Status</th><th>Total</th></tr></thead>
-                    <tbody>
+    <div class="dashboard-grid">
+        <section class="dashboard-panel dashboard-orders-panel">
+            <div class="dashboard-panel-header">
+                <div>
+                    <p class="dashboard-panel-kicker">Live Feed</p>
+                    <h2>Recent Orders</h2>
+                </div>
+                <span class="dashboard-panel-meta" id="dashboard-recent-orders-meta">Latest 10 orders</span>
+            </div>
+            <div class="dashboard-table-wrap">
+                <table class="table dashboard-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Mode</th>
+                            <th>Table</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-recent-orders-body">
                         {% for order in recent_orders %}
                             <tr>
-                                <td>{{ order.order_number }}</td>
+                                <td>
+                                    <strong>{{ order.order_number }}</strong>
+                                </td>
                                 <td>{{ order.get_order_type_display }}</td>
-                                <td>{{ order.table.name|default:"-" }}</td>
-                                <td><span class="badge text-bg-secondary">{{ order.get_status_display }}</span></td>
+                                <td>{{ order.table.name|default:"Walk-in" }}</td>
+                                <td>
+                                    <span class="status-pill{% if order.status == 'completed' %} status-success{% elif order.status == 'ready' %} status-info{% elif order.status == 'cancelled' %} status-danger{% elif order.status == 'kot_sent' or order.status == 'in_progress' %} status-warning{% else %} status-neutral{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
                                 <td>Rs. {{ order.total_amount }}</td>
+                                <td>{{ order.created_at|date:"H:i" }}</td>
                             </tr>
                         {% empty %}
-                            <tr><td colspan="5" class="text-center text-muted py-4">No orders yet.</td></tr>
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">No orders yet. The live order stream will appear here once billing starts.</td>
+                            </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
+        </section>
+
+        <div class="dashboard-side-stack">
+            <section class="dashboard-panel dashboard-list-panel">
+                <div class="dashboard-panel-header">
+                    <div>
+                        <p class="dashboard-panel-kicker">Stock Watch</p>
+                        <h2>Low Stock Alerts</h2>
+                    </div>
+                    <span class="dashboard-panel-meta" id="dashboard-low-stock-meta">{{ low_stock_items|length }} flagged</span>
+                </div>
+                <div class="dashboard-list" id="dashboard-low-stock-list">
+                    {% for ingredient in low_stock_items %}
+                        <div class="dashboard-list-row">
+                            <div>
+                                <strong>{{ ingredient.name }}</strong>
+                                <span>{{ ingredient.sku }}</span>
+                            </div>
+                            <div class="text-end">
+                                <strong class="text-danger">{{ ingredient.current_stock }} {{ ingredient.unit.short_code }}</strong>
+                                <span>Reorder at {{ ingredient.reorder_level }} {{ ingredient.unit.short_code }}</span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="dashboard-empty-state">All ingredient levels are healthy.</div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="dashboard-panel dashboard-list-panel">
+                <div class="dashboard-panel-header">
+                    <div>
+                        <p class="dashboard-panel-kicker">Floor Pulse</p>
+                        <h2>Table Status Snapshot</h2>
+                    </div>
+                    <span class="dashboard-panel-meta" id="dashboard-table-status-meta">{{ table_status|length }} states</span>
+                </div>
+                <div class="dashboard-list" id="dashboard-table-status-list">
+                    {% for row in table_status %}
+                        <div class="dashboard-list-row">
+                            <div>
+                                <strong>{{ row.status|title }}</strong>
+                                <span>Tables in this state right now</span>
+                            </div>
+                            <span class="table-state-pill{% if row.status == 'occupied' %} is-busy{% elif row.status == 'available' %} is-open{% elif row.status == 'reserved' %} is-held{% else %} is-attention{% endif %}">{{ row.total }}</span>
+                        </div>
+                    {% empty %}
+                        <div class="dashboard-empty-state">No floor tables created yet.</div>
+                    {% endfor %}
+                </div>
+            </section>
         </div>
     </div>
-    <div class="col-lg-5">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white"><strong>Low Stock Alerts</strong></div>
-            <ul class="list-group list-group-flush">
-                {% for ingredient in low_stock_items %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ ingredient.name }}</span>
-                        <span class="text-danger">{{ ingredient.current_stock }} {{ ingredient.unit.short_code }}</span>
-                    </li>
-                {% empty %}
-                    <li class="list-group-item text-muted">All ingredient levels are healthy.</li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="card shadow-sm">
-            <div class="card-header bg-white"><strong>Table Status Snapshot</strong></div>
-            <ul class="list-group list-group-flush">
-                {% for row in table_status %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ row.status|title }}</span>
-                        <span>{{ row.total }}</span>
-                    </li>
-                {% empty %}
-                    <li class="list-group-item text-muted">No floor tables created yet.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</div>
+</section>
+{% endblock %}
+{% block extra_js %}
+<script>
+    window.DASHBOARD_CONFIG = {
+        summaryUrl: "{% url 'core:dashboard-summary' %}",
+    };
+</script>
+<script src="{% static 'js/dashboard_live.js' %}?v=20260403e"></script>
 {% endblock %}

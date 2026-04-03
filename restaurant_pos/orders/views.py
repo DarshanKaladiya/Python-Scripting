@@ -12,7 +12,7 @@ from floor.models import RestaurantTable
 from menu.models import MenuCategory, MenuItem
 
 from .models import Order
-from .services import add_item_to_order, cancel_order, create_order, send_kot, serialize_order, settle_order
+from .services import add_item_to_order, cancel_order, create_order, resolve_modifier_selection, send_kot, serialize_order, settle_order
 
 
 def _json_body(request):
@@ -23,10 +23,40 @@ def _json_body(request):
 
 @login_required
 def pos_screen(request):
-    categories = MenuCategory.objects.prefetch_related("items").filter(is_active=True)
+    categories = MenuCategory.objects.prefetch_related("items__modifier_groups__options").filter(is_active=True)
     tables = RestaurantTable.objects.filter(is_active=True).select_related("section")
     payment_methods = PaymentMethod.objects.filter(is_active=True)
     active_orders = Order.objects.exclude(status__in=[Order.Status.COMPLETED, Order.Status.CANCELLED])[:10]
+    initial_order_id = request.GET.get("order_id", "").strip()
+    initial_table_id = request.GET.get("table_id", "").strip()
+    menu_item_catalog = {
+        item.id: {
+            "id": item.id,
+            "name": item.name,
+            "base_price": str(item.base_price),
+            "description": item.description,
+            "modifier_groups": [
+                {
+                    "id": group.id,
+                    "name": group.name,
+                    "selection_type": group.selection_type,
+                    "is_required": group.is_required,
+                    "options": [
+                        {
+                            "id": option.id,
+                            "name": option.name,
+                            "price_delta": str(option.price_delta),
+                        }
+                        for option in group.options.all()
+                        if option.is_active
+                    ],
+                }
+                for group in item.modifier_groups.all()
+            ],
+        }
+        for category in categories
+        for item in category.items.all()
+    }
     return render(
         request,
         "orders/pos.html",
@@ -35,6 +65,9 @@ def pos_screen(request):
             "tables": tables,
             "payment_methods": payment_methods,
             "active_orders": active_orders,
+            "initial_order_id": initial_order_id,
+            "initial_table_id": initial_table_id,
+            "menu_item_catalog": menu_item_catalog,
         },
     )
 
@@ -89,14 +122,22 @@ def create_order_api(request):
 def add_item_api(request, order_id):
     order = get_object_or_404(Order, pk=order_id)
     payload = _json_body(request)
-    menu_item = get_object_or_404(MenuItem, pk=payload["menu_item_id"])
+    menu_item = get_object_or_404(MenuItem.objects.prefetch_related("modifier_groups__options"), pk=payload["menu_item_id"])
+    try:
+        modifier_snapshot, modifier_price_delta = resolve_modifier_selection(
+            menu_item=menu_item,
+            selected_option_ids=payload.get("modifiers", []),
+        )
+    except ValueError as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
     item = add_item_to_order(
         order=order,
         menu_item=menu_item,
         quantity=Decimal(str(payload.get("quantity", "1"))),
         notes=payload.get("notes", ""),
         line_discount=Decimal(str(payload.get("line_discount", "0"))),
-        modifiers=payload.get("modifiers", []),
+        modifiers=modifier_snapshot,
+        modifier_price_delta=modifier_price_delta,
     )
     order.refresh_from_db()
     return JsonResponse({"item_id": item.id, "order": serialize_order(order)})

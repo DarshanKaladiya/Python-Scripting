@@ -8,6 +8,7 @@ from core.models import AuditLog, OutletProfile
 from customers.models import LoyaltyRule
 from inventory.models import StockLedger
 from inventory.services import create_stock_entry
+from menu.models import ModifierOption
 from recipes.models import Recipe
 
 from .models import KOTItem, KitchenOrderTicket, Order, OrderItem, Payment
@@ -15,6 +16,55 @@ from .models import KOTItem, KitchenOrderTicket, Order, OrderItem, Payment
 
 def next_document_number(prefix, count):
     return f"{prefix}{count:05d}"
+
+
+def resolve_modifier_selection(*, menu_item, selected_option_ids):
+    option_ids = []
+    for option_id in selected_option_ids or []:
+        if option_id in (None, ""):
+            continue
+        try:
+            option_ids.append(int(option_id))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Invalid modifier option selected.") from exc
+
+    option_ids = list(dict.fromkeys(option_ids))
+    groups = list(
+        menu_item.modifier_groups.prefetch_related("options").all()
+    )
+    valid_options = {
+        option.id: option
+        for group in groups
+        for option in group.options.all()
+        if option.is_active
+    }
+    invalid_option_ids = [option_id for option_id in option_ids if option_id not in valid_options]
+    if invalid_option_ids:
+        raise ValueError("One or more modifier options are not valid for this item.")
+
+    selected_by_group = {}
+    for option_id in option_ids:
+        option = valid_options[option_id]
+        selected_by_group.setdefault(option.group_id, []).append(option)
+
+    snapshot = []
+    price_delta_total = Decimal("0")
+    for group in groups:
+        chosen_options = selected_by_group.get(group.id, [])
+        if group.is_required and not chosen_options:
+            raise ValueError(f"Please choose an option for {group.name}.")
+        if group.selection_type == group.SelectionType.SINGLE and len(chosen_options) > 1:
+            raise ValueError(f"Choose only one option for {group.name}.")
+        for option in chosen_options:
+            snapshot.append(
+                {
+                    "group_name": group.name,
+                    "option_name": option.name,
+                    "price_delta": str(option.price_delta),
+                }
+            )
+            price_delta_total += option.price_delta
+    return snapshot, price_delta_total
 
 
 @transaction.atomic
@@ -38,14 +88,14 @@ def create_order(*, order_type, created_by, table=None, customer=None, waiter=No
 
 
 @transaction.atomic
-def add_item_to_order(*, order, menu_item, quantity=Decimal("1"), notes="", line_discount=Decimal("0"), modifiers=None):
+def add_item_to_order(*, order, menu_item, quantity=Decimal("1"), notes="", line_discount=Decimal("0"), modifiers=None, modifier_price_delta=Decimal("0")):
     tax_rate = menu_item.tax_rate.rate_percent if menu_item.tax_rate else Decimal("0")
     item = OrderItem.objects.create(
         order=order,
         menu_item=menu_item,
         item_name_snapshot=menu_item.name,
         quantity=quantity,
-        unit_price=menu_item.base_price,
+        unit_price=menu_item.base_price + modifier_price_delta,
         line_discount=line_discount,
         tax_rate_snapshot=tax_rate,
         notes=notes,
@@ -194,9 +244,10 @@ def serialize_order(order):
                 "name": item.item_name_snapshot,
                 "quantity": str(item.quantity),
                 "price": str(item.total_price),
+                "unit_price": str(item.unit_price),
                 "status": item.status,
                 "notes": item.notes,
-                "modifiers": json.dumps(item.modifiers_snapshot),
+                "modifiers": item.modifiers_snapshot,
             }
             for item in order.items.all()
         ],

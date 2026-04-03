@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -65,30 +64,12 @@ TEMPLATES = [
 WSGI_APPLICATION = "restaurant_pos.wsgi.application"
 ASGI_APPLICATION = "restaurant_pos.asgi.application"
 
-USE_MYSQL = os.getenv("MYSQL_DATABASE") and os.getenv("USE_SQLITE", "0") != "1" and "test" not in sys.argv
-
-if USE_MYSQL:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.getenv("MYSQL_DATABASE", "restaurant_pos"),
-            "USER": os.getenv("MYSQL_USER", "root"),
-            "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
-            "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
-            "PORT": int(os.getenv("MYSQL_PORT", "3306")),
-            "OPTIONS": {
-                "charset": "utf8mb4",
-                "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": PROJECT_DIR / "sqlite_pos.sqlite3",
     }
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": RUNTIME_DIR / "pos_demo.sqlite3",
-        }
-    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

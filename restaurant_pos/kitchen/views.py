@@ -10,8 +10,44 @@ from orders.models import KOTItem, KitchenOrderTicket, Order, OrderItem
 
 @login_required
 def kds_screen(request):
-    kot_items = KOTItem.objects.select_related("kot", "order_item", "kot__order").exclude(status=KitchenOrderTicket.Status.SERVED)
-    return render(request, "kitchen/kds.html", {"kot_items": kot_items})
+    lane_config = [
+        {
+            "key": KitchenOrderTicket.Status.NEW,
+            "label": "New",
+            "description": "Freshly fired items waiting to be picked up by the line.",
+        },
+        {
+            "key": KitchenOrderTicket.Status.PREPARING,
+            "label": "Preparing",
+            "description": "Items that are actively on the stove, grill, or assembly station.",
+        },
+        {
+            "key": KitchenOrderTicket.Status.READY,
+            "label": "Ready",
+            "description": "Finished items waiting for handoff to service.",
+        },
+    ]
+    kot_items = list(
+        KOTItem.objects.select_related("kot", "order_item", "kot__order", "kot__order__table")
+        .exclude(status=KitchenOrderTicket.Status.SERVED)
+        .order_by("status", "kot__created_at", "id")
+    )
+    items_by_status = {lane["key"]: [] for lane in lane_config}
+    for item in kot_items:
+        items_by_status.setdefault(item.status, []).append(item)
+    lanes = [
+        {
+            **lane,
+            "items": items_by_status.get(lane["key"], []),
+        }
+        for lane in lane_config
+    ]
+    context = {
+        "lanes": lanes,
+        "active_item_count": len(kot_items),
+        "active_ticket_count": len({item.kot_id for item in kot_items}),
+    }
+    return render(request, "kitchen/kds.html", context)
 
 
 @login_required

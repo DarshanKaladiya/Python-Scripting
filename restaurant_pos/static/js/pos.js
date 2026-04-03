@@ -1,7 +1,11 @@
 (function () {
     const config = window.POS_CONFIG;
+    const menuItemCatalog = JSON.parse(document.getElementById("menu-item-catalog").textContent || "{}");
     let currentOrderId = null;
     let activeCategory = "";
+    let customizerState = null;
+    const initialOrderId = config.initialOrderId || null;
+    const initialTableId = config.initialTableId || null;
 
     function csrfToken() {
         const match = document.cookie.match(/csrftoken=([^;]+)/);
@@ -16,6 +20,19 @@
         return String(value || "")
             .replaceAll("_", " ")
             .replace(/\b\w/g, (char) => char.toUpperCase());
+    }
+
+    function escapeHtml(value) {
+        return String(value || "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#39;");
+    }
+
+    function formatCurrency(value) {
+        return `Rs. ${Number(value || 0).toFixed(2)}`;
     }
 
     function setActionState(enabled) {
@@ -99,6 +116,14 @@
                         <span>Qty ${item.quantity}</span>
                         <span>${humanize(item.status)}</span>
                     </div>
+                    ${item.modifiers && item.modifiers.length ? `
+                        <div class="cart-line-tags">
+                            ${item.modifiers.map((modifier) => `
+                                <span>${escapeHtml(modifier.group_name)}: ${escapeHtml(modifier.option_name)}${Number(modifier.price_delta) > 0 ? ` (+Rs. ${Number(modifier.price_delta).toFixed(2)})` : ""}</span>
+                            `).join("")}
+                        </div>
+                    ` : ""}
+                    ${item.notes ? `<div class="cart-line-note">Note: ${escapeHtml(item.notes)}</div>` : ""}
                 </div>
                 <div class="fw-semibold">Rs. ${item.price}</div>
             </div>
@@ -121,16 +146,95 @@
         renderOrder(data.order);
     }
 
-    async function addItem(menuItemId) {
+    function closeCustomizer() {
+        customizerState = null;
+        document.getElementById("item-customizer-backdrop").classList.add("d-none");
+        document.getElementById("customizer-error").classList.add("d-none");
+        document.getElementById("customizer-error").textContent = "";
+        document.getElementById("customizer-note").value = "";
+        document.getElementById("customizer-modifier-groups").innerHTML = "";
+    }
+
+    function selectedModifierIds() {
+        const ids = [];
+        document.querySelectorAll("[data-modifier-option]:checked").forEach((input) => {
+            ids.push(input.value);
+        });
+        return ids;
+    }
+
+    function updateCustomizerPrice() {
+        if (!customizerState) return;
+        const itemConfig = menuItemCatalog[String(customizerState.menuItemId)] || {base_price: "0", modifier_groups: []};
+        const modifierTotal = selectedModifierIds().reduce((total, optionId) => {
+            for (const group of itemConfig.modifier_groups) {
+                const option = group.options.find((candidate) => String(candidate.id) === String(optionId));
+                if (option) {
+                    return total + Number(option.price_delta || 0);
+                }
+            }
+            return total;
+        }, 0);
+        document.getElementById("customizer-base-price").textContent = formatCurrency(itemConfig.base_price);
+        document.getElementById("customizer-modifier-price").textContent = formatCurrency(modifierTotal);
+        document.getElementById("customizer-total-price").textContent = formatCurrency(Number(itemConfig.base_price || 0) + modifierTotal);
+    }
+
+    function openCustomizer(menuItemId) {
+        const itemConfig = menuItemCatalog[String(menuItemId)];
+        if (!itemConfig) {
+            return;
+        }
+        customizerState = {menuItemId};
+        document.getElementById("item-customizer-backdrop").classList.remove("d-none");
+        document.getElementById("customizer-item-name").textContent = itemConfig.name;
+        document.getElementById("customizer-item-description").textContent = itemConfig.description || "Choose modifiers and kitchen notes before adding.";
+        document.getElementById("customizer-note").value = "";
+        document.getElementById("customizer-error").classList.add("d-none");
+        document.getElementById("customizer-error").textContent = "";
+        document.getElementById("customizer-modifier-groups").innerHTML = itemConfig.modifier_groups.length
+            ? itemConfig.modifier_groups.map((group) => `
+                <section class="pos-customizer-group">
+                    <div class="pos-customizer-group-head">
+                        <strong>${escapeHtml(group.name)}</strong>
+                        <span>${group.selection_type === "single" ? "Choose one" : "Choose any"}${group.is_required ? " • Required" : ""}</span>
+                    </div>
+                    <div class="pos-customizer-options">
+                        ${group.options.map((option) => `
+                            <label class="pos-customizer-option">
+                                <input
+                                    type="${group.selection_type === "single" ? "radio" : "checkbox"}"
+                                    name="modifier-group-${group.id}"
+                                    value="${option.id}"
+                                    data-modifier-option
+                                >
+                                <span>${escapeHtml(option.name)}</span>
+                                <strong>${Number(option.price_delta) > 0 ? `+Rs. ${Number(option.price_delta).toFixed(2)}` : "Included"}</strong>
+                            </label>
+                        `).join("")}
+                    </div>
+                </section>
+            `).join("")
+            : '<div class="pos-customizer-empty">No modifiers for this item. Add an optional kitchen note if needed.</div>';
+        document.querySelectorAll("[data-modifier-option]").forEach((input) => {
+            input.addEventListener("change", updateCustomizerPrice);
+        });
+        updateCustomizerPrice();
+    }
+
+    async function addItem(menuItemId, {modifiers = [], notes = ""} = {}) {
         if (!currentOrderId) {
             await createOrder();
         }
-        const response = await posSafeFetch(urlFor(config.addItemUrlTemplate, currentOrderId), {
+        const response = await fetch(urlFor(config.addItemUrlTemplate, currentOrderId), {
             method: "POST",
             headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken()},
-            body: JSON.stringify({menu_item_id: menuItemId, quantity: 1}),
+            body: JSON.stringify({menu_item_id: menuItemId, quantity: 1, modifiers, notes}),
         });
         const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Unable to add item.");
+        }
         renderOrder(data.order);
     }
 
@@ -153,7 +257,21 @@
     document.getElementById("new-order-btn").addEventListener("click", createOrder);
 
     document.querySelectorAll(".pos-item-btn").forEach((button) => {
-        button.addEventListener("click", () => addItem(button.dataset.itemId));
+        button.addEventListener("click", async () => {
+            if (button.dataset.hasModifiers === "1") {
+                openCustomizer(button.dataset.itemId);
+                return;
+            }
+            try {
+                await addItem(button.dataset.itemId);
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+    });
+
+    document.querySelectorAll("[data-customize-item-id]").forEach((button) => {
+        button.addEventListener("click", () => openCustomizer(button.dataset.customizeItemId));
     });
 
     document.querySelectorAll(".active-order-btn").forEach((button) => {
@@ -221,7 +339,44 @@
         renderOrder(data.order);
     });
 
+    document.getElementById("customizer-close-btn").addEventListener("click", closeCustomizer);
+    document.getElementById("customizer-cancel-btn").addEventListener("click", closeCustomizer);
+    document.getElementById("item-customizer-backdrop").addEventListener("click", (event) => {
+        if (event.target.id === "item-customizer-backdrop") {
+            closeCustomizer();
+        }
+    });
+    document.getElementById("customizer-add-btn").addEventListener("click", async () => {
+        if (!customizerState) {
+            return;
+        }
+        const errorNode = document.getElementById("customizer-error");
+        try {
+            await addItem(customizerState.menuItemId, {
+                modifiers: selectedModifierIds(),
+                notes: document.getElementById("customizer-note").value.trim(),
+            });
+            closeCustomizer();
+        } catch (error) {
+            errorNode.textContent = error.message;
+            errorNode.classList.remove("d-none");
+        }
+    });
+
     updateServiceSummary();
     updateVisibleItems();
     setActionState(false);
+
+    if (initialTableId) {
+        document.getElementById("table-id").value = initialTableId;
+        document.getElementById("order-type").value = "dine_in";
+        document.querySelectorAll(".order-type-chip").forEach((chip) => {
+            chip.classList.toggle("active", chip.dataset.value === "dine_in");
+        });
+        updateServiceSummary();
+    }
+
+    if (initialOrderId) {
+        refreshOrder(initialOrderId);
+    }
 })();
