@@ -8,6 +8,9 @@
             <p class="pos-eyebrow mb-2">Counter Billing Console</p>
             <h1 class="pos-title mb-2">Billing Console</h1>
             <p class="pos-subtitle mb-0">Take table orders, fire KOT, manage running bills, and settle quickly from a single screen.</p>
+            <div class="dashboard-hero-actions">
+                <a class="btn pos-soft-btn" href="{% url 'orders:self-service' %}" target="_blank" rel="noopener">Open Customer Self-Order</a>
+            </div>
         </div>
         <div class="pos-hero-meta">
             <div class="pos-hero-chip">
@@ -198,18 +201,61 @@
                     </div>
                     <div class="pos-running-list">
                         {% for order in active_orders %}
-                            <button class="active-order-btn" data-order-id="{{ order.id }}" type="button">
-                                <div>
-                                    <strong>{{ order.order_number }}</strong>
-                                    <span>{{ order.get_order_type_display }}</span>
-                                </div>
-                                <div class="text-end">
-                                    <strong>Rs. {{ order.total_amount }}</strong>
-                                    <span>{{ order.get_status_display }}</span>
-                                </div>
-                            </button>
+                            <div class="pos-running-card">
+                                <button class="active-order-btn" data-order-id="{{ order.id }}" type="button">
+                                    <div>
+                                        <strong>{{ order.order_number }}</strong>
+                                        <span>{{ order.get_order_type_display }}{% if order.source == 'self_service' %} • Self Service{% endif %}</span>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>Rs. {{ order.total_amount }}</strong>
+                                        <span>{{ order.get_status_display }}</span>
+                                    </div>
+                                </button>
+                                {% if order.payment_status == 'paid' %}
+                                    <form method="post" action="{% url 'orders:complete-prepaid' order.id %}" class="pos-inline-form">
+                                        {% csrf_token %}
+                                        <button class="btn pos-soft-btn pos-inline-submit" type="submit">Complete Paid Order</button>
+                                    </form>
+                                {% endif %}
+                            </div>
                         {% empty %}
                             <div class="text-muted small">No active orders.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="pos-running-orders">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Pending Self Orders</strong>
+                        <span class="text-muted small">Cashier approval required</span>
+                    </div>
+                    <div class="pos-running-list">
+                        {% for order in pending_self_orders %}
+                            <div class="pos-pending-self-order">
+                                <div class="pos-pending-self-head">
+                                    <div>
+                                        <strong>{{ order.order_number }}</strong>
+                                        <span>{{ order.get_order_type_display }}{% if order.table %} • {{ order.table.section.name }} {{ order.table.name }}{% endif %}</span>
+                                    </div>
+                                    <span class="status-pill status-warning">Cash Pending</span>
+                                </div>
+                                <div class="pos-pending-self-items">
+                                    {% for item in order.items.all %}
+                                        <span>{{ item.quantity }} x {{ item.item_name_snapshot }}</span>
+                                    {% endfor %}
+                                </div>
+                                <div class="pos-pending-self-meta">
+                                    <span>{% if order.customer %}{{ order.customer.name|default:order.customer.phone_number }}{% else %}Guest{% endif %}</span>
+                                    <strong>Rs. {{ order.total_amount }}</strong>
+                                </div>
+                                <form method="post" action="{% url 'orders:confirm-self-service' order.id %}" class="pos-inline-form">
+                                    {% csrf_token %}
+                                    <button class="btn pos-primary-btn pos-inline-submit" type="submit">Confirm and Send to Kitchen</button>
+                                </form>
+                            </div>
+                        {% empty %}
+                            <div class="text-muted small">No self-service cash orders are waiting right now.</div>
                         {% endfor %}
                     </div>
                 </div>

@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Self Order | Restaurant POS{% endblock %}
+{% block content %}
+<section class="pos-shell self-service-shell">
+    <div class="pos-hero self-service-hero">
+        <div>
+            <p class="pos-eyebrow mb-2">Customer Self Ordering</p>
+            <h1 class="pos-title mb-2">Place Your Order</h1>
+            <p class="pos-subtitle mb-0">Choose dine-in or takeaway, build your cart, and place the order yourself. Cash orders wait for cashier approval. UPI and card orders go straight to the kitchen after payment.</p>
+        </div>
+        <div class="pos-hero-meta">
+            <div class="pos-hero-chip">
+                <span class="pos-hero-label">Cart Items</span>
+                <strong id="self-cart-count">0</strong>
+            </div>
+            <div class="pos-hero-chip">
+                <span class="pos-hero-label">Grand Total</span>
+                <strong id="self-cart-total">Rs. 0.00</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="pos-workspace">
+                <div class="pos-toolbar">
+                    <div class="pos-toolbar-left">
+                        <label class="pos-field">
+                            <span>Search menu</span>
+                            <input id="self-menu-search" class="form-control pos-search-input" type="search" placeholder="Type item name">
+                        </label>
+                        <label class="pos-field pos-table-field">
+                            <span>Dine-In Table</span>
+                            <select id="self-table-id" class="form-select">
+                                <option value="">Select if dine-in</option>
+                                {% for table in tables %}
+                                    <option value="{{ table.id }}">{{ table.section.name }} - {{ table.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                    </div>
+                    <div class="pos-order-type-switch" role="group" aria-label="Self order type">
+                        <button type="button" class="order-type-chip active" data-self-order-type="takeaway">Takeaway</button>
+                        <button type="button" class="order-type-chip" data-self-order-type="dine_in">Dine In</button>
+                    </div>
+                    <input id="self-order-type" type="hidden" value="takeaway">
+                </div>
+
+                <div class="pos-main-grid">
+                    <aside class="pos-category-rail">
+                        <div class="pos-rail-header">
+                            <span>Categories</span>
+                            <small id="self-visible-items-count">{{ categories|length }} groups</small>
+                        </div>
+                        <div class="pos-category-list">
+                            <button class="category-filter active" data-self-category="" type="button">
+                                <span class="category-name">All Items</span>
+                                <span class="category-meta">Full menu</span>
+                            </button>
+                            {% for category in categories %}
+                                <button class="category-filter" data-self-category="{{ category.id }}" type="button" style="--category-accent: {{ category.color_code|default:'#f97316' }};">
+                                    <span class="category-name">{{ category.name }}</span>
+                                    <span class="category-meta">{{ category.items.count }} items</span>
+                                </button>
+                            {% endfor %}
+                        </div>
+                    </aside>
+
+                    <div class="pos-menu-board">
+                        <div class="pos-board-header">
+                            <div>
+                                <p class="mb-1 text-muted small">Menu section</p>
+                                <h2 id="self-selected-category-label" class="h4 mb-0">All Items</h2>
+                            </div>
+                            <span class="status-pill status-neutral">Self-Service</span>
+                        </div>
+
+                        <div class="row g-3" id="self-item-grid">
+                            {% for category in categories %}
+                                {% for item in category.items.all %}
+                                    <div class="col-sm-6 col-lg-4 self-item-card" data-category="{{ category.id }}" data-name="{{ item.name|lower }}">
+                                        <div class="pos-item-card-shell">
+                                            <button class="pos-item-btn self-item-btn" data-item-id="{{ item.id }}" data-has-modifiers="{% if item.modifier_groups.exists %}1{% else %}0{% endif %}" type="button">
+                                                <div class="pos-item-top">
+                                                    <span class="pos-item-category" style="background: {{ category.color_code|default:'#fff2e8' }};">{{ category.name }}</span>
+                                                    <span class="pos-item-code">{{ item.short_name|default:item.sku }}</span>
+                                                </div>
+                                                <div class="pos-item-middle">
+                                                    <h3>{{ item.name }}</h3>
+                                                    <p>{{ item.description|default:"Tap to add this item to your order."|truncatechars:80 }}</p>
+                                                </div>
+                                                <div class="pos-item-footer">
+                                                    <strong>Rs. {{ item.base_price }}</strong>
+                                                    <span>{% if item.modifier_groups.exists %}Customize{% else %}Add{% endif %}</span>
+                                                </div>
+                                            </button>
+                                            <button class="pos-item-secondary-btn self-customize-btn" data-customize-item-id="{{ item.id }}" type="button">
+                                                {% if item.modifier_groups.exists %}Add with options{% else %}Add note{% endif %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% empty %}
+                                <div class="col-12">
+                                    <div class="alert alert-light border">Menu setup is empty right now.</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <aside class="pos-ticket pos-sidebar self-service-ticket">
+                <div class="pos-ticket-header">
+                    <div>
+                        <p class="mb-1 text-muted small">Your Cart</p>
+                        <h2 class="h4 mb-0">Review Order</h2>
+                    </div>
+                    <span id="self-cart-badge" class="pos-cart-badge">0</span>
+                </div>
+
+                <div class="pos-ticket-service">
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label class="pos-field mb-0">
+                                <span>Phone Number</span>
+                                <input id="self-customer-phone" class="form-control" type="text" placeholder="9876543210">
+                            </label>
+                        </div>
+                        <div class="col-5">
+                            <label class="pos-field mb-0">
+                                <span>Name</span>
+                                <input id="self-customer-name" class="form-control" type="text" placeholder="Guest">
+                            </label>
+                        </div>
+                    </div>
+                    <label class="pos-field mt-3 mb-0">
+                        <span>Payment Method</span>
+                        <select id="self-payment-method-id" class="form-select">
+                            {% for method in payment_methods %}
+                                <option value="{{ method.id }}" data-is-cash="{% if method.is_cash %}1{% else %}0{% endif %}">{{ method.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <div class="self-service-payment-note" id="self-payment-note">
+                        Cash orders wait for cashier confirmation. UPI and card orders go straight to the kitchen after payment.
+                    </div>
+                </div>
+
+                <div class="pos-ticket-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong>Selected Items</strong>
+                        <button id="self-clear-cart-btn" class="btn pos-soft-btn pos-inline-submit" type="button">Clear</button>
+                    </div>
+                    <div id="self-cart-items" class="cart-items">
+                        <div class="pos-empty-cart">
+                            <strong>No items added yet</strong>
+                            <span>Pick from the menu to start your order.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pos-ticket-totals">
+                    <div><span>Subtotal</span><strong id="self-subtotal-amount">Rs. 0.00</strong></div>
+                    <div><span>Estimated Tax</span><strong id="self-tax-amount">Rs. 0.00</strong></div>
+                    <div class="pos-total-line"><span>Total</span><strong id="self-total-amount">Rs. 0.00</strong></div>
+                </div>
+
+                <div class="pos-payment-panel">
+                    <label class="pos-field mb-0">
+                        <span>Order Note</span>
+                        <textarea id="self-order-notes" class="form-control" rows="3" placeholder="Optional overall note for the order"></textarea>
+                    </label>
+                </div>
+
+                <div id="self-order-feedback" class="alert alert-info d-none mb-0"></div>
+
+                <div class="pos-action-grid">
+                    <button id="self-place-order-btn" class="btn pos-primary-btn" type="button">Place Order</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<div id="self-item-customizer-backdrop" class="pos-customizer-backdrop d-none">
+    <div class="pos-customizer-panel">
+        <div class="pos-customizer-header">
+            <div>
+                <p class="pos-eyebrow mb-1">Customize Item</p>
+                <h2 id="self-customizer-item-name" class="h4 mb-1">Customize item</h2>
+                <p id="self-customizer-item-description" class="mb-0 text-muted">Choose modifiers and notes before adding this item.</p>
+            </div>
+            <button id="self-customizer-close-btn" class="pos-customizer-close" type="button">Close</button>
+        </div>
+
+        <div class="pos-customizer-summary">
+            <div>
+                <span>Base Price</span>
+                <strong id="self-customizer-base-price">Rs. 0.00</strong>
+            </div>
+            <div>
+                <span>Modifier Price</span>
+                <strong id="self-customizer-modifier-price">Rs. 0.00</strong>
+            </div>
+            <div>
+                <span>Line Price</span>
+                <strong id="self-customizer-total-price">Rs. 0.00</strong>
+            </div>
+        </div>
+
+        <div id="self-customizer-modifier-groups" class="pos-customizer-groups"></div>
+
+        <label class="pos-field pos-customizer-note-field">
+            <span>Item Note</span>
+            <textarea id="self-customizer-note" class="form-control" rows="3" placeholder="Example: no onion, extra crispy"></textarea>
+        </label>
+
+        <div id="self-customizer-error" class="alert alert-danger py-2 px-3 d-none mb-0"></div>
+
+        <div class="pos-customizer-actions">
+            <button id="self-customizer-cancel-btn" class="btn pos-soft-btn" type="button">Cancel</button>
+            <button id="self-customizer-add-btn" class="btn pos-primary-btn" type="button">Add Item</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.SELF_SERVICE_CONFIG = {
+        submitUrl: "{% url 'orders:submit-self-service-order' %}"
+    };
+</script>
+{{ menu_item_catalog|json_script:"self-service-menu-item-catalog" }}
+{% endblock %}
+{% block extra_js %}
+<script src="{% static 'js/self_service.js' %}?v=20260404a"></script>
+{% endblock %}

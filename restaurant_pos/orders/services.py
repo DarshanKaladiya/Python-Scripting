@@ -1,4 +1,3 @@
-import json
 from decimal import Decimal
 
 from django.db import transaction
@@ -8,7 +7,6 @@ from core.models import AuditLog, OutletProfile
 from customers.models import LoyaltyRule
 from inventory.models import StockLedger
 from inventory.services import create_stock_entry
-from menu.models import ModifierOption
 from recipes.models import Recipe
 
 from .models import KOTItem, KitchenOrderTicket, Order, OrderItem, Payment
@@ -16,6 +14,49 @@ from .models import KOTItem, KitchenOrderTicket, Order, OrderItem, Payment
 
 def next_document_number(prefix, count):
     return f"{prefix}{count:05d}"
+
+
+def _invoice_prefix():
+    outlet = OutletProfile.objects.first()
+    return outlet.invoice_prefix if outlet else "INV"
+
+
+def _assign_invoice_if_missing(order):
+    if order.invoice_number:
+        return
+    order.invoice_number = next_document_number(_invoice_prefix(), Order.objects.exclude(invoice_number="").count() + 1)
+
+
+def _finalize_completed_order(*, order, user, update_fields):
+    order.recalculate_totals()
+    order.status = Order.Status.COMPLETED
+    order.updated_by = user
+    order.settled_at = timezone.now()
+    _assign_invoice_if_missing(order)
+    if "subtotal" not in update_fields:
+        update_fields.extend(["subtotal", "tax_amount", "total_amount"])
+    if "status" not in update_fields:
+        update_fields.append("status")
+    if "updated_by" not in update_fields:
+        update_fields.append("updated_by")
+    if "settled_at" not in update_fields:
+        update_fields.append("settled_at")
+    if "invoice_number" not in update_fields:
+        update_fields.append("invoice_number")
+    if "updated_at" not in update_fields:
+        update_fields.append("updated_at")
+    order.save(update_fields=update_fields)
+    if order.table:
+        order.table.status = order.table.Status.AVAILABLE
+        order.table.save(update_fields=["status"])
+    apply_recipe_deductions(order=order, user=user)
+    if order.customer:
+        loyalty_rule = LoyaltyRule.objects.first()
+        if loyalty_rule:
+            points = order.total_amount * loyalty_rule.points_per_rupee
+            order.customer.add_points(points)
+    AuditLog.objects.create(user=user, action="order_settled", entity_type="Order", entity_id=order.id)
+    return order
 
 
 def resolve_modifier_selection(*, menu_item, selected_option_ids):
@@ -123,7 +164,8 @@ def send_kot(*, order, user):
         KOTItem.objects.create(kot=kot, order_item=item, quantity=item.quantity)
         item.sent_to_kitchen = True
         item.save(update_fields=["sent_to_kitchen"])
-    order.status = Order.Status.KOT_SENT
+    if order.status not in {Order.Status.COMPLETED, Order.Status.CANCELLED}:
+        order.status = Order.Status.KOT_SENT
     order.updated_by = user
     order.save(update_fields=["status", "updated_by", "updated_at"])
     AuditLog.objects.create(user=user, action="kot_sent", entity_type="Order", entity_id=order.id, payload={"kot_id": kot.id})
@@ -177,14 +219,7 @@ def reverse_recipe_deductions(*, order, user=None):
 def settle_order(*, order, user, payments):
     order.recalculate_totals()
     order.payment_status = Order.PaymentStatus.PAID
-    order.status = Order.Status.COMPLETED
-    order.updated_by = user
-    order.settled_at = timezone.now()
-    outlet = OutletProfile.objects.first()
-    invoice_prefix = outlet.invoice_prefix if outlet else "INV"
-    if not order.invoice_number:
-        order.invoice_number = next_document_number(invoice_prefix, Order.objects.exclude(invoice_number="").count() + 1)
-    order.save(update_fields=["subtotal", "tax_amount", "total_amount", "payment_status", "status", "updated_by", "settled_at", "invoice_number", "updated_at"])
+    order.save(update_fields=["subtotal", "tax_amount", "total_amount", "payment_status", "updated_at"])
     Payment.objects.filter(order=order).delete()
     for payment in payments:
         Payment.objects.create(
@@ -194,17 +229,50 @@ def settle_order(*, order, user, payments):
             reference_number=payment.get("reference_number", ""),
             received_by=user,
         )
-    if order.table:
-        order.table.status = order.table.Status.AVAILABLE
-        order.table.save(update_fields=["status"])
-    apply_recipe_deductions(order=order, user=user)
-    if order.customer:
-        loyalty_rule = LoyaltyRule.objects.first()
-        if loyalty_rule:
-            points = order.total_amount * loyalty_rule.points_per_rupee
-            order.customer.add_points(points)
-    AuditLog.objects.create(user=user, action="order_settled", entity_type="Order", entity_id=order.id)
+    return _finalize_completed_order(order=order, user=user, update_fields=["payment_status"])
+
+
+@transaction.atomic
+def mark_order_paid(*, order, user, payments):
+    order.recalculate_totals()
+    order.payment_status = Order.PaymentStatus.PAID
+    order.updated_by = user
+    order.save(update_fields=["subtotal", "tax_amount", "total_amount", "payment_status", "updated_by", "updated_at"])
+    Payment.objects.filter(order=order).delete()
+    for payment in payments:
+        Payment.objects.create(
+            order=order,
+            method=payment["method"],
+            amount=payment["amount"],
+            reference_number=payment.get("reference_number", ""),
+            received_by=user,
+        )
+    AuditLog.objects.create(user=user, action="order_paid", entity_type="Order", entity_id=order.id)
     return order
+
+
+@transaction.atomic
+def confirm_self_service_cash_order(*, order, user):
+    if order.source != Order.Source.SELF_SERVICE:
+        raise ValueError("Only self-service orders can be confirmed here.")
+    if order.status != Order.Status.PENDING_CONFIRMATION:
+        raise ValueError("This self-service order is not waiting for cashier confirmation.")
+    if not order.items.exists():
+        raise ValueError("Cannot confirm an empty order.")
+    order.updated_by = user
+    order.save(update_fields=["updated_by", "updated_at"])
+    kot = send_kot(order=order, user=user)
+    AuditLog.objects.create(user=user, action="self_service_cash_confirmed", entity_type="Order", entity_id=order.id)
+    return kot
+
+
+@transaction.atomic
+def complete_prepaid_order(*, order, user):
+    if order.payment_status != Order.PaymentStatus.PAID:
+        raise ValueError("Only paid orders can be completed here.")
+    if order.status in {Order.Status.COMPLETED, Order.Status.CANCELLED}:
+        raise ValueError("This order is already closed.")
+    return _finalize_completed_order(order=order, user=user, update_fields=[])
 
 
 @transaction.atomic
@@ -228,8 +296,13 @@ def serialize_order(order):
         "order_number": order.order_number,
         "invoice_number": order.invoice_number,
         "status": order.status,
+        "status_display": order.get_status_display(),
         "payment_status": order.payment_status,
+        "payment_status_display": order.get_payment_status_display(),
         "order_type": order.order_type,
+        "order_type_display": order.get_order_type_display(),
+        "source": order.source,
+        "source_display": order.get_source_display(),
         "subtotal": str(order.subtotal),
         "tax_amount": str(order.tax_amount),
         "discount_amount": str(order.discount_amount),

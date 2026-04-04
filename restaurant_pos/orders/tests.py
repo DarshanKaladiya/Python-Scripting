@@ -12,7 +12,7 @@ from menu.models import MenuCategory, MenuItem, ModifierGroup, ModifierOption
 from recipes.models import Recipe, RecipeLine
 
 from .models import Order
-from .services import add_item_to_order, create_order, resolve_modifier_selection, send_kot, settle_order
+from .services import add_item_to_order, create_order, mark_order_paid, resolve_modifier_selection, send_kot, settle_order
 
 
 class OrderFlowTests(TestCase):
@@ -20,6 +20,8 @@ class OrderFlowTests(TestCase):
         self.user = get_user_model().objects.create_user(username="cashier", password="pass123", role="cashier")
         self.tax = TaxRate.objects.create(name="GST 5", rate_percent=Decimal("5.00"))
         self.cash = PaymentMethod.objects.create(code="cash", name="Cash", is_cash=True)
+        self.upi = PaymentMethod.objects.create(code="upi", name="UPI", is_cash=False)
+        self.card = PaymentMethod.objects.create(code="card", name="Card", is_cash=False)
         self.category = MenuCategory.objects.create(name="Starters")
         self.item = MenuItem.objects.create(category=self.category, tax_rate=self.tax, name="Paneer Tikka", sku="PT-1", base_price=Decimal("250.00"))
         self.unit = Unit.objects.create(name="Gram", short_code="g")
@@ -94,5 +96,101 @@ class OrderFlowTests(TestCase):
 
         with self.assertRaisesMessage(ValueError, "not valid for this item"):
             resolve_modifier_selection(menu_item=self.item, selected_option_ids=[option.id])
+
+    def test_self_service_cash_order_waits_for_cashier_confirmation(self):
+        response = self.client.post(
+            reverse("orders:submit-self-service-order"),
+            data="""
+            {
+                "order_type": "takeaway",
+                "payment_method_id": %s,
+                "customer_name": "Walk In",
+                "phone_number": "9990001112",
+                "items": [{"menu_item_id": %s, "quantity": 1, "modifiers": [], "notes": "Less spicy"}]
+            }
+            """ % (self.cash.id, self.item.id),
+            content_type="application/json",
+        )
+        order = Order.objects.get(source=Order.Source.SELF_SERVICE)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(order.status, Order.Status.PENDING_CONFIRMATION)
+        self.assertEqual(order.payment_status, Order.PaymentStatus.UNPAID)
+        self.assertFalse(order.kots.exists())
+        self.assertFalse(response.json()["direct_to_kitchen"])
+
+    def test_self_service_card_order_is_paid_and_sent_to_kitchen(self):
+        response = self.client.post(
+            reverse("orders:submit-self-service-order"),
+            data="""
+            {
+                "order_type": "dine_in",
+                "table_id": %s,
+                "payment_method_id": %s,
+                "customer_name": "Table Guest",
+                "phone_number": "9990001113",
+                "items": [{"menu_item_id": %s, "quantity": 1, "modifiers": []}]
+            }
+            """ % (self.table.id, self.card.id, self.item.id),
+            content_type="application/json",
+        )
+        order = Order.objects.get(source=Order.Source.SELF_SERVICE)
+        self.table.refresh_from_db()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(order.status, Order.Status.KOT_SENT)
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PAID)
+        self.assertTrue(order.kots.exists())
+        self.assertTrue(order.payments.filter(method=self.card).exists())
+        self.assertEqual(self.table.status, RestaurantTable.Status.OCCUPIED)
+        self.assertTrue(response.json()["direct_to_kitchen"])
+
+    def test_cash_self_service_order_can_be_confirmed_by_cashier(self):
+        order = create_order(
+            order_type=Order.OrderType.TAKEAWAY,
+            created_by=None,
+            customer=self.customer,
+            source=Order.Source.SELF_SERVICE,
+        )
+        add_item_to_order(order=order, menu_item=self.item, quantity=Decimal("1"))
+        order.status = Order.Status.PENDING_CONFIRMATION
+        order.save(update_fields=["status"])
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse("orders:confirm-self-service", kwargs={"order_id": order.id}))
+        order.refresh_from_db()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(order.status, Order.Status.KOT_SENT)
+        self.assertTrue(order.kots.exists())
+
+    def test_complete_prepaid_order_closes_without_double_payment(self):
+        order = create_order(
+            order_type=Order.OrderType.DINE_IN,
+            created_by=None,
+            table=self.table,
+            customer=self.customer,
+            source=Order.Source.SELF_SERVICE,
+        )
+        add_item_to_order(order=order, menu_item=self.item, quantity=Decimal("1"))
+        mark_order_paid(
+            order=order,
+            user=None,
+            payments=[{"method": self.upi, "amount": Decimal("262.50"), "reference_number": "SELF-UPI"}],
+        )
+        send_kot(order=order, user=None)
+        self.client.force_login(self.user)
+
+        response = self.client.post(reverse("orders:complete-prepaid", kwargs={"order_id": order.id}))
+        order.refresh_from_db()
+        self.table.refresh_from_db()
+        self.customer.refresh_from_db()
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(order.status, Order.Status.COMPLETED)
+        self.assertEqual(order.payment_status, Order.PaymentStatus.PAID)
+        self.assertEqual(order.payments.count(), 1)
+        self.assertEqual(self.table.status, RestaurantTable.Status.AVAILABLE)
+        self.assertGreater(self.customer.loyalty_points, 0)
 
 # Create your tests here.

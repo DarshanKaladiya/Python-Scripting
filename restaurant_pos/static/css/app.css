@@ -2337,3 +2337,102 @@ body,
         grid-template-columns: 1fr;
     }
 }
+
+.self-service-shell {
+    gap: 1.15rem;
+}
+
+.self-service-hero {
+    border-top: 4px solid #16a34a;
+}
+
+.self-service-ticket {
+    background: linear-gradient(180deg, #18343b, #11252b);
+}
+
+.self-service-payment-note {
+    margin-top: 0.8rem;
+    padding: 0.8rem 0.85rem;
+    border-radius: 0.85rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(248, 250, 252, 0.86);
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.self-remove-line-btn {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #f97316;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.pos-inline-form {
+    margin: 0;
+}
+
+.pos-inline-submit {
+    width: 100%;
+    min-height: 2.45rem;
+    font-size: 0.82rem;
+}
+
+.pos-running-card,
+.pos-pending-self-order {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.pos-pending-self-order {
+    padding: 0.85rem;
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pos-pending-self-head,
+.pos-pending-self-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.pos-pending-self-head strong,
+.pos-pending-self-meta strong {
+    display: block;
+}
+
+.pos-pending-self-head span,
+.pos-pending-self-meta span {
+    color: rgba(248, 250, 252, 0.7);
+    font-size: 0.77rem;
+}
+
+.pos-pending-self-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.pos-pending-self-items span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.8rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(249, 115, 22, 0.14);
+    color: #fdba74;
+    font-size: 0.73rem;
+    font-weight: 700;
+}
+
+@media (max-width: 767.98px) {
+    .pos-pending-self-head,
+    .pos-pending-self-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

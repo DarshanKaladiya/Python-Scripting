@@ -12,6 +12,7 @@ class Order(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = "draft", "Draft"
+        PENDING_CONFIRMATION = "pending_confirmation", "Pending Cashier Confirmation"
         KOT_SENT = "kot_sent", "KOT Sent"
         IN_PROGRESS = "in_progress", "In Progress"
         READY = "ready", "Ready"
@@ -26,6 +27,7 @@ class Order(models.Model):
 
     class Source(models.TextChoices):
         MANUAL = "manual", "Manual"
+        SELF_SERVICE = "self_service", "Self Service"
         SWIGGY = "swiggy", "Swiggy"
         ZOMATO = "zomato", "Zomato"
         ONDC = "ondc", "ONDC"
