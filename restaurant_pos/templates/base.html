@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Restaurant POS{% endblock %}</title>
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <style>
+        :root {
+            --primary: #f97316; /* Petpooja Orange */
+            --bg-light: #f8fafc;
+            --text-dark: #0f172a;
+            --border-color: #e2e8f0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            margin: 0;
+            overflow-x: hidden;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">RestoPOS</div>
+        <div class="nav-links">
+            {% if user.is_authenticated %}
+                {% if user.role == 'admin' %}
+                    <a href="{% url 'inventory:admin_dashboard' %}">Dashboard</a>
+                    <a href="/admin/">Admin Panel</a>
+                {% elif user.role == 'chef' %}
+                    <a href="{% url 'orders:kds' %}">KDS (Kitchen)</a>
+                {% elif user.role == 'customer' %}
+                    <a href="{% url 'menu:customer_menu' %}">Menu</a>
+                {% endif %}
+                
+                {% if user.role in 'admin,cashier,captain' %}
+                    <a href="{% url 'tables:floor_map' %}">Floor Map</a>
+                    <a href="{% url 'orders:pos_home' %}">POS Terminal</a>
+                {% endif %}
+                
+                <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">Logout ({{ user.username }})</button>
+                </form>
+            {% else %}
+                <a href="{% url 'accounts:login' %}">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+    <div class="app-container">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="{% static 'js/pos.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

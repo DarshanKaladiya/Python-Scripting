@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Billing Terminal{% endblock %}
+
+{% block content %}
+<div class="pos-main-wrapper">
+    <!-- Category Side Rail -->
+    <div class="cat-rail" id="cat-rail">
+        <div class="cat-btn active" id="cat-all" onclick="filterByCategory('all')">All Items</div>
+        <!-- Dynamic Categories -->
+    </div>
+
+    <!-- Items Grid -->
+    <div style="flex: 1; display:flex; flex-direction: column;">
+        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); background: white; margin-bottom: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
+            <input type="text" id="item-search" placeholder="Search menu items..." style="width: 100%; padding: 0.75rem; border: none; font-size: 1rem; outline: none;">
+        </div>
+        <div class="items-container" id="items-grid">
+            <!-- Dynamic Items -->
+        </div>
+    </div>
+
+    <!-- Cart Sidebar -->
+    <div class="cart-sidebar">
+        <div class="cart-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Current Order</span>
+            {% if selected_table_id %}
+                <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+                    TABLE #{{ selected_table_id }}
+                </span>
+            {% endif %}
+        </div>
+        <input type="hidden" id="selected-table-id" value="{{ selected_table_id|default:'' }}">
+        <input type="hidden" id="selected-order-id" value="{{ selected_order_id|default:'' }}">
+        <div class="cart-items" id="cart-list">
+            <!-- Dynamic Cart Items -->
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                Cart is empty
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">
+                <span>Total</span>
+                <span>₹<span id="cart-total">0.00</span></span>
+            </div>
+            <button onclick="handleCheckout()" style="width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                SETTLE BILL
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

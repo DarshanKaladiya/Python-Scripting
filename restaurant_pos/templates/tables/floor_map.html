@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load table_extras %}
+
+{% block title %}Floor Management - RestoPOS{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem;">
+    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div>
+            <h1 style="font-size: 2rem; font-weight: 800; margin: 0;">Floor Management</h1>
+            <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Visual table overview & occupancy</p>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #10b981;"></div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Available</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #f97316;"></div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Occupied</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 12px; height: 12px; border-radius: 3px; background: #3b82f6;"></div>
+                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Reserved</span>
+            </div>
+        </div>
+    </header>
+
+    {% for section in sections %}
+    <div style="margin-bottom: 3rem;">
+        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-dark); border-left: 4px solid var(--primary); padding-left: 1rem;">
+            {{ section.name|upper }}
+        </h2>
+        
+        <div class="floor-canvas" style="position: relative; width: 100%; height: 600px; background: white; border: 1px solid var(--border-color); border-radius: 20px; box-shadow: var(--shadow-sm); overflow: hidden;">
+            <!-- Grid Pattern Background -->
+            <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--border-color) 1px, transparent 1px); background-size: 30px 30px; opacity: 0.5;"></div>
+            
+            {% for table in section.tables.all %}
+                {% with order=table_order_map|get_item:table.id %}
+                <div class="table-node {% if order %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"
+                     onclick="handleTableClick('{{ table.id }}', '{{ order.id|default:'' }}')"
+                     style="position: absolute; 
+                            left: {{ table.x_pos }}%; 
+                            top: {{ table.y_pos }}%; 
+                            width: {{ table.width }}px; 
+                            height: {{ table.height }}px; 
+                            border-radius: {% if table.shape == 'circle' %}50%{% else %}12px{% endif %};
+                            cursor: pointer;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            z-index: 10;">
+                    
+                    <span style="font-weight: 800; font-size: 1.1rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
+                        {{ table.name }}
+                    </span>
+                    
+                    {% if order %}
+                        <div style="font-size: 0.7rem; font-weight: 700; margin-top: 4px; opacity: 0.9;">
+                            #{{ order.order_number|slice:":5" }}
+                        </div>
+                    {% else %}
+                        <div style="font-size: 0.65rem; font-weight: 600; margin-top: 4px; opacity: 0.7;">
+                            CAP: {{ table.capacity }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+        <div style="text-align: center; padding: 4rem; color: var(--text-muted); border: 2px dashed var(--border-color); border-radius: 20px;">
+            No floor sections configured. Head to Admin to add sections and tables.
+        </div>
+    {% endfor %}
+</div>
+
+<style>
+.floor-canvas {
+    background-color: #f8fafc !important;
+}
+
+.table-node {
+    border: 2px solid transparent;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.table-node.available {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: #10b981;
+    color: #065f46;
+}
+
+.table-node.occupied {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: #f97316;
+    color: #9a3412;
+    box-shadow: 0 4px 20px rgba(249, 115, 22, 0.2);
+    animation: pulse 2s infinite;
+}
+
+.table-node.reserved {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    color: #1e40af;
+}
+
+.table-node:hover {
+    transform: scale(1.05) translateY(-5px);
+    z-index: 20;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+}
+</style>
+
+<script>
+function handleTableClick(tableId, orderId) {
+    if (orderId) {
+        // Table occupied, go to POS and load this order (simulation for now)
+        window.location.href = `/pos/?table_id=${tableId}&order_id=${orderId}`;
+    } else {
+        // Table available, start new order
+        window.location.href = `/pos/?table_id=${tableId}`;
+    }
+}
+</script>
+{% endblock %}

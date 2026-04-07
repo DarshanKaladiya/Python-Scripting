@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Menu - RestoPOS{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto; padding: 2rem; background: var(--bg-light); min-height: 100vh;">
+    <header style="text-align: center; margin-bottom: 3rem;">
+        <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem; border-top: 4px solid var(--primary); padding-top: 1rem; display: inline-block;">
+            OUR MENU
+        </h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">Fresh ingredients, chef-crafted recipes</p>
+    </header>
+
+    <!-- Category Filters -->
+    <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 2.5rem; scrollbar-width: none;">
+        <button onclick="filterCategory('all')" class="cat-pill active">All</button>
+        {% for category in categories %}
+            <button onclick="filterCategory('{{ category.name|slugify }}')" class="cat-pill">
+                {{ category.name }}
+            </button>
+        {% endfor %}
+    </div>
+
+    <!-- Menu Items -->
+    <div id="menu-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+        {% for item in menu_items %}
+            <div class="menu-item-card" data-category="{{ item.category.name|slugify }}" 
+                 style="background: white; border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; display: flex; box-shadow: 0 4px 20px rgba(0,0,0,0.04); transition: transform 0.2s;">
+                <div style="width: 120px; height: 120px; background: #f1f5f9; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        🍴
+                    {% endif %}
+                </div>
+                <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-dark); margin: 0;">{{ item.name }}</h3>
+                        <span style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">₹{{ item.price }}</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; flex: 1; line-height: 1.4;">
+                        {{ item.description|truncatechars:85 }}
+                    </p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px;">
+                            {{ item.category.name }}
+                        </span>
+                        {% if item.is_vegetarian %}
+                            <span style="color: #10b981; font-size: 0.75rem; border: 1px solid #10b981; padding: 1px 4px; border-radius: 2px;">🟢 VEG</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.cat-pill {
+    padding: 0.6rem 1.25rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.cat-pill.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.menu-item-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+}
+</style>
+
+<script>
+function filterCategory(slug) {
+    // Update pills
+    document.querySelectorAll('.cat-pill').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.innerText.toLowerCase() === slug.replace('-', ' ') || (slug === 'all' && btn.innerText === 'All')) {
+            btn.classList.add('active');
+        }
+    });
+
+    // Filter items
+    const items = document.querySelectorAll('.menu-item-card');
+    items.forEach(item => {
+        if (slug === 'all' || item.dataset.category === slug) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

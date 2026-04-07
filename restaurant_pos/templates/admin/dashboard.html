@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - RestoPOS{% endblock %}
+
+{% block content %}
+<div style="padding: 2rem;">
+    <header style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2rem; font-weight: 700;">Business Overview</h1>
+        <p style="color: var(--text-muted);">Good day, {{ user.username }}. Here's what's happening today.</p>
+    </header>
+
+    <div class="stats-grid">
+        <div class="glass-card stat-item">
+            <span class="stat-label">Total Revenue</span>
+            <span class="stat-value">₹{{ total_sales|floatformat:2 }}</span>
+        </div>
+        <div class="glass-card stat-item">
+            <span class="stat-label">Total Orders</span>
+            <span class="stat-value">{{ order_count }}</span>
+        </div>
+        <div class="glass-card stat-item">
+            <span class="stat-label">Low Stock Alerts</span>
+            <span class="stat-value" style="color: {% if low_stock_items %}#ef4444{% else %}#10b981{% endif %};">
+                {{ low_stock_items.count }}
+            </span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <div class="glass-card" style="padding: 1.5rem;">
+            <h3 style="margin-bottom: 1rem;">Recent Activity</h3>
+            <!-- Placeholder for chart or recent orders list -->
+            <div style="height: 200px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); border: 1px dashed var(--border-color); border-radius: 8px;">
+                Transaction history chart coming soon
+            </div>
+        </div>
+        
+        <div class="glass-card" style="padding: 1.5rem;">
+            <h3 style="margin-bottom: 1rem;">Low Stock Items</h3>
+            {% if low_stock_items %}
+                <ul style="list-style: none; padding: 0;">
+                    {% for item in low_stock_items %}
+                        <li style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                            <span>{{ item.name }}</span>
+                            <span style="color: #ef4444; font-weight: 600;">{{ item.current_stock }} {{ item.unit.short_code }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p style="color: #10b981; font-size: 0.9rem;">All stock levels are healthy.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
