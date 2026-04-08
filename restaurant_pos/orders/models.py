@@ -13,16 +13,29 @@ class Order(models.Model):
     )
     STATUS_CHOICES = (
         ('draft', 'Draft / Ordering'),
+        ('awaiting_confirmation', 'Awaiting Confirmation'),
         ('kot_sent', 'KOT Sent'),
         ('preparing', 'Preparing'),
         ('ready', 'Ready'),
         ('completed', 'Completed/Billed'),
         ('cancelled', 'Cancelled'),
     )
+    PAYMENT_METHOD_CHOICES = (
+        ('cash', 'Cash'),
+        ('upi', 'UPI'),
+        ('card', 'Card'),
+    )
+    PAYMENT_STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+    )
     
     order_number = models.CharField(max_length=20, unique=True)
     order_type = models.CharField(max_length=20, choices=ORDER_TYPE_CHOICES, default='dine_in')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='draft')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cash')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    guest_count = models.IntegerField(default=1)
     
     table = models.ForeignKey(Table, null=True, blank=True, on_delete=models.SET_NULL)
     waiter = models.ForeignKey(User, null=True, blank=True, related_name='taken_orders', on_delete=models.SET_NULL)

@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Self-Order Kiosk - RestoPOS{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --kiosk-primary: #f97316;
+        --kiosk-bg: #f8fafc;
+        --kiosk-card: #ffffff;
+    }
+
+    body {
+        background: var(--kiosk-bg);
+        overflow-x: hidden;
+    }
+
+    .kiosk-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        min-height: calc(100vh - 64px);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Steps Progress */
+    .steps-nav {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        margin-bottom: 3rem;
+    }
+
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-muted);
+        font-weight: 700;
+        position: relative;
+    }
+
+    .step-dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+
+    .step-item.active { color: var(--kiosk-primary); }
+    .step-item.active .step-dot {
+        border-color: var(--kiosk-primary);
+        background: var(--kiosk-primary);
+        color: white;
+        box-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
+    }
+
+    /* Screens */
+    .screen {
+        display: none;
+        animation: fadeIn 0.4s ease-out;
+    }
+    .screen.active { display: block; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Option Cards */
+    .option-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .option-card {
+        background: white;
+        border-radius: 32px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    .option-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--kiosk-primary);
+        box-shadow: 0 20px 40px rgba(249, 115, 22, 0.1);
+    }
+
+    .option-card i {
+        font-size: 4rem;
+        color: var(--kiosk-primary);
+        margin-bottom: 1.5rem;
+    }
+
+    .option-card h3 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Guest Count */
+    .counter-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 3rem;
+    }
+
+    .counter-btn {
+        width: 60px;
+        height: 60px;
+        border-radius: 20px;
+        border: none;
+        background: white;
+        font-size: 1.5rem;
+        font-weight: 800;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        cursor: pointer;
+    }
+
+    #guest-count-display {
+        font-size: 4rem;
+        font-weight: 900;
+        color: var(--text-dark);
+    }
+
+    /* Menu Grid overrides */
+    .kiosk-menu {
+        max-height: 500px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: white;
+        border-radius: 24px;
+        margin-top: 1rem;
+    }
+
+    /* Footer Navigation */
+    .kiosk-footer {
+        margin-top: auto;
+        padding: 2rem 0;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .btn-primary {
+        background: var(--kiosk-primary);
+        color: white;
+        padding: 1rem 2.5rem;
+        border-radius: 18px;
+        font-weight: 800;
+        border: none;
+        cursor: pointer;
+        font-size: 1.1rem;
+        box-shadow: 0 10px 20px rgba(249, 115, 22, 0.2);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-muted);
+        padding: 1rem 2.5rem;
+        border-radius: 18px;
+        font-weight: 800;
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+    }
+
+    /* Payment simulation */
+    .payment-modal {
+        text-align: center;
+        padding: 3rem;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="kiosk-container">
+    <!-- Progress -->
+    <nav class="steps-nav">
+        <div class="step-item active" id="step-nav-1">
+            <div class="step-dot">1</div>
+            <span>Type</span>
+        </div>
+        <div class="step-item" id="step-nav-2">
+            <div class="step-dot">2</div>
+            <span>Table</span>
+        </div>
+        <div class="step-item" id="step-nav-3">
+            <div class="step-dot">3</div>
+            <span>Menu</span>
+        </div>
+        <div class="step-item" id="step-nav-4">
+            <div class="step-dot">4</div>
+            <span>Pay</span>
+        </div>
+    </nav>
+
+    <!-- Screen 1: Order Type -->
+    <div class="screen active" id="screen-type">
+        <h1 style="text-align: center; font-weight: 900; font-size: 2.5rem;">How would you like to eat?</h1>
+        <div class="option-grid">
+            <div class="option-card" onclick="setOrderType('dine_in')">
+                <i class="fas fa-utensils"></i>
+                <h3>Dine In</h3>
+                <p>Eat world-class food at our cozy restaurant</p>
+            </div>
+            <div class="option-card" onclick="setOrderType('takeaway')">
+                <i class="fas fa-bag-shopping"></i>
+                <h3>Take Away</h3>
+                <p>Pack your favorites for the road</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 2: Guests (Auto-Table) -->
+    <div class="screen" id="screen-guests">
+        <h1 style="text-align: center; font-weight: 900; font-size: 2.5rem;">How many guests?</h1>
+        <p style="text-align: center; color: var(--text-muted);">We'll find the perfect table for you</p>
+        <div class="counter-wrapper">
+            <button class="counter-btn" onclick="updateGuests(-1)">-</button>
+            <span id="guest-count-display">1</span>
+            <button class="counter-btn" onclick="updateGuests(1)">+</button>
+        </div>
+        <div class="kiosk-footer">
+            <button class="btn-secondary" onclick="prevStep()">Back</button>
+            <button class="btn-primary" onclick="nextStep()">Next</button>
+        </div>
+    </div>
+
+    <!-- Screen 3: Menu -->
+    <div class="screen" id="screen-menu">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1 style="font-weight: 900; font-size: 2rem;">Choose your items</h1>
+            <div id="kiosk-cart-summary" style="font-weight: 800; color: var(--kiosk-primary);">
+                0 Items • ₹0
+            </div>
+        </div>
+        
+        <!-- Simplified Menu re-using your design -->
+        <div class="kiosk-menu" id="kiosk-menu-grid">
+            {% for item in menu_items %}
+                <div class="cart-row" style="padding: 1.5rem; border-bottom: 1px solid #f1f5f9;">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 800;">{{ item.name }}</div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted);">₹{{ item.base_price }}</div>
+                    </div>
+                    <div class="qty-controls" style="background: #f8fafc; padding: 0.5rem; border-radius: 12px; display: flex; gap: 1rem; align-items: center;">
+                        <button class="qty-btn" 
+                                style="border: none; background: white; width: 30px; height: 30px; border-radius: 8px;" 
+                                data-id="{{ item.id }}" 
+                                data-name="{{ item.name }}" 
+                                data-price="{{ item.base_price }}"
+                                onclick="handleKioskCart(this, -1)">-</button>
+                        <span id="qty-{{ item.id }}" style="font-weight: 800;">0</span>
+                        <button class="qty-btn" 
+                                style="border: none; background: white; width: 30px; height: 30px; border-radius: 8px;" 
+                                data-id="{{ item.id }}" 
+                                data-name="{{ item.name }}" 
+                                data-price="{{ item.base_price }}"
+                                onclick="handleKioskCart(this, 1)">+</button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="kiosk-footer">
+            <button class="btn-secondary" onclick="prevStep()">Back</button>
+            <button class="btn-primary" onclick="nextStep()">Checkout</button>
+        </div>
+    </div>
+
+    <!-- Screen 4: Payment -->
+    <div class="screen" id="screen-payment">
+        <h1 style="text-align: center; font-weight: 900; font-size: 2.5rem;">Select Payment Method</h1>
+        <div class="option-grid">
+            <div class="option-card" onclick="processPayment('cash')">
+                <i class="fas fa-money-bill-wave"></i>
+                <h3>Pay at Counter</h3>
+                <p>Cash or Card at the register</p>
+            </div>
+            <div class="option-card" onclick="processPayment('upi')">
+                <i class="fas fa-qrcode"></i>
+                <h3>UPI / QR</h3>
+                <p>Scan and pay instantly</p>
+            </div>
+            <div class="option-card" onclick="processPayment('card')">
+                <i class="fas fa-credit-card"></i>
+                <h3>Direct Card</h3>
+                <p>Pay with credit/debit card</p>
+            </div>
+        </div>
+        <div class="kiosk-footer">
+            <button class="btn-secondary" onclick="prevStep()">Back</button>
+        </div>
+    </div>
+
+    <!-- Finalizing Loader -->
+    <div class="screen" id="screen-loading">
+        <div class="payment-modal">
+            <i class="fas fa-circle-notch fa-spin fa-5x" style="color: var(--kiosk-primary); margin-bottom: 2rem;"></i>
+            <h2 id="loading-text">Finalizing your order...</h2>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    let orderData = {
+        type: 'takeaway',
+        guests: 1,
+        cart: [],
+        payment: null
+    };
+
+    function setOrderType(type) {
+        orderData.type = type;
+        if (type === 'takeaway') {
+            currentStep = 2; // Skip guests for takeaway
+            nextStep();
+        } else {
+            nextStep();
+        }
+    }
+
+    function updateGuests(delta) {
+        orderData.guests = Math.max(1, orderData.guests + delta);
+        document.getElementById('guest-count-display').innerText = orderData.guests;
+    }
+
+    function handleKioskCart(btn, delta) {
+        const id = btn.dataset.id;
+        const name = btn.dataset.name;
+        const price = parseFloat(btn.dataset.price);
+
+        const idx = orderData.cart.findIndex(i => i.id === id);
+        if (idx > -1) {
+            orderData.cart[idx].qty += delta;
+            if (orderData.cart[idx].qty <= 0) orderData.cart.splice(idx, 1);
+        } else if (delta > 0) {
+            orderData.cart.push({id, name, price, qty: 1});
+        }
+        
+        // Update UI
+        const qtyEl = document.getElementById(`qty-${id}`);
+        const cartItem = orderData.cart.find(i => i.id === id);
+        qtyEl.innerText = cartItem ? cartItem.qty : 0;
+        
+        const total = orderData.cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+        document.getElementById('kiosk-cart-summary').innerText = `${orderData.cart.length} Items • ₹${total}`;
+    }
+
+    function nextStep() {
+        currentStep++;
+        showStep(currentStep);
+    }
+
+    function prevStep() {
+        currentStep--;
+        if (orderData.type === 'takeaway' && currentStep === 2) currentStep--;
+        showStep(currentStep);
+    }
+
+    function showStep(step) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active'));
+        
+        const screenId = ['type', 'guests', 'menu', 'payment'][step-1];
+        document.getElementById(`screen-${screenId}`).classList.add('active');
+        
+        for(let i=1; i<=step; i++) {
+            document.getElementById(`step-nav-${i}`)?.classList.add('active');
+        }
+    }
+
+    async function processPayment(method) {
+        orderData.payment = method;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-loading').classList.add('active');
+        
+        if (method !== 'cash') {
+            document.getElementById('loading-text').innerText = "Processing secure payment...";
+            await new Promise(r => setTimeout(r, 2000));
+        }
+
+        placeFinalOrder();
+    }
+
+    async function placeFinalOrder() {
+        const subtotal = orderData.cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+        const payload = {
+            order_number: "KIOSK-" + Date.now().toString().slice(-6),
+            order_type: orderData.type,
+            payment_method: orderData.payment,
+            guest_count: orderData.guests,
+            subtotal: subtotal,
+            tax: subtotal * 0.05,
+            total_amount: subtotal * 1.05,
+            items: orderData.cart.map(i => ({
+                menu_item: i.id,
+                quantity: i.qty,
+                price: i.price
+            }))
+        };
+
+        try {
+            const response = await fetch('/orders/api/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                let msg = `Order Success! #${data.order_number}`;
+                if (data.table) {
+                    msg += `\nYour table: ${data.table}`;
+                }
+                if (orderData.payment === 'cash') {
+                    msg += `\nPlease pay at the counter to start your order.`;
+                } else {
+                    msg += `\nYour order is being prepared!`;
+                }
+                alert(msg);
+                window.location.reload();
+            } else {
+                alert("Order failed: " + (data.error || "Unknown error"));
+                location.reload();
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Connection error occurred.");
+        }
+    }
+</script>
+{% endblock %}

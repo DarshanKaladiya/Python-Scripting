@@ -25,6 +25,78 @@
         overflow-y: auto;
     }
 
+    .self-order-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ef4444;
+        color: white;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        display: none;
+    }
+
+    /* Modal Styles */
+    .pos-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(8px);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pos-modal.active { display: flex; }
+
+    .modal-card {
+        background: white;
+        width: 100%;
+        max-width: 600px;
+        border-radius: 24px;
+        overflow: hidden;
+        animation: modalIn 0.3s ease-out;
+    }
+
+    @keyframes modalIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        background: white;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .pending-row {
+        padding: 1.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .approve-btn {
+        background: #10b981;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
     .cat-btn {
         width: 80px;
         height: 80px;
@@ -227,8 +299,29 @@
 <div class="pos-layout">
     <!-- Category Side Rail -->
     <aside class="cat-rail">
-        <!-- Dynimcally filled by pos.js -->
+        <div class="cat-btn" onclick="togglePendingModal(true)" style="position: relative; border-color: #ef4444; color: #ef4444;">
+            <i class="fas fa-bell"></i>
+            <span>Approvals</span>
+            <div id="pending-count" class="self-order-badge">0</div>
+        </div>
+        <div style="height: 1px; background: #f1f5f9; margin: 0.5rem 0;"></div>
+        <div id="category-list">
+            <!-- Dynamically filled by pos.js -->
+        </div>
     </aside>
+
+    <!-- Pending Orders Modal -->
+    <div class="pos-modal" id="pending-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 style="margin: 0; font-weight: 800;">Pending Self-Orders</h2>
+                <button onclick="togglePendingModal(false)" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div id="pending-orders-list" style="max-height: 400px; overflow-y: auto;">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
 
     <!-- Main Item Grid -->
     <main class="pos-main">
@@ -387,5 +480,88 @@
             rail.appendChild(btn);
         });
     };
+
+    // Self-Order Approval Logic
+    let pendingOrders = [];
+
+    async function fetchPendingSelfOrders() {
+        try {
+            const resp = await fetch('/api/orders/?status=awaiting_confirmation');
+            const data = await resp.json();
+            pendingOrders = data;
+            
+            const badge = document.getElementById('pending-count');
+            if (data.length > 0) {
+                badge.innerText = data.length;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            if (document.getElementById('pending-modal').classList.contains('active')) {
+                renderPendingList();
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    function renderPendingList() {
+        const list = document.getElementById('pending-orders-list');
+        list.innerHTML = '';
+        
+        if (pendingOrders.length === 0) {
+            list.innerHTML = '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">No pending approvals</div>';
+            return;
+        }
+
+        pendingOrders.forEach(order => {
+            const row = document.createElement('div');
+            row.className = 'pending-row';
+            row.innerHTML = `
+                <div>
+                    <div style="font-weight: 800;">${order.order_number}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        ${order.order_type.toUpperCase()} • ₹${order.total_amount}
+                    </div>
+                </div>
+                <button class="approve-btn" onclick="approveOrder(${order.id})">
+                    Approve & Pay
+                </button>
+            `;
+            list.appendChild(row);
+        });
+    }
+
+    async function approveOrder(id) {
+        try {
+            const resp = await fetch(`/api/orders/${id}/update_status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ status: 'kot_sent' })
+            });
+
+            if (resp.ok) {
+                fetchPendingSelfOrders();
+                alert("Order approved and sent to kitchen!");
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    function togglePendingModal(show) {
+        const modal = document.getElementById('pending-modal');
+        if (show) {
+            modal.classList.add('active');
+            renderPendingList();
+        } else {
+            modal.classList.remove('active');
+        }
+    }
+
+    // Auto-refresh every 10 seconds
+    setInterval(fetchPendingSelfOrders, 10000);
+    document.addEventListener('DOMContentLoaded', fetchPendingSelfOrders);
+
 </script>
 {% endblock %}

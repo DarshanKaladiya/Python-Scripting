@@ -268,11 +268,59 @@
         justify-content: center;
     }
 
-    .non-veg-dot {
-        width: 10px;
-        height: 10px;
-        background: #ef4444;
-        border-radius: 50%;
+    /* Checkout Modal */
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(10px);
+        z-index: 2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-card {
+        background: white;
+        width: 100%;
+        max-width: 500px;
+        border-radius: 32px;
+        overflow: hidden;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    .modal-step { display: none; padding: 2.5rem; }
+    .modal-step.active { display: block; }
+
+    .step-title { font-size: 1.75rem; font-weight: 800; text-align: center; margin-bottom: 2rem; }
+
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .choice-card {
+        padding: 2rem 1rem;
+        border: 2px solid #f1f5f9;
+        border-radius: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .choice-card i { font-size: 2rem; margin-bottom: 1rem; color: #f97316; }
+    .choice-card.active { border-color: #f97316; background: #fff7ed; }
+
+    .guest-counter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        font-size: 3rem;
+        font-weight: 800;
+        margin-top: 1rem;
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
     }
 
     .card-content {
@@ -568,7 +616,6 @@
             <div style="display: flex; justify-content: space-between; margin-bottom: 2rem; font-size: 1.5rem; font-weight: 800;">
                 <span>Total</span>
                 <span id="cart-total">₹0</span>
-            </div>
             <button class="checkout-btn" onclick="placeOrder()">
                 CONFIRM ORDER
             </button>
@@ -576,6 +623,53 @@
     </div>
 
     <div id="toast" class="toast">Added to cart!</div>
+
+    <!-- Checkout Modal -->
+    <div class="modal-overlay" id="checkout-modal">
+        <div class="modal-card">
+            <!-- Step 1: Type -->
+            <div class="modal-step active" id="checkout-step-1">
+                <div class="step-title">Order Type</div>
+                <div class="choice-grid">
+                    <div class="choice-card" onclick="setCheckoutType('dine_in', this)">
+                        <i class="fas fa-utensils"></i>
+                        <div style="font-weight: 700;">Dine In</div>
+                    </div>
+                    <div class="choice-card" onclick="setCheckoutType('takeaway', this)">
+                        <i class="fas fa-bag-shopping"></i>
+                        <div style="font-weight: 700;">Take Away</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Guests -->
+            <div class="modal-step" id="checkout-step-2">
+                <div class="step-title">How many guests?</div>
+                <div class="guest-counter">
+                    <button class="add-btn" style="padding: 1rem;" onclick="updateCheckoutGuests(-1)">-</button>
+                    <span id="checkout-guest-display">1</span>
+                    <button class="add-btn" style="padding: 1rem;" onclick="updateCheckoutGuests(1)">+</button>
+                </div>
+                <button class="checkout-btn" style="margin-top: 3rem;" onclick="showCheckoutStep(3)">Next</button>
+            </div>
+
+            <!-- Step 3: Payment -->
+            <div class="modal-step" id="checkout-step-3">
+                <div class="step-title">Payment Method</div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="choice-card" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem;" onclick="finalCheckout('cash')">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <div style="font-weight: 700;">Pay with Cash</div>
+                    </div>
+                    <div class="choice-card" style="display: flex; align-items: center; gap: 1rem; padding: 1.5rem;" onclick="finalCheckout('upi')">
+                        <i class="fas fa-qrcode"></i>
+                        <div style="font-weight: 700;">UPI / Card (Online)</div>
+                    </div>
+                </div>
+                <button class="btn-secondary" style="border:none; background:none; margin-top: 1rem; width:100%; cursor:pointer;" onclick="showCheckoutStep(1)">Back</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -746,25 +840,57 @@
         setTimeout(() => toast.classList.remove('active'), 2000);
     }
 
-    async function placeOrder() {
-        if (cart.length === 0) return;
+    // New Checkout Logic
+    let checkoutData = {
+        type: 'takeaway',
+        guests: 1,
+        payment: 'cash'
+    };
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const tableId = urlParams.get('table_id');
+    function placeOrder() {
+        if (cart.length === 0) return;
+        document.getElementById('checkout-modal').classList.add('active');
+    }
+
+    function setCheckoutType(type, el) {
+        checkoutData.type = type;
+        document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        
+        if (type === 'dine_in') {
+            showCheckoutStep(2);
+        } else {
+            showCheckoutStep(3);
+        }
+    }
+
+    function updateCheckoutGuests(delta) {
+        checkoutData.guests = Math.max(1, checkoutData.guests + delta);
+        document.getElementById('checkout-guest-display').innerText = checkoutData.guests;
+    }
+
+    function showCheckoutStep(step) {
+        document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
+        document.getElementById(`checkout-step-${step}`).classList.add('active');
+    }
+
+    async function finalCheckout(payment) {
+        checkoutData.payment = payment;
         
         const subtotal = cart.reduce((acc, i) => acc + (i.price * i.qty), 0);
+        
         const payload = {
-            order_number: "CUST-" + Date.now(),
-            order_type: tableId ? "dine_in" : "takeaway",
-            status: "kot_sent",
-            table: tableId || null,
+            order_number: "CUST-" + Date.now().toString().slice(-6),
+            order_type: checkoutData.type,
+            payment_method: checkoutData.payment,
+            guest_count: checkoutData.guests,
             subtotal: subtotal,
             tax: subtotal * 0.05,
             total_amount: subtotal * 1.05,
-            items: cart.map(i => ({
-                menu_item: i.id,
-                quantity: i.qty,
-                price: i.price
+            items: cart.map(item => ({
+                menu_item: item.id,
+                quantity: item.qty,
+                price: item.price
             }))
         };
 
@@ -773,25 +899,29 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
+                    'X-CSRFToken': '{{ csrf_token }}'
                 },
                 body: JSON.stringify(payload)
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                const data = await response.json();
-                showToast("Order Placed Successfully!");
-                cart = [];
-                updateCart();
-                toggleCart(false);
-                setTimeout(() => {
-                    alert(`Order # ${data.order_number} has been sent to the kitchen!`);
-                }, 500);
+                let msg = `🎉 Order Success! #${data.order_number}`;
+                if (checkoutData.payment === 'cash') {
+                    msg += `\n\nOur captain is coming to collect payment. Your order will start soon!`;
+                } else {
+                    msg += `\n\nPayment Successful! Your order has been sent to the kitchen.`;
+                }
+                alert(msg);
+                localStorage.removeItem('resto_cart');
+                window.location.reload();
             } else {
-                alert("Failed to place order. Please try again.");
+                alert("Order failed: " + (data.error || "Please check with the staff."));
             }
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error(error);
+            alert("Something went wrong. Please try again.");
         }
     }
 
