@@ -2,54 +2,273 @@
 
 {% block title %}KDS - Kitchen Display System{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        --kds-bg: #020617;
+        --ticket-bg: #1e293b;
+        --accent-orange: #f97316;
+        --accent-blue: #3b82f6;
+        --accent-green: #10b981;
+    }
+
+    body {
+        background-color: var(--kds-bg);
+    }
+
+    .kds-wrapper {
+        padding: 2rem;
+        background: radial-gradient(circle at 50% 0%, rgba(249, 115, 22, 0.05) 0%, transparent 70%);
+        min-height: calc(100vh - 64px);
+    }
+
+    .kds-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        padding: 0 1rem;
+    }
+
+    .kds-title {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .kds-title h1 {
+        margin: 0;
+        font-size: 2.25rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: white;
+    }
+
+    .live-badge {
+        background: #ef4444;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        animation: pulse-live 2s infinite;
+        letter-spacing: 1px;
+    }
+
+    @keyframes pulse-live {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .order-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2rem;
+    }
+
+    .order-ticket {
+        background: var(--ticket-bg);
+        border: 2px solid rgba(255,255,255,0.05);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .order-ticket:hover {
+        border-color: rgba(255,255,255,0.2);
+        transform: translateY(-5px);
+    }
+
+    .ticket-header {
+        padding: 1.25rem;
+        background: rgba(30, 41, 59, 0.5);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .order-number {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: white;
+    }
+
+    .order-type {
+        font-size: 0.7rem;
+        font-weight: 800;
+        background: var(--accent-orange);
+        color: white;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        text-transform: uppercase;
+    }
+
+    .ticket-body {
+        padding: 1.5rem;
+        flex: 1;
+    }
+
+    .item-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .ticket-item {
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 1rem;
+        font-size: 1.25rem;
+        color: rgba(255,255,255,0.9);
+        font-weight: 600;
+    }
+
+    .item-qty {
+        color: var(--accent-orange);
+        font-weight: 900;
+    }
+
+    .item-meta {
+        margin-left: 2.5rem;
+        margin-top: -0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .item-note {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        font-style: italic;
+        background: rgba(255,255,255,0.03);
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        border-left: 3px solid var(--accent-orange);
+    }
+
+    .ticket-footer {
+        padding: 1.25rem;
+        background: rgba(15, 23, 42, 0.3);
+        display: flex;
+        gap: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 1rem;
+        border: none;
+        border-radius: 12px;
+        font-weight: 800;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-prepare { background: var(--accent-blue); }
+    .btn-prepare:hover { background: #2563eb; }
+    
+    .btn-ready { background: var(--accent-green); }
+    .btn-ready:hover { background: #059669; }
+
+    .ticket-timer {
+        padding: 0.5rem;
+        text-align: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-weight: 600;
+        background: rgba(0,0,0,0.2);
+    }
+
+    /* Glow based on status */
+    .status-kot_sent { box-shadow: 0 0 20px rgba(59, 130, 246, 0.1); }
+    .status-preparing { box-shadow: 0 0 30px rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.3) !important; }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        height: 400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="padding: 2.5rem; background: #0f172a; min-height: calc(100vh - 60px); color: white;">
-    <header style="margin-bottom: 2.5rem; border-bottom: 2px solid #1e293b; padding-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="font-size: 2rem; font-weight: 800; color: #f97316;">KITCHEN ORDERS</h1>
-        <div style="font-size: 1.1rem; font-weight: 600;">ACTIVE: {{ orders.count }}</div>
+<div class="kds-wrapper">
+    <header class="kds-header">
+        <div class="kds-title">
+            <h1>KDS TERMINAL</h1>
+            <span class="live-badge">Live System</span>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 1.5rem; font-weight: 900; color: white;">{{ orders.count }}</div>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Active Tickets</div>
+        </div>
     </header>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem;">
+    <div class="order-grid">
         {% for order in orders %}
-            <div style="background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(8px); border: 2px solid #334155; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;">
-                <div style="padding: 1rem; background: #334155; display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-weight: 700; font-size: 1.25rem;">#{{ order.order_number }}</span>
-                    <span style="background: #f97316; padding: 0.25rem 0.75rem; border-radius: 4px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase;">
-                        {{ order.get_order_type_display }}
-                    </span>
+            <div class="order-ticket status-{{ order.status }}">
+                <div class="ticket-header">
+                    <span class="order-number">#{{ order.order_number|slice:":5" }}</span>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        {% if order.table %}
+                            <span style="font-weight: 800; color: var(--accent-orange);">T-{{ order.table.name }}</span>
+                        {% endif %}
+                        <span class="order-type">{{ order.get_order_type_display }}</span>
+                    </div>
                 </div>
                 
-                <div style="padding: 1.5rem; flex: 1;">
-                    <ul style="list-style: none; padding: 0; margin: 0;">
+                <div class="ticket-body">
+                    <ul class="item-list">
                         {% for item in order.items.all %}
-                            <li style="margin-bottom: 0.75rem; font-size: 1.1rem; display: flex; gap: 1rem;">
-                                <span style="color: #f97316; font-weight: 800;">{{ item.quantity }}x</span>
-                                <span>{{ item.menu_item.name }}</span>
-                                {% if item.notes %}
-                                    <div style="font-size: 0.85rem; color: #94a3b8; font-style: italic; margin-left: 2rem;">"{{ item.notes }}"</div>
-                                {% endif %}
+                            <li class="ticket-item">
+                                <span class="item-qty">{{ item.quantity }}x</span>
+                                <span class="item-name">{{ item.menu_item.name }}</span>
                             </li>
+                            {% if item.notes %}
+                                <div class="item-meta">
+                                    <div class="item-note">"{{ item.notes }}"</div>
+                                </div>
+                            {% endif %}
                         {% endfor %}
                     </ul>
                 </div>
                 
-                <div style="padding: 1rem; border-top: 2px solid #334155; display: flex; gap: 0.75rem;">
-                    <button onclick="updateStatus('{{ order.id }}', 'preparing')" 
-                            style="flex: 1; padding: 0.75rem; background: #3b82f6; border: none; border-radius: 6px; color: white; font-weight: 700; cursor: pointer;">
-                        PREPARING
-                    </button>
-                    <button onclick="updateStatus('{{ order.id }}', 'ready')" 
-                            style="flex: 1; padding: 0.75rem; background: #10b981; border: none; border-radius: 6px; color: white; font-weight: 700; cursor: pointer;">
-                        READY
+                <div class="ticket-footer">
+                    {% if order.status == 'kot_sent' %}
+                        <button onclick="updateStatus('{{ order.id }}', 'preparing')" class="action-btn btn-prepare">
+                            <i class="fas fa-fire"></i> START COOKING
+                        </button>
+                    {% endif %}
+                    <button onclick="updateStatus('{{ order.id }}', 'ready')" class="action-btn btn-ready">
+                        <i class="fas fa-check-double"></i> MARK READY
                     </button>
                 </div>
-                <div style="padding: 0.5rem; text-align: center; color: #94a3b8; font-size: 0.8rem;">
-                    RECEIVED {{ order.created_at|timesince }} AGO
+                
+                <div class="ticket-timer" data-start="{{ order.created_at|date:'c' }}">
+                    <i class="far fa-clock"></i> <span class="elapsed">00:00</span>
                 </div>
             </div>
         {% empty %}
-            <div style="grid-column: 1 / -1; height: 300px; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 1.5rem; border: 2px dashed #1e293b; border-radius: 12px;">
-                ORDER BOARD IS CLEAR
+            <div class="empty-state">
+                <i class="fas fa-clipboard-check fa-5x" style="margin-bottom: 2rem; opacity: 0.1;"></i>
+                <h2 style="font-weight: 800; color: #334155;">ALL CLEAR</h2>
+                <p style="font-weight: 600;">No pending orders in the queue.</p>
             </div>
         {% endfor %}
     </div>
@@ -73,6 +292,29 @@ async function updateStatus(orderId, newStatus) {
         console.error('Failed to update status:', error);
     }
 }
+
+// Timer functionality
+function updateTimers() {
+    const timers = document.querySelectorAll('.ticket-timer');
+    timers.forEach(timer => {
+        const start = new Date(timer.dataset.start);
+        const now = new Date();
+        const diff = Math.floor((now - start) / 1000); // seconds
+        
+        const mins = Math.floor(diff / 60);
+        const secs = diff % 60;
+        
+        timer.querySelector('.elapsed').innerText = 
+            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        // Color coding for delay
+        if (mins >= 10) timer.style.color = '#ef4444';
+        else if (mins >= 5) timer.style.color = '#f97316';
+    });
+}
+
+setInterval(updateTimers, 1000);
+updateTimers();
 </script>
 <form style="display:none;">{% csrf_token %}</form>
 {% endblock %}

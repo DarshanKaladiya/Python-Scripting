@@ -1,105 +1,337 @@
 {% extends 'base.html' %}
 
-{% block title %}Menu - RestoPOS{% endblock %}
+{% block title %}Digital Menu - RestoPOS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .menu-wrapper {
+        min-height: calc(100vh - 64px);
+        background: #fafafa;
+        padding-bottom: 5rem;
+    }
+
+    /* Hero Section */
+    .menu-hero {
+        height: 250px;
+        background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=2070');
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .menu-hero h1 {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin: 0;
+        text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .menu-hero p {
+        font-size: 1.25rem;
+        font-weight: 500;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+    }
+
+    /* Floating Categories */
+    .category-scroll {
+        position: sticky;
+        top: 64px;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 0;
+        display: flex;
+        justify-content: center;
+        overflow-x: auto;
+        gap: 1rem;
+        scrollbar-width: none;
+    }
+
+    .category-scroll::-webkit-scrollbar { display: none; }
+
+    .cat-chip {
+        padding: 0.75rem 1.5rem;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
+        white-space: nowrap;
+        font-weight: 700;
+        color: var(--text-dark);
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .cat-chip:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .cat-chip.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+    }
+
+    /* Menu Grid */
+    .menu-container {
+        max-width: 1200px;
+        margin: 3rem auto;
+        padding: 0 2rem;
+    }
+
+    .menu-section {
+        margin-bottom: 4rem;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .section-title::after {
+        content: '';
+        flex: 1;
+        height: 2px;
+        background: var(--border-color);
+    }
+
+    .item-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2.5rem;
+    }
+
+    .menu-card {
+        background: white;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .menu-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    .card-img {
+        height: 200px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .card-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .veg-tag {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.35rem;
+        background: white;
+        border-radius: 4px;
+        border: 2px solid #10b981;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .veg-dot {
+        width: 10px;
+        height: 10px;
+        background: #10b981;
+        border-radius: 50%;
+    }
+
+    .card-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .item-name {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        margin: 0 0 0.5rem 0;
+    }
+
+    .item-desc {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 1.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+
+    .item-price {
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    .add-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: var(--text-dark);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .add-btn:hover {
+        background: var(--primary);
+        transform: rotate(90deg);
+    }
+
+</style>
+{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto; padding: 2rem; background: var(--bg-light); min-height: 100vh;">
-    <header style="text-align: center; margin-bottom: 3rem;">
-        <h1 style="font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem; border-top: 4px solid var(--primary); padding-top: 1rem; display: inline-block;">
-            OUR MENU
-        </h1>
-        <p style="color: var(--text-muted); font-size: 1.1rem;">Fresh ingredients, chef-crafted recipes</p>
-    </header>
+<div class="menu-wrapper">
+    <!-- Hero -->
+    <section class="menu-hero">
+        <h1>Deliciously Crafted</h1>
+        <p>Explore our premium selection of chef-inspired dishes</p>
+    </section>
 
-    <!-- Category Filters -->
-    <div style="display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 1rem; margin-bottom: 2.5rem; scrollbar-width: none;">
-        <button onclick="filterCategory('all')" class="cat-pill active">All</button>
+    <!-- Categories -->
+    <div class="category-scroll">
+        <div class="cat-chip active" onclick="scrollToSection('all')">All Menu</div>
         {% for category in categories %}
-            <button onclick="filterCategory('{{ category.name|slugify }}')" class="cat-pill">
-                {{ category.name }}
-            </button>
+            <div class="cat-chip" onclick="scrollToSection('cat-{{ category.id }}')">{{ category.name }}</div>
         {% endfor %}
     </div>
 
-    <!-- Menu Items -->
-    <div id="menu-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
-        {% for item in menu_items %}
-            <div class="menu-item-card" data-category="{{ item.category.name|slugify }}" 
-                 style="background: white; border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; display: flex; box-shadow: 0 4px 20px rgba(0,0,0,0.04); transition: transform 0.2s;">
-                <div style="width: 120px; height: 120px; background: #f1f5f9; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
-                    {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}" style="width: 100%; height: 100%; object-fit: cover;">
-                    {% else %}
-                        🍴
-                    {% endif %}
-                </div>
-                <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                        <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-dark); margin: 0;">{{ item.name }}</h3>
-                        <span style="font-weight: 800; color: var(--primary); font-size: 1.1rem;">₹{{ item.price }}</span>
-                    </div>
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; flex: 1; line-height: 1.4;">
-                        {{ item.description|truncatechars:85 }}
-                    </p>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px;">
-                            {{ item.category.name }}
-                        </span>
-                        {% if item.is_vegetarian %}
-                            <span style="color: #10b981; font-size: 0.75rem; border: 1px solid #10b981; padding: 1px 4px; border-radius: 2px;">🟢 VEG</span>
+    <!-- Menu Sections -->
+    <div class="menu-container">
+        {% for category in categories %}
+            <div class="menu-section" id="cat-{{ category.id }}">
+                <h2 class="section-title">{{ category.name|upper }}</h2>
+                
+                <div class="item-grid">
+                    {% for item in menu_items %}
+                        {% if item.category == category %}
+                            <div class="menu-card">
+                                <div class="card-img">
+                                    {% if item.image %}
+                                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                                    {% else %}
+                                        <i class="fas fa-utensils fa-3x" style="opacity: 0.1;"></i>
+                                    {% endif %}
+                                    <div class="veg-tag">
+                                        <div class="veg-dot"></div>
+                                    </div>
+                                </div>
+                                <div class="card-content">
+                                    <h3 class="item-name">{{ item.name }}</h3>
+                                    <p class="item-desc">{{ item.description|default:"A delightful chef-prepared specialty made with fresh, locally sourced ingredients." }}</p>
+                                    
+                                    <div class="card-footer">
+                                        <div class="item-price">₹{{ item.base_price|floatformat:0 }}</div>
+                                        <button class="add-btn">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         {% endif %}
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         {% endfor %}
     </div>
 </div>
 
-<style>
-.cat-pill {
-    padding: 0.6rem 1.25rem;
-    background: white;
-    border: 1px solid var(--border-color);
-    border-radius: 50px;
-    font-weight: 600;
-    color: var(--text-muted);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-}
-
-.cat-pill.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
-}
-
-.menu-item-card:hover {
-    transform: translateY(-4px);
-    border-color: var(--primary);
-}
-</style>
-
 <script>
-function filterCategory(slug) {
-    // Update pills
-    document.querySelectorAll('.cat-pill').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.innerText.toLowerCase() === slug.replace('-', ' ') || (slug === 'all' && btn.innerText === 'All')) {
-            btn.classList.add('active');
-        }
-    });
-
-    // Filter items
-    const items = document.querySelectorAll('.menu-item-card');
-    items.forEach(item => {
-        if (slug === 'all' || item.dataset.category === slug) {
-            item.style.display = 'flex';
+    function scrollToSection(id) {
+        if (id === 'all') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         } else {
-            item.style.display = 'none';
+            const el = document.getElementById(id);
+            if (el) {
+                const offset = 140; // Navbar + Category bar
+                const bodyRect = document.body.getBoundingClientRect().top;
+                const elementRect = el.getBoundingClientRect().top;
+                const elementPosition = elementRect - bodyRect;
+                const offsetPosition = elementPosition - offset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
         }
+        
+        // Update active chip
+        document.querySelectorAll('.cat-chip').forEach(chip => {
+            if (chip.innerText.toLowerCase() === (id === 'all' ? 'all menu' : document.getElementById(id).querySelector('.section-title').innerText.toLowerCase())) {
+                chip.classList.add('active');
+            } else {
+                chip.classList.remove('active');
+            }
+        });
+    }
+
+    // Scroll spy for categories
+    window.addEventListener('scroll', () => {
+        let current = 'all';
+        const sections = document.querySelectorAll('.menu-section');
+        const offset = 200;
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - offset) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        document.querySelectorAll('.cat-chip').forEach(chip => {
+            chip.classList.remove('active');
+            const target = chip.getAttribute('onclick').match(/'([^']+)'/)[1];
+            if (target === current) {
+                chip.classList.add('active');
+            }
+        });
     });
-}
 </script>
 {% endblock %}

@@ -1,53 +1,391 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Billing Terminal{% endblock %}
+{% block title %}POS Terminal - RestoPOS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pos-layout {
+        display: grid;
+        grid-template-columns: 120px 1fr 400px;
+        height: calc(100vh - 64px);
+        background: #f1f5f9;
+        overflow: hidden;
+    }
+
+    /* Category Rail Upgrade */
+    .cat-rail {
+        background: white;
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.5rem 0.75rem;
+        z-index: 10;
+        overflow-y: auto;
+    }
+
+    .cat-btn {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border-radius: 16px;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        border: 2px solid transparent;
+    }
+
+    .cat-btn:hover {
+        background: #f8fafc;
+        color: var(--primary);
+    }
+
+    .cat-btn.active {
+        background: #fff7ed;
+        color: var(--primary);
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1);
+    }
+
+    .cat-btn i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Main Area Upgrade */
+    .pos-main {
+        display: flex;
+        flex-direction: column;
+        padding: 2.5rem;
+        overflow-y: auto;
+    }
+
+    .pos-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-bar {
+        position: relative;
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .search-bar input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        background: white;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    .search-bar i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+    }
+
+    .items-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .item-card {
+        background: white;
+        padding: 1.25rem;
+        border-radius: 20px;
+        border: 1px solid transparent;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 140px;
+        justify-content: center;
+    }
+
+    .item-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.05);
+        border-color: var(--primary);
+    }
+
+    .item-card:active {
+        transform: scale(0.95);
+    }
+
+    /* Cart Sidebar Upgrade */
+    .cart-sidebar {
+        background: white;
+        border-left: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        box-shadow: -10px 0 30px rgba(0,0,0,0.03);
+    }
+
+    .cart-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cart-content {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .cart-item {
+        padding: 1.25rem;
+        border-bottom: 1px dotted var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .cart-footer {
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .bill-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 1rem;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-dark);
+    }
+
+    .checkout-btn {
+        width: 100%;
+        margin-top: 1.5rem;
+        padding: 1.25rem;
+        border-radius: 16px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        font-weight: 800;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .checkout-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+    }
+
+    /* Order Feed Panel */
+    .live-feed-trigger {
+        position: fixed;
+        bottom: 2rem;
+        left: 2rem;
+        z-index: 100;
+        background: var(--text-dark);
+        color: white;
+        padding: 1rem;
+        border-radius: 50%;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="pos-main-wrapper">
+<div class="pos-layout">
     <!-- Category Side Rail -->
-    <div class="cat-rail" id="cat-rail">
-        <div class="cat-btn active" id="cat-all" onclick="filterByCategory('all')">All Items</div>
-        <!-- Dynamic Categories -->
-    </div>
+    <aside class="cat-rail">
+        <!-- Dynimcally filled by pos.js -->
+    </aside>
 
-    <!-- Items Grid -->
-    <div style="flex: 1; display:flex; flex-direction: column;">
-        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); background: white; margin-bottom: 1rem; border-radius: 12px; border: 1px solid var(--border-color);">
-            <input type="text" id="item-search" placeholder="Search menu items..." style="width: 100%; padding: 0.75rem; border: none; font-size: 1rem; outline: none;">
+    <!-- Main Item Grid -->
+    <main class="pos-main">
+        <header class="pos-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <h2 style="margin: 0; font-weight: 800;">
+                    {% if selected_table_id %}Table {{ selected_table_id }}{% else %}New Sale{% endif %}
+                </h2>
+                {% if selected_table_id %}
+                    <span style="padding: 0.35rem 0.75rem; border-radius: 50px; background: #fff7ed; color: var(--primary); font-size: 0.75rem; font-weight: 800; border: 1px solid var(--primary);">DINE-IN</span>
+                {% else %}
+                    <span style="padding: 0.35rem 0.75rem; border-radius: 50px; background: #f1f5f9; color: #64748b; font-size: 0.75rem; font-weight: 800;">TAKEAWAY</span>
+                {% endif %}
+            </div>
+            
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search menu items..." id="item-search">
+            </div>
+        </header>
+
+        <div class="items-grid" id="items-grid">
+            <!-- Dynamically filled by pos.js -->
         </div>
-        <div class="items-container" id="items-grid">
-            <!-- Dynamic Items -->
-        </div>
-    </div>
+    </main>
 
     <!-- Cart Sidebar -->
-    <div class="cart-sidebar">
-        <div class="cart-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>Current Order</span>
-            {% if selected_table_id %}
-                <span style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
-                    TABLE #{{ selected_table_id }}
-                </span>
-            {% endif %}
+    <aside class="cart-sidebar">
+        <div class="cart-header">
+            <div style="font-weight: 800; font-size: 1.25rem;">Live Cart</div>
+            <button onclick="cart = []; updateCartUI();" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 0.85rem;">Clear All</button>
         </div>
-        <input type="hidden" id="selected-table-id" value="{{ selected_table_id|default:'' }}">
-        <input type="hidden" id="selected-order-id" value="{{ selected_order_id|default:'' }}">
-        <div class="cart-items" id="cart-list">
-            <!-- Dynamic Cart Items -->
-            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
-                Cart is empty
+
+        <div class="cart-content" id="cart-list">
+            <!-- Dynamically filled by pos.js -->
+            <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
+                <i class="fas fa-shopping-cart fa-3x" style="opacity: 0.1; margin-bottom: 1.5rem;"></i>
+                <p style="font-weight: 600;">Your cart is empty</p>
             </div>
         </div>
+
         <div class="cart-footer">
-            <div style="display: flex; justify-content: space-between; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">
+            <div class="bill-row">
+                <span>Subtotal</span>
+                <span id="bill-subtotal">₹0.00</span>
+            </div>
+            <div class="bill-row">
+                <span>Tax (5%)</span>
+                <span id="bill-tax">₹0.00</span>
+            </div>
+            <div class="total-row">
                 <span>Total</span>
                 <span>₹<span id="cart-total">0.00</span></span>
             </div>
-            <button onclick="handleCheckout()" style="width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                SETTLE BILL
+            
+            <button class="checkout-btn" onclick="handleCheckout()">
+                <i class="fas fa-lightning"></i> COMPLETE ORDER
             </button>
         </div>
-    </div>
+    </aside>
 </div>
+
+<input type="hidden" id="selected-table-id" value="{{ selected_table_id|default:'' }}">
+<input type="hidden" id="selected-order-id" value="{{ selected_order_id|default:'' }}">
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Extend pos.js functionality for better UI
+    document.getElementById('item-search')?.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const cards = document.querySelectorAll('.item-card');
+        cards.forEach(card => {
+            const name = card.innerText.toLowerCase();
+            card.style.display = name.includes(query) ? 'flex' : 'none';
+        });
+    });
+
+    // Override the updateCartUI from pos.js to support the new breakdown
+    const originalUpdateCartUI = window.updateCartUI;
+    window.updateCartUI = function() {
+        // Original logic
+        const cartList = document.getElementById('cart-list');
+        cartList.innerHTML = '';
+        
+        if (cart.length === 0) {
+            cartList.innerHTML = `
+                <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
+                    <i class="fas fa-shopping-cart fa-3x" style="opacity: 0.1; margin-bottom: 1.5rem;"></i>
+                    <p style="font-weight: 600;">Your cart is empty</p>
+                </div>`;
+            document.getElementById('bill-subtotal').innerText = "₹0.00";
+            document.getElementById('bill-tax').innerText = "₹0.00";
+            document.getElementById('cart-total').innerText = "0.00";
+            return;
+        }
+
+        let subtotal = 0;
+        cart.forEach((item, index) => {
+            const row = document.createElement('div');
+            row.className = 'cart-item';
+            row.innerHTML = `
+                <div style="flex: 1;">
+                    <div style="font-weight: 700; color: var(--text-dark);">${item.name}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        ${item.quantity} x ₹${item.price.toFixed(2)}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: 800; color: var(--primary);">₹${(item.price * item.quantity).toFixed(2)}</div>
+                    <div onclick="removeFromCart(${index})" style="color: #ef4444; cursor: pointer; font-size: 0.7rem; font-weight: 700; margin-top: 4px;">REMOVE</div>
+                </div>
+            `;
+            cartList.appendChild(row);
+            subtotal += item.price * item.quantity;
+        });
+
+        const tax = subtotal * 0.05;
+        const total = subtotal + tax;
+
+        document.getElementById('bill-subtotal').innerText = "₹" + subtotal.toFixed(2);
+        document.getElementById('bill-tax').innerText = "₹" + tax.toFixed(2);
+        document.getElementById('cart-total').innerText = total.toFixed(2);
+    };
+
+    // Override renderCategories to use icons
+    const iconMap = {
+        'Starter': 'fa-bowl-food',
+        'Main Course': 'fa-utensils',
+        'Beverage': 'fa-glass-water',
+        'Dessert': 'fa-ice-cream',
+        'Pizza': 'fa-pizza-slice',
+        'Burger': 'fa-burger'
+    };
+
+    window.renderCategories = function(categories) {
+        const rail = document.querySelector('.cat-rail');
+        rail.innerHTML = '';
+        
+        // All Items
+        const allBtn = document.createElement('div');
+        allBtn.className = 'cat-btn active';
+        allBtn.id = 'cat-all';
+        allBtn.innerHTML = `<i class="fas fa-th-large"></i><span>All</span>`;
+        allBtn.onclick = () => filterByCategory('all');
+        rail.appendChild(allBtn);
+
+        categories.forEach(cat => {
+            const btn = document.createElement('div');
+            btn.className = 'cat-btn';
+            btn.id = `cat-${cat.id}`;
+            const icon = iconMap[cat.name] || 'fa-utensils';
+            btn.innerHTML = `<i class="fas ${icon}"></i><span>${cat.name}</span>`;
+            btn.onclick = () => filterByCategory(cat.id);
+            rail.appendChild(btn);
+        });
+    };
+</script>
 {% endblock %}

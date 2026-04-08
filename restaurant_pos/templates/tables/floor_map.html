@@ -3,133 +3,444 @@
 
 {% block title %}Floor Management - RestoPOS{% endblock %}
 
-{% block content %}
-<div style="padding: 2rem;">
-    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div>
-            <h1 style="font-size: 2rem; font-weight: 800; margin: 0;">Floor Management</h1>
-            <p style="color: var(--text-muted); margin: 0.25rem 0 0 0;">Visual table overview & occupancy</p>
-        </div>
-        <div style="display: flex; gap: 1rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: #10b981;"></div>
-                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Available</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: #f97316;"></div>
-                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Occupied</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <div style="width: 12px; height: 12px; border-radius: 3px; background: #3b82f6;"></div>
-                <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Reserved</span>
-            </div>
-        </div>
-    </header>
-
-    {% for section in sections %}
-    <div style="margin-bottom: 3rem;">
-        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-dark); border-left: 4px solid var(--primary); padding-left: 1rem;">
-            {{ section.name|upper }}
-        </h2>
+{% block extra_css %}
+<style>
+    :root {
+        --floor-bg: #0f172a;
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --accent-glow: rgba(249, 115, 22, 0.15);
         
-        <div class="floor-canvas" style="position: relative; width: 100%; height: 600px; background: white; border: 1px solid var(--border-color); border-radius: 20px; box-shadow: var(--shadow-sm); overflow: hidden;">
-            <!-- Grid Pattern Background -->
-            <div style="position: absolute; inset: 0; background-image: radial-gradient(var(--border-color) 1px, transparent 1px); background-size: 30px 30px; opacity: 0.5;"></div>
+        --status-available: #10b981;
+        --status-occupied: #f97316;
+        --status-reserved: #3b82f6;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Main container handles scroll */
+    }
+
+    .floor-dashboard {
+        height: calc(100vh - 64px); /* Navbar height offset */
+        background: var(--floor-bg);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Animated Background */
+    .floor-dashboard::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: 
+            radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+        animation: breath 15s ease-in-out infinite alternate;
+        z-index: 0;
+    }
+
+    @keyframes breath {
+        0% { opacity: 0.3; transform: scale(1); }
+        100% { opacity: 0.7; transform: scale(1.1); }
+    }
+
+    /* Floating Tab Navigation */
+    .floor-nav {
+        position: absolute;
+        top: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 50px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .nav-tab {
+        padding: 0.75rem 1.5rem;
+        border-radius: 40px;
+        color: rgba(255,255,255,0.6);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        border: none;
+        background: transparent;
+    }
+
+    .nav-tab.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+    }
+
+    .nav-tab:hover:not(.active) {
+        color: white;
+        background: rgba(255,255,255,0.05);
+    }
+
+    /* Floor Canvas Area */
+    .floor-container {
+        flex: 1;
+        position: relative;
+        padding: 6rem 2rem 2rem 2rem;
+        overflow-y: auto;
+        z-index: 1;
+    }
+
+    .section-canvas {
+        display: none; /* Controlled by JS */
+        position: relative;
+        width: 100%;
+        height: 700px;
+        background: rgba(255,255,255,0.01);
+        border: 1px solid var(--glass-border);
+        border-radius: 32px;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .section-canvas.active {
+        display: block;
+        animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Overlay */
+    .grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(var(--glass-border) 1px, transparent 1px),
+                          linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
+        background-size: 40px 40px;
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    /* Table Node Styles */
+    .table-node {
+        position: absolute;
+        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        text-align: center;
+        user-select: none;
+        z-index: 10;
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--glass-border);
+    }
+
+    .table-node::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+        z-index: -1;
+    }
+
+    .table-node .table-icon {
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+        opacity: 0.8;
+    }
+
+    .table-node .table-name {
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .table-node .table-cap {
+        font-size: 0.65rem;
+        opacity: 0.5;
+        font-weight: 500;
+        text-transform: uppercase;
+        margin-top: 2px;
+    }
+
+    /* Status Varients */
+    .table-node.available {
+        background: rgba(16, 185, 129, 0.08);
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+    .table-node.available:hover {
+        background: rgba(16, 185, 129, 0.15);
+        box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+    }
+
+    .table-node.occupied {
+        background: rgba(249, 115, 22, 0.12);
+        border-color: rgba(249, 115, 22, 0.4);
+        animation: entry-pulse 3s infinite;
+    }
+    .table-node.occupied .table-name { color: var(--status-occupied); }
+    .table-node.occupied:hover {
+        background: rgba(249, 115, 22, 0.2);
+        box-shadow: 0 0 40px rgba(249, 115, 22, 0.25);
+    }
+
+    .table-node.reserved {
+        background: rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+    .table-node.reserved .table-name { color: var(--status-reserved); }
+
+    @keyframes entry-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.2); }
+        70% { box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+    }
+
+    .table-node:hover {
+        transform: scale(1.08) translateY(-8px);
+        z-index: 50;
+        border-color: white;
+    }
+
+    /* Floating Legend */
+    .floor-legend {
+        position: absolute;
+        bottom: 2rem;
+        left: 2rem;
+        z-index: 100;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(20px);
+        padding: 1rem 1.5rem;
+        border-radius: 20px;
+        border: 1px solid var(--glass-border);
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.85rem;
+        color: rgba(255,255,255,0.7);
+        font-weight: 600;
+    }
+
+    .legend-color {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+
+    /* Stats Widget */
+    .floor-stats {
+        position: absolute;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 100;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(20px);
+        padding: 1rem 1.5rem;
+        border-radius: 20px;
+        border: 1px solid var(--glass-border);
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 2rem;
+        color: rgba(255,255,255,0.5);
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .stat-row b {
+        color: white;
+    }
+
+    /* Active Orders View */
+    .order-popover {
+        position: absolute;
+        bottom: 120%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: white;
+        color: var(--text-dark);
+        padding: 0.75rem;
+        border-radius: 12px;
+        width: 150px;
+        font-size: 0.75rem;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s;
+        pointer-events: none;
+    }
+
+    .table-node:hover .order-popover {
+        opacity: 1;
+        visibility: visible;
+        bottom: 110%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="floor-dashboard">
+    <!-- Section Navigation -->
+    <div class="floor-nav">
+        {% for section in sections %}
+            <button class="nav-tab {% if forloop.first %}active{% endif %}" 
+                    onclick="switchSection('{{ section.id }}', this)">
+                <i class="fas fa-layer-group" style="margin-right: 8px;"></i>
+                {{ section.name }}
+            </button>
+        {% endfor %}
+    </div>
+
+    <!-- Floor Canvas Area -->
+    <div class="floor-container">
+        {% for section in sections %}
+        <div id="section-{{ section.id }}" class="section-canvas {% if forloop.first %}active{% endif %}">
+            <div class="grid-overlay"></div>
             
             {% for table in section.tables.all %}
                 {% with order=table_order_map|get_item:table.id %}
                 <div class="table-node {% if order %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"
                      onclick="handleTableClick('{{ table.id }}', '{{ order.id|default:'' }}')"
-                     style="position: absolute; 
-                            left: {{ table.x_pos }}%; 
+                     style="left: {{ table.x_pos }}%; 
                             top: {{ table.y_pos }}%; 
                             width: {{ table.width }}px; 
                             height: {{ table.height }}px; 
-                            border-radius: {% if table.shape == 'circle' %}50%{% else %}12px{% endif %};
-                            cursor: pointer;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: center;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                            z-index: 10;">
+                            border-radius: {% if table.shape == 'circle' %}50%{% else %}16px{% endif %};">
                     
-                    <span style="font-weight: 800; font-size: 1.1rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));">
-                        {{ table.name }}
-                    </span>
+                    <div class="table-icon">
+                        {% if table.shape == 'circle' %}
+                            <i class="fas fa-circle-notch"></i>
+                        {% elif table.width > table.height %}
+                            <i class="fas fa-rectangle-ad"></i>
+                        {% else %}
+                            <i class="fas fa-square-full" style="font-size: 1.2rem;"></i>
+                        {% endif %}
+                    </div>
                     
+                    <span class="table-name">{{ table.name }}</span>
+                    <span class="table-cap">Cap: {{ table.capacity }}</span>
+
                     {% if order %}
-                        <div style="font-size: 0.7rem; font-weight: 700; margin-top: 4px; opacity: 0.9;">
-                            #{{ order.order_number|slice:":5" }}
-                        </div>
-                    {% else %}
-                        <div style="font-size: 0.65rem; font-weight: 600; margin-top: 4px; opacity: 0.7;">
-                            CAP: {{ table.capacity }}
+                        <div class="order-popover">
+                            <div style="font-weight: 700; border-bottom: 1px solid #eee; margin-bottom: 5px; padding-bottom: 5px;">
+                                Order #{{ order.order_number|slice:":8" }}
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Status:</span>
+                                <b style="color: var(--primary);">{{ order.status|title }}</b>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 3px;">
+                                <span>Total:</span>
+                                <b>₹{{ order.total_amount }}</b>
+                            </div>
                         </div>
                     {% endif %}
                 </div>
                 {% endwith %}
             {% endfor %}
         </div>
-    </div>
-    {% empty %}
-        <div style="text-align: center; padding: 4rem; color: var(--text-muted); border: 2px dashed var(--border-color); border-radius: 20px;">
-            No floor sections configured. Head to Admin to add sections and tables.
+        {% empty %}
+        <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.3);">
+            <i class="fas fa-map-marked-alt fa-4x" style="margin-bottom: 1.5rem;"></i>
+            <h2 style="font-weight: 700;">No floor sections defined</h2>
+            <p>Please configure floor sections and tables in the admin panel.</p>
         </div>
-    {% endfor %}
+        {% endfor %}
+    </div>
+
+    <!-- Floating Legend -->
+    <div class="floor-legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--status-available);"></div>
+            Available
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--status-occupied); box-shadow: 0 0 10px var(--status-occupied);"></div>
+            Occupied
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--status-reserved);"></div>
+            Reserved
+        </div>
+    </div>
+
+    <!-- Floating Stats -->
+    <div class="floor-stats">
+        <div class="stat-row">
+            <span>Total Tables</span>
+            <b id="total-tables">0</b>
+        </div>
+        <div class="stat-row">
+            <span>Occupancy</span>
+            <b id="occupancy-rate">0%</b>
+        </div>
+    </div>
 </div>
 
-<style>
-.floor-canvas {
-    background-color: #f8fafc !important;
-}
-
-.table-node {
-    border: 2px solid transparent;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-.table-node.available {
-    background: rgba(16, 185, 129, 0.15);
-    border-color: #10b981;
-    color: #065f46;
-}
-
-.table-node.occupied {
-    background: rgba(249, 115, 22, 0.2);
-    border-color: #f97316;
-    color: #9a3412;
-    box-shadow: 0 4px 20px rgba(249, 115, 22, 0.2);
-    animation: pulse 2s infinite;
-}
-
-.table-node.reserved {
-    background: rgba(59, 130, 246, 0.15);
-    border-color: #3b82f6;
-    color: #1e40af;
-}
-
-.table-node:hover {
-    transform: scale(1.05) translateY(-5px);
-    z-index: 20;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
-}
-</style>
-
 <script>
+function switchSection(sectionId, element) {
+    // Update tabs
+    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    element.classList.add('active');
+
+    // Update canvas
+    document.querySelectorAll('.section-canvas').forEach(canvas => canvas.classList.remove('active'));
+    document.getElementById(`section-${sectionId}`).classList.add('active');
+    
+    updateStats(sectionId);
+}
+
+function updateStats(sectionId) {
+    const section = document.getElementById(`section-${sectionId}`);
+    if (!section) return;
+    
+    const total = section.querySelectorAll('.table-node').length;
+    const occupied = section.querySelectorAll('.table-node.occupied').length;
+    const rate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+    
+    document.getElementById('total-tables').innerText = total;
+    document.getElementById('occupancy-rate').innerText = `${rate}%`;
+}
+
 function handleTableClick(tableId, orderId) {
     if (orderId) {
-        // Table occupied, go to POS and load this order (simulation for now)
         window.location.href = `/pos/?table_id=${tableId}&order_id=${orderId}`;
     } else {
-        // Table available, start new order
         window.location.href = `/pos/?table_id=${tableId}`;
     }
 }
+
+// Initial stats for first section
+document.addEventListener('DOMContentLoaded', () => {
+    const firstTab = document.querySelector('.nav-tab');
+    if (firstTab) {
+        const sectionId = firstTab.getAttribute('onclick').match(/'([^']+)'/)[1];
+        updateStats(sectionId);
+    }
+});
 </script>
 {% endblock %}
