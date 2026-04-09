@@ -1,4 +1,5 @@
 from django.db import models
+from decimal import Decimal
 from accounts.models import User
 from menu.models import MenuItem
 from tables.models import Table
@@ -41,7 +42,10 @@ class Order(models.Model):
     waiter = models.ForeignKey(User, null=True, blank=True, related_name='taken_orders', on_delete=models.SET_NULL)
     
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    cgst = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    sgst = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Total tax (cgst + sgst)
+    service_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -52,6 +56,22 @@ class Order(models.Model):
 
     def __str__(self):
         return self.order_number
+
+    def calculate_totals(self):
+        """Calculates subtotal, taxes, and final total based on order items."""
+        from django.db.models import Sum, F
+        self.subtotal = self.items.aggregate(
+            total=Sum(F('price') * F('quantity'), output_field=models.DecimalField())
+        )['total'] or 0
+        
+        # Standard 5% GST (2.5% CGST + 2.5% SGST)
+        self.cgst = self.subtotal * Decimal('0.025')
+        self.sgst = self.subtotal * Decimal('0.025')
+        self.tax = self.cgst + self.sgst
+        
+        # Grand Total
+        self.total_amount = self.subtotal + self.tax + self.service_charge
+        self.save()
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)

@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from accounts.decorators import chef_required
@@ -89,4 +89,10 @@ class SelfOrderView(TemplateView):
         context['categories'] = Category.objects.all().order_by('order')
         context['menu_items'] = MenuItem.objects.filter(is_active=True)
         return context
+
+def generate_invoice(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    # Ensure totals are calculated before printing
+    order.calculate_totals()
+    return render(request, 'orders/invoice.html', {'order': order})
 

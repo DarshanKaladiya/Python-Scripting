@@ -369,8 +369,16 @@
                 <span id="bill-subtotal">₹0.00</span>
             </div>
             <div class="bill-row">
-                <span>Tax (5%)</span>
-                <span id="bill-tax">₹0.00</span>
+                <span>CGST (2.5%)</span>
+                <span id="bill-cgst">₹0.00</span>
+            </div>
+            <div class="bill-row">
+                <span>SGST (2.5%)</span>
+                <span id="bill-sgst">₹0.00</span>
+            </div>
+            <div class="bill-row" id="service-charge-row" style="display: none;">
+                <span>Service Charge (5%)</span>
+                <span id="bill-service">₹0.00</span>
             </div>
             <div class="total-row">
                 <span>Total</span>
@@ -415,7 +423,9 @@
                     <p style="font-weight: 600;">Your cart is empty</p>
                 </div>`;
             document.getElementById('bill-subtotal').innerText = "₹0.00";
-            document.getElementById('bill-tax').innerText = "₹0.00";
+            document.getElementById('bill-cgst').innerText = "₹0.00";
+            document.getElementById('bill-sgst').innerText = "₹0.00";
+            document.getElementById('bill-service').innerText = "₹0.00";
             document.getElementById('cart-total').innerText = "0.00";
             return;
         }
@@ -440,12 +450,64 @@
             subtotal += item.price * item.quantity;
         });
 
-        const tax = subtotal * 0.05;
-        const total = subtotal + tax;
+        const cgst = subtotal * 0.025;
+        const sgst = subtotal * 0.025;
+        const serviceCharge = 0; // Can be toggled if needed
+        const total = subtotal + cgst + sgst + serviceCharge;
 
         document.getElementById('bill-subtotal').innerText = "₹" + subtotal.toFixed(2);
-        document.getElementById('bill-tax').innerText = "₹" + tax.toFixed(2);
+        document.getElementById('bill-cgst').innerText = "₹" + cgst.toFixed(2);
+        document.getElementById('bill-sgst').innerText = "₹" + sgst.toFixed(2);
+        document.getElementById('bill-service').innerText = "₹" + serviceCharge.toFixed(2);
         document.getElementById('cart-total').innerText = total.toFixed(2);
+    };
+
+    // Override handleCheckout to use server-side invoicing
+    window.handleCheckout = async function() {
+        if (cart.length === 0) {
+            alert("Cart is empty!");
+            return;
+        }
+        
+        const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        const selectedTableId = document.getElementById('selected-table-id').value;
+        const selectedOrderId = document.getElementById('selected-order-id').value;
+        
+        const payload = {
+            order_number: "ORD" + Date.now(),
+            order_type: selectedTableId ? "dine_in" : "takeaway",
+            status: "completed",
+            payment_status: "paid",
+            table: selectedTableId || null,
+            subtotal: subtotal,
+            items: cart.map(item => ({
+                menu_item: item.id,
+                quantity: item.quantity,
+                price: item.price
+            }))
+        };
+
+        try {
+            const resp = await fetch('/api/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                cart = [];
+                updateCartUI();
+                if (confirm("Order Completed! Print Bill?")) {
+                    window.open(`/invoice/${data.id}/`, '_blank', 'width=400,height=600');
+                }
+            } else {
+                alert("Checkout failed. Check console.");
+            }
+        } catch (err) { console.error(err); }
     };
 
     // Override renderCategories to use icons

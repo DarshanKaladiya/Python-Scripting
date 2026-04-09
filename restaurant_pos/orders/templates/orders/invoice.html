@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ order.order_number }}</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 300px;
+            margin: 0 auto;
+            padding: 20px;
+            font-size: 14px;
+            color: #000;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .restaurant-name {
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .separator {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+        }
+        .bill-info {
+            margin-bottom: 10px;
+        }
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .item-details {
+            flex: 1;
+        }
+        .totals-section {
+            margin-top: 15px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        .grand-total {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 12px;
+        }
+        @media print {
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="header">
+        <div class="restaurant-name">RESTOPOS DELIGHT</div>
+        <div>123 Gourmet Street, Food City</div>
+        <div>Tel: +91 98765 43210</div>
+        <div>GSTIN: 24AAACC1234F1Z5</div>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="bill-info">
+        <div><strong>Order:</strong> #{{ order.order_number }}</div>
+        <div><strong>Type:</strong> {{ order.get_order_type_display }}</div>
+        {% if order.table %}
+            <div><strong>Table:</strong> {{ order.table.number }}</div>
+        {% endif %}
+        <div><strong>Date:</strong> {{ order.created_at|date:"d/m/Y H:i" }}</div>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="items-section">
+        {% for item in order.items.all %}
+            <div class="item-row">
+                <div class="item-details">
+                    {{ item.quantity }} x {{ item.menu_item.name }}
+                </div>
+                <div>₹{{ item.price }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="totals-section">
+        <div class="item-row">
+            <div>Subtotal</div>
+            <div>₹{{ order.subtotal }}</div>
+        </div>
+        <div class="item-row">
+            <div>CGST (2.5%)</div>
+            <div>₹{{ order.cgst }}</div>
+        </div>
+        <div class="item-row">
+            <div>SGST (2.5%)</div>
+            <div>₹{{ order.sgst }}</div>
+        </div>
+        {% if order.service_charge > 0 %}
+            <div class="item-row">
+                <div>Service Charge</div>
+                <div>₹{{ order.service_charge }}</div>
+            </div>
+        {% endif %}
+        
+        <div class="separator"></div>
+        
+        <div class="total-row grand-total">
+            <div>GRAND TOTAL</div>
+            <div>₹{{ order.total_amount }}</div>
+        </div>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="footer">
+        <div>Thank you for dining with us!</div>
+        <div style="margin-top: 5px;">Visit again soon.</div>
+        <div style="margin-top: 10px; font-size: 10px;">Powered by RestoPOS</div>
+    </div>
+
+    <div class="no-print" style="margin-top: 20px; text-align: center;">
+        <button onclick="window.close()" style="padding: 10px 20px; cursor: pointer;">Close Window</button>
+    </div>
+</body>
+</html>
