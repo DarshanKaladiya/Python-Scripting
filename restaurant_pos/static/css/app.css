@@ -19,118 +19,14 @@ body {
     color: var(--text-dark);
 }
 
-.pos-main-wrapper {
-    display: flex;
-    height: 100vh;
-    padding: 1rem;
-    gap: 1rem;
-}
-
-/* Category Rail */
-.cat-rail {
-    width: 140px;
-    background: var(--white);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    box-shadow: var(--shadow-sm);
-}
-
-.cat-btn {
-    padding: 1.25rem 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-    text-align: center;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    transition: all 0.2s;
-}
-
-.cat-btn:hover {
-    background-color: #fef2f2;
-}
-
-.cat-btn.active {
-    background-color: var(--primary);
-    color: var(--white);
-    font-weight: 600;
-}
-
-
-/* Item Grid */
-.items-container {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    grid-auto-rows: min-content;
-    gap: 1rem;
-    overflow-y: auto;
-}
-
-.item-card {
-    background: var(--white);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 120px;
-    box-shadow: var(--shadow-sm);
-}
-
-
-.item-card:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary);
-}
-
-.item-card:active {
-    transform: scale(0.95);
-}
-
-/* Live Cart */
-.cart-sidebar {
-    width: 380px;
-    background: var(--white);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-}
-
-.cart-header {
-    padding: 1rem;
-    border-bottom: 1px solid var(--border-color);
-    font-weight: 600;
-}
-
-.cart-items {
-    flex: 1;
-    overflow-y: auto;
-}
-
-.cart-footer {
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
-}
-
-/* Navbar */
+/* Generic Layout components (Inherited by multiple pages) */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 2rem;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border-color);
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -138,9 +34,10 @@ body {
 
 .nav-brand {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 800;
     color: var(--primary);
-    letter-spacing: -0.5px;
+    text-decoration: none;
+    letter-spacing: -0.8px;
 }
 
 .nav-links {
@@ -151,10 +48,10 @@ body {
 
 .nav-links a {
     text-decoration: none;
-    color: var(--text-dark);
-    font-weight: 500;
-    font-size: 0.95rem;
-    transition: color 0.2s;
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s;
 }
 
 .nav-links a:hover {
@@ -163,11 +60,12 @@ body {
 
 .logout-btn {
     background: #fee2e2;
-    color: #991b1b;
+    color: #ef4444;
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 8px;
-    font-weight: 600;
+    font-weight: 800;
+    font-size: 0.8rem;
     cursor: pointer;
     transition: all 0.2s;
 }
@@ -176,7 +74,6 @@ body {
     background: #fecaca;
 }
 
-/* Glass Card */
 .glass-card {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(10px);
@@ -211,3 +108,30 @@ body {
     font-weight: 700;
     color: var(--text-dark);
 }
+
+/* Dietary Dots for POS */
+.diet-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+    background: white;
+}
+
+.diet-dot i {
+    font-size: 6px;
+}
+
+.dot-v { border-color: #10b981; }
+.dot-v i { color: #10b981; }
+
+.dot-nv { border-color: #ef4444; }
+.dot-nv i { color: #ef4444; }
+
+.dot-e { border-color: #f59e0b; }
+.dot-e i { color: #f59e0b; }

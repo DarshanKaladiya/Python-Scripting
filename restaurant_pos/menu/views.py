@@ -22,6 +22,25 @@ class CustomerMenuView(ListView):
         return MenuItem.objects.filter(is_active=True).select_related('category')
 
     def get_context_data(self, **kwargs):
+        from tables.models import Table
+        from orders.models import Order
+        
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all().order_by('order')
+        
+        # Smart Table Detection
+        table_id = self.request.GET.get('table')
+        if table_id:
+            try:
+                table = Table.objects.get(id=table_id)
+                context['table'] = table
+                # Check for active dine-in order on this table
+                active_order = Order.objects.filter(
+                    table=table, 
+                    status__in=['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready']
+                ).first()
+                context['active_order'] = active_order
+            except (Table.DoesNotExist, ValueError):
+                pass
+                
         return context

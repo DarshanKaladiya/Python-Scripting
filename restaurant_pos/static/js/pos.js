@@ -3,6 +3,15 @@ let cart = [];
 let allCategories = [];
 let allItems = [];
 
+const iconMap = {
+    'Starter': 'fa-bowl-food',
+    'Main Course': 'fa-utensils',
+    'Beverage': 'fa-glass-water',
+    'Dessert': 'fa-ice-cream',
+    'Pizza': 'fa-pizza-slice',
+    'Burger': 'fa-burger'
+};
+
 // Fetching functions
 async function fetchMenuData() {
     try {
@@ -11,8 +20,8 @@ async function fetchMenuData() {
         allCategories = data;
         renderCategories(allCategories);
         
-        // Default to first category or all
-        renderItems('all');
+        // Default to all items
+        filterByCategory('all');
     } catch (err) {
         console.error("Error loading menu:", err);
     }
@@ -27,7 +36,7 @@ function renderCategories(categories) {
     const allBtn = document.createElement('div');
     allBtn.className = 'cat-btn active';
     allBtn.id = 'cat-all';
-    allBtn.innerText = 'All Items';
+    allBtn.innerHTML = `<i class="fas fa-th-large"></i><span>All</span>`;
     allBtn.onclick = () => filterByCategory('all');
     rail.appendChild(allBtn);
 
@@ -35,16 +44,17 @@ function renderCategories(categories) {
         const btn = document.createElement('div');
         btn.className = 'cat-btn';
         btn.id = `cat-${cat.id}`;
-        btn.innerText = cat.name;
+        const icon = iconMap[cat.name] || 'fa-utensils';
+        btn.innerHTML = `<i class="fas ${icon}"></i><span>${cat.name}</span>`;
         btn.onclick = () => filterByCategory(cat.id);
         rail.appendChild(btn);
     });
 }
 
 function filterByCategory(categoryId) {
-    // Update active class
     document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`cat-${categoryId}`).classList.add('active');
+    const activeBtn = document.getElementById(`cat-${categoryId}`);
+    if (activeBtn) activeBtn.classList.add('active');
     
     renderItems(categoryId);
 }
@@ -67,16 +77,24 @@ function renderItems(categoryId) {
         const card = document.createElement('div');
         card.className = 'item-card';
         card.onclick = () => addToCart(item);
+        
+        let dietClass = 'dot-nv';
+        if (item.item_type === 'veg') dietClass = 'dot-v';
+        else if (item.item_type === 'egg') dietClass = 'dot-e';
+
         card.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 0.5rem;">${item.name}</div>
-            <div style="color: var(--primary); font-weight: 700;">₹${item.base_price}</div>
+            <div style="font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span class="diet-dot ${dietClass}"><i class="fa-solid fa-circle"></i></span>
+                ${item.name}
+            </div>
+            <div style="color: var(--primary); font-weight: 800; font-size: 1.1rem;">₹${parseFloat(item.base_price).toFixed(2)}</div>
         `;
         grid.appendChild(card);
     });
 }
 
 function addToCart(item) {
-    const existing = cart.find(i => i.id === item.id);
+    const existing = cart.find(i => i.id === item.id && !i.isExisting);
     if (existing) {
         existing.quantity += 1;
     } else {
@@ -84,8 +102,21 @@ function addToCart(item) {
             id: item.id,
             name: item.name,
             price: parseFloat(item.base_price),
-            quantity: 1
+            item_type: item.item_type,
+            quantity: 1,
+            isExisting: false
         });
+    }
+    updateCartUI();
+}
+
+function updateQty(itemId, delta) {
+    const item = cart.find(i => i.id === itemId && !i.isExisting);
+    if (item) {
+        item.quantity += delta;
+        if (item.quantity <= 0) {
+            cart = cart.filter(i => !(i.id === itemId && !i.isExisting));
+        }
     }
     updateCartUI();
 }
@@ -95,129 +126,146 @@ function updateCartUI() {
     cartList.innerHTML = '';
     
     if (cart.length === 0) {
-        cartList.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-muted);">Cart is empty</div>';
-    }
-
-    let total = 0;
-    cart.forEach((item, index) => {
-        const row = document.createElement('div');
-        row.style.padding = '1rem';
-        row.style.borderBottom = '1px solid var(--border-color)';
-        row.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 600;">${item.name}</div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        ${item.quantity} x ₹${item.price.toFixed(2)}
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-weight: 600;">₹${(item.price * item.quantity).toFixed(2)}</div>
-                    <button onclick="removeFromCart(${index})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.75rem;">Remove</button>
-                </div>
+        cartList.innerHTML = `
+            <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
+                <i class="fas fa-shopping-cart fa-3x" style="opacity: 0.1; margin-bottom: 1.5rem;"></i>
+                <p style="font-weight: 600;">Your cart is empty</p>
             </div>
         `;
-        cartList.appendChild(row);
-        total += item.price * item.quantity;
+        resetBillTotals();
+        return;
+    }
+
+    const selectedOrderId = document.getElementById('selected-order-id')?.value;
+    const isAppendMode = !!selectedOrderId;
+    const settleBtn = document.getElementById('settle-btn');
+    const checkoutText = document.getElementById('checkout-btn-text');
+    
+    if (isAppendMode) {
+        if (settleBtn) settleBtn.style.display = 'flex';
+        if (checkoutText) checkoutText.innerText = "UPDATE KOT / ADD ITEMS";
+    }
+
+    let subtotal = 0;
+    cart.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'cart-item-card';
+        if (item.isExisting) card.style.opacity = '0.7';
+
+        let dietClass = 'dot-nv';
+        if (item.item_type === 'veg') dietClass = 'dot-v';
+        else if (item.item_type === 'egg') dietClass = 'dot-e';
+
+        card.innerHTML = `
+            <div class="cic-header">
+                <div>
+                    <div class="cic-name">
+                        <span class="diet-dot ${dietClass}"><i class="fa-solid fa-circle"></i></span>
+                        ${item.name}
+                        ${item.isExisting ? '<span style="font-size: 0.6rem; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">KOT</span>' : ''}
+                    </div>
+                </div>
+                <div class="cic-price">₹${(item.price * item.quantity).toFixed(2)}</div>
+            </div>
+            <div class="cic-controls">
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    ${!item.isExisting ? `
+                        <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
+                        <span style="font-weight: 800; font-size: 1rem; min-width: 20px; text-align: center;">${item.quantity}</span>
+                        <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
+                    ` : `<span style="font-weight: 700; color: #64748b;">Qty: ${item.quantity}</span>`}
+                </div>
+                ${!item.isExisting ? `
+                    <button onclick="updateQty('${item.id}', -${item.quantity})" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 0.75rem;">REMOVE</button>
+                ` : `<span style="font-size: 0.65rem; font-weight: 800; color: #94a3b8;">LOCKED</span>`}
+            </div>
+        `;
+        cartList.appendChild(card);
+        subtotal += item.price * item.quantity;
     });
 
+    const tax = subtotal * 0.05;
+    const total = subtotal + tax;
+
+    document.getElementById('bill-subtotal').innerText = '₹' + subtotal.toFixed(2);
+    document.getElementById('bill-cgst').innerText = '₹' + (tax/2).toFixed(2);
+    document.getElementById('bill-sgst').innerText = '₹' + (tax/2).toFixed(2);
     document.getElementById('cart-total').innerText = total.toFixed(2);
 }
 
-function removeFromCart(index) {
-    cart.splice(index, 1);
-    updateCartUI();
+function resetBillTotals() {
+    document.getElementById('bill-subtotal').innerText = '₹0.00';
+    document.getElementById('bill-cgst').innerText = '₹0.00';
+    document.getElementById('bill-sgst').innerText = '₹0.00';
+    document.getElementById('cart-total').innerText = '0.00';
 }
 
 async function handleCheckout() {
+    const selectedOrderId = document.getElementById('selected-order-id').value;
+    const newItems = cart.filter(item => !item.isExisting);
+    
     if (cart.length === 0) {
         alert("Cart is empty!");
         return;
     }
-    
-    // 1. Calculate totals
-    let subtotal = 0;
-    cart.forEach(item => subtotal += item.price * item.quantity);
-    
-    // 2. Prepare payload
+
+    if (selectedOrderId && newItems.length === 0) {
+        alert("No new items added. Use 'Settle' to complete bill.");
+        return;
+    }
+
+    let url = '/api/orders/';
+    let method = 'POST';
     const selectedTableId = document.getElementById('selected-table-id').value;
-    const payload = {
+    
+    let payload = {
         order_number: "ORD" + Date.now(),
         order_type: selectedTableId ? "dine_in" : "takeaway",
         status: selectedTableId ? "kot_sent" : "completed",
         table: selectedTableId || null,
-        subtotal: subtotal,
-        tax: subtotal * 0.05, // 5% tax
-        total_amount: subtotal * 1.05,
-        items: cart.map(item => ({
-            menu_item: item.id,
-            quantity: item.quantity,
-            price: item.price
-        }))
+        items: cart.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
     };
 
+    if (selectedOrderId) {
+        url = `/api/orders/${selectedOrderId}/add_items/`;
+        payload = { items: newItems.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price })) };
+    }
+
     try {
-        const response = await fetch('/api/orders/', {
+        const response = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
-            },
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
             body: JSON.stringify(payload)
         });
 
         if (response.ok) {
-            const data = await response.json();
-            alert("Order Success! Order ID: " + data.order_number);
-            
-            // 3. Clear cart and refresh
-            cart = [];
-            updateCartUI();
-            
-            // 4. Option to print bill
-            if (confirm("Would you like to print the bill?")) {
-                printBill(data);
+            alert(selectedOrderId ? "Added to KOT!" : "Order Success!");
+            if (selectedTableId) window.location.href = '/tables/floor/';
+            else {
+                cart = [];
+                updateCartUI();
             }
-        } else {
-            const errData = await response.json();
-            console.error("Order failed:", errData);
-            alert("Order failed! Check console.");
         }
-    } catch (err) {
-        console.error("Checkout error:", err);
+    } catch (err) { console.error(err); }
+}
+
+async function settleAndRelease() {
+    const orderId = document.getElementById('selected-order-id').value;
+    if (!orderId) return;
+
+    if (confirm("Settle this bill and release table?")) {
+        const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ status: 'completed' })
+        });
+        if (resp.ok) {
+            alert("Table Released!");
+            window.location.href = '/tables/floor/';
+        }
     }
 }
 
-function printBill(orderData) {
-    // Basic printer-friendly window for now
-    const printWindow = window.open('', '_blank', 'width=350,height=600');
-    printWindow.document.write(`
-        <html>
-        <head><title>Bill - ${orderData.order_number}</title></head>
-        <body style="font-family: monospace; padding: 20px; width: 300px;">
-            <h2 style="text-align:center;">RESTAURANT POS</h2>
-            <div style="text-align:center;">Tax Invoice</div>
-            <hr>
-            <div>Order: ${orderData.order_number}</div>
-            <div>Date: ${new Date().toLocaleString()}</div>
-            <hr>
-            <table style="width:100%;">
-                ${orderData.items.map(i => `
-                    <tr><td>${i.quantity} x ${i.menu_item_name || 'Item'}</td><td style="text-align:right;">₹${(i.price * i.quantity).toFixed(2)}</td></tr>
-                `).join('')}
-            </table>
-            <hr>
-            <div style="display:flex; justify-content:space-between;"><b>Total</b> <b>₹${parseFloat(orderData.total_amount).toFixed(2)}</b></div>
-            <hr>
-            <div style="text-align:center; margin-top:20px;">THANK YOU!</div>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-}
-
-// Utility to get CSRF token
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -233,8 +281,4 @@ function getCookie(name) {
     return cookieValue;
 }
 
-
-// Initializing
-document.addEventListener('DOMContentLoaded', () => {
-    fetchMenuData();
-});
+document.addEventListener('DOMContentLoaded', fetchMenuData);

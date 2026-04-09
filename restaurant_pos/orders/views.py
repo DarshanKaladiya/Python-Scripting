@@ -88,6 +88,20 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'])
+    def check_status(self, request):
+        order_number = request.query_params.get('order_number')
+        if not order_number:
+            return Response({'error': 'No order number provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        order = get_object_or_404(Order, order_number=order_number)
+        return Response({
+            'id': order.id,
+            'status': order.status,
+            'display_status': order.get_status_display(),
+            'total_amount': order.total_amount
+        })
+
 class POSView(TemplateView):
     template_name = 'orders/pos.html'
 

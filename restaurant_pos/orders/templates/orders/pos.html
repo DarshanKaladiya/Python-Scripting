@@ -7,71 +7,59 @@
 <style>
     .pos-layout {
         display: grid;
-        grid-template-columns: 120px 1fr 400px;
-        height: calc(100vh - 64px);
-        background: #f1f5f9;
+        grid-template-columns: 100px 1fr 400px;
+        height: calc(100vh - 100px); /* Clean viewport constraint */
+        background: #f8fafc;
         overflow: hidden;
     }
 
-    /* Category Rail Upgrade */
+    /* Fixed Columns & Scrolling Content */
+    .cat-rail, .pos-main, .cart-sidebar {
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Left Sidebar: Categories */
     .cat-rail {
         background: white;
         border-right: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
+        padding: 1rem 0.5rem;
         gap: 0.75rem;
-        padding: 1.5rem 0.75rem;
-        z-index: 10;
         overflow-y: auto;
     }
 
-    .self-order-badge {
-        position: absolute;
-        top: -5px;
-        right: -5px;
-        background: #ef4444;
-        color: white;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        font-size: 0.7rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        display: none;
-    }
-
-    /* Modal Styles */
-    .pos-modal {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(8px);
-        z-index: 2000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .pos-modal.active { display: flex; }
-
-    .modal-card {
-        background: white;
+    .cat-btn {
         width: 100%;
-        max-width: 600px;
-        border-radius: 24px;
-        overflow: hidden;
-        animation: modalIn 0.3s ease-out;
+        aspect-ratio: 1/1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        border: 2px solid transparent;
     }
 
-    @keyframes modalIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    .cat-btn.active {
+        background: #fff7ed;
+        color: var(--primary);
+        border-color: var(--primary);
     }
+    
+    .cat-btn i { font-size: 1.25rem; margin-bottom: 0.25rem; }
 
-    .modal-header {
-        padding: 1.5rem;
+    /* Middle: Menu Items */
+    .pos-main { background: #f1f5f9; }
+
+    .pos-header {
+        padding: 1.5rem 2rem;
         background: white;
         border-bottom: 1px solid var(--border-color);
         display: flex;
@@ -79,108 +67,42 @@
         align-items: center;
     }
 
-    .pending-row {
-        padding: 1.5rem;
-        border-bottom: 1px solid #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .approve-btn {
-        background: #10b981;
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    .cat-btn {
-        width: 80px;
-        height: 80px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        border-radius: 16px;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        font-size: 0.75rem;
-        font-weight: 700;
-        color: var(--text-muted);
-        border: 2px solid transparent;
-    }
-
-    .cat-btn:hover {
-        background: #f8fafc;
-        color: var(--primary);
-    }
-
-    .cat-btn.active {
-        background: #fff7ed;
-        color: var(--primary);
-        border-color: var(--primary);
-        box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1);
-    }
-
-    .cat-btn i {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Main Area Upgrade */
-    .pos-main {
-        display: flex;
-        flex-direction: column;
-        padding: 2.5rem;
-        overflow-y: auto;
-    }
-
-    .pos-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-    }
-
     .search-bar {
         position: relative;
         flex: 1;
-        max-width: 400px;
+        max-width: 300px;
     }
 
     .search-bar input {
         width: 100%;
-        padding: 0.75rem 1rem 0.75rem 2.5rem;
-        border-radius: 12px;
+        padding: 0.6rem 1rem 0.6rem 2.5rem;
+        border-radius: 10px;
         border: 1px solid var(--border-color);
-        background: white;
         outline: none;
-        transition: border-color 0.2s;
     }
-
+    
     .search-bar i {
         position: absolute;
-        left: 1rem;
+        left: 0.85rem;
         top: 50%;
         transform: translateY(-50%);
         color: var(--text-muted);
     }
 
     .items-grid {
+        flex: 1;
+        overflow-y: auto;
+        padding: 2rem;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-auto-rows: min-content;
+        gap: 1.5rem;
     }
 
     .item-card {
         background: white;
-        padding: 1.25rem;
+        padding: 1.5rem;
         border-radius: 20px;
-        border: 1px solid transparent;
         box-shadow: 0 4px 6px rgba(0,0,0,0.02);
         cursor: pointer;
         transition: all 0.2s;
@@ -188,27 +110,20 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
-        min-height: 140px;
-        justify-content: center;
+        border: 2px solid transparent;
+    }
+    
+    .item-card:hover { 
+        transform: translateY(-4px); 
+        border-color: var(--primary); 
+        box-shadow: 0 10px 15px rgba(0,0,0,0.05);
     }
 
-    .item-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 20px rgba(0,0,0,0.05);
-        border-color: var(--primary);
-    }
-
-    .item-card:active {
-        transform: scale(0.95);
-    }
-
-    /* Cart Sidebar Upgrade */
+    /* Right Sidebar: Cart */
     .cart-sidebar {
         background: white;
         border-left: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-        box-shadow: -10px 0 30px rgba(0,0,0,0.03);
+        box-shadow: -10px 0 30px rgba(0,0,0,0.02);
     }
 
     .cart-header {
@@ -222,76 +137,98 @@
     .cart-content {
         flex: 1;
         overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: #f8fafc;
     }
 
-    .cart-item {
-        padding: 1.25rem;
-        border-bottom: 1px dotted var(--border-color);
+    .cart-item-card {
+        background: white;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .cic-header { display: flex; justify-content: space-between; align-items: start; }
+    .cic-name { font-weight: 700; font-size: 0.9rem; color: #1e293b; }
+    .cic-price { font-weight: 800; color: var(--primary); }
+
+    .cic-controls {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background: #f1f5f9;
+        padding: 0.4rem 0.75rem;
+        border-radius: 8px;
+    }
+
+    .qty-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        border: none;
+        background: white;
+        font-weight: 800;
+        cursor: pointer;
     }
 
     .cart-footer {
         padding: 1.5rem;
-        background: #f8fafc;
         border-top: 1px solid var(--border-color);
+        background: white;
     }
 
-    .bill-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-        color: var(--text-muted);
-    }
-
-    .total-row {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 1rem;
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: var(--text-dark);
+    .bill-row { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem; color: #64748b; }
+    .total-row { 
+        display: flex; 
+        justify-content: space-between; 
+        margin-top: 0.75rem; 
+        padding-top: 0.75rem; 
+        border-top: 2px dashed #e2e8f0; 
+        font-weight: 800; 
+        font-size: 1.4rem; 
+        color: #1e293b; 
     }
 
     .checkout-btn {
         width: 100%;
-        margin-top: 1.5rem;
-        padding: 1.25rem;
-        border-radius: 16px;
-        background: var(--primary);
+        background: var(--text-dark);
         color: white;
         border: none;
+        padding: 1rem;
+        border-radius: 12px;
         font-weight: 800;
-        font-size: 1.1rem;
         cursor: pointer;
-        transition: all 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.75rem;
+        gap: 0.5rem;
+        margin-top: 1rem;
     }
 
-    .checkout-btn:hover {
-        background: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
-    }
-
-    /* Order Feed Panel */
-    .live-feed-trigger {
+    .pos-modal {
         position: fixed;
-        bottom: 2rem;
-        left: 2rem;
-        z-index: 100;
-        background: var(--text-dark);
-        color: white;
-        padding: 1rem;
-        border-radius: 50%;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        cursor: pointer;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
     }
+    .pos-modal.active { display: flex; }
+    .modal-card { background: white; width: 500px; border-radius: 20px; overflow: hidden; }
+    .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
+    .pending-row { padding: 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 </style>
 {% endblock %}
 
@@ -299,424 +236,107 @@
 <div class="pos-layout">
     <input type="hidden" id="selected-table-id" value="{{ selected_table_id|default:'' }}">
     <input type="hidden" id="selected-order-id" value="{{ selected_order_id|default:'' }}">
-    
-    <!-- Category Side Rail -->
+
+    <!-- Column 1: Categories -->
     <aside class="cat-rail">
-        <div class="cat-btn" onclick="togglePendingModal(true)" style="position: relative; border-color: #ef4444; color: #ef4444;">
+        <div class="cat-btn" onclick="togglePendingModal(true)" style="color: #ef4444; border-color: #fee2e2;">
             <i class="fas fa-bell"></i>
-            <span>Approvals</span>
-            <div id="pending-count" class="self-order-badge">0</div>
+            <span>Alerts</span>
         </div>
         <div style="height: 1px; background: #f1f5f9; margin: 0.5rem 0;"></div>
-        <div id="category-list">
-            <!-- Dynamically filled by pos.js -->
+        <div id="category-list" style="display:contents;">
+            <!-- Category buttons filled by pos.js -->
         </div>
     </aside>
 
-    <!-- Pending Orders Modal -->
-    <div class="pos-modal" id="pending-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h2 style="margin: 0; font-weight: 800;">Pending Self-Orders</h2>
-                <button onclick="togglePendingModal(false)" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            </div>
-            <div id="pending-orders-list" style="max-height: 400px; overflow-y: auto;">
-                <!-- Filled by JS -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Item Grid -->
+    <!-- Column 2: Items -->
     <main class="pos-main">
         <header class="pos-header">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <h2 style="margin: 0; font-weight: 800;">
-                    {% if selected_table_id %}Table {{ selected_table_id }}{% else %}New Sale{% endif %}
-                </h2>
-                {% if selected_table_id %}
-                    <span style="padding: 0.35rem 0.75rem; border-radius: 50px; background: #fff7ed; color: var(--primary); font-size: 0.75rem; font-weight: 800; border: 1px solid var(--primary);">DINE-IN</span>
-                {% else %}
-                    <span style="padding: 0.35rem 0.75rem; border-radius: 50px; background: #f1f5f9; color: #64748b; font-size: 0.75rem; font-weight: 800;">TAKEAWAY</span>
-                {% endif %}
-            </div>
-            
+            <h2 style="margin:0; font-weight: 800;">
+                {% if selected_table_id %}Table {{ selected_table_id }}{% else %}New Sale{% endif %}
+            </h2>
             <div class="search-bar">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search menu items..." id="item-search">
+                <input type="text" id="item-search" placeholder="Search menu...">
             </div>
         </header>
-
         <div class="items-grid" id="items-grid">
-            <!-- Dynamically filled by pos.js -->
+            <!-- Grid filled by pos.js -->
         </div>
     </main>
 
-    <!-- Cart Sidebar -->
+    <!-- Column 3: Cart -->
     <aside class="cart-sidebar">
         <div class="cart-header">
-            <div style="font-weight: 800; font-size: 1.25rem;">Live Cart</div>
-            <button onclick="cart = []; updateCartUI();" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 0.85rem;">Clear All</button>
+            <div style="font-weight: 800; font-size: 1.1rem;">Live Cart</div>
+            <button onclick="cart = []; updateCartUI();" style="border:none; background:none; color:#ef4444; font-weight:700; cursor:pointer;">Clear</button>
         </div>
-
         <div class="cart-content" id="cart-list">
-            <!-- Dynamically filled by pos.js -->
-            <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
-                <i class="fas fa-shopping-cart fa-3x" style="opacity: 0.1; margin-bottom: 1.5rem;"></i>
-                <p style="font-weight: 600;">Your cart is empty</p>
-            </div>
+            <!-- Items filled by pos.js -->
         </div>
-
         <div class="cart-footer">
-            <div class="bill-row">
-                <span>Subtotal</span>
-                <span id="bill-subtotal">₹0.00</span>
-            </div>
-            <div class="bill-row">
-                <span>CGST (2.5%)</span>
-                <span id="bill-cgst">₹0.00</span>
-            </div>
-            <div class="bill-row">
-                <span>SGST (2.5%)</span>
-                <span id="bill-sgst">₹0.00</span>
-            </div>
-            <div class="bill-row" id="service-charge-row" style="display: none;">
-                <span>Service Charge (5%)</span>
-                <span id="bill-service">₹0.00</span>
-            </div>
-            <div class="total-row">
-                <span>Total</span>
-                <span>₹<span id="cart-total">0.00</span></span>
-            </div>
+            <div class="bill-row"><span>Subtotal</span><span id="bill-subtotal">₹0.00</span></div>
+            <div class="bill-row"><span>CGST (2.5%)</span><span id="bill-cgst">₹0.00</span></div>
+            <div class="bill-row"><span>SGST (2.5%)</span><span id="bill-sgst">₹0.00</span></div>
+            <div class="total-row"><span>Total</span><span id="cart-total">0.00</span></div>
             
-            <div class="checkout-actions" style="display: flex; gap: 10px; flex-direction: column;">
-                <button class="checkout-btn" onclick="handleCheckout()">
-                    <i class="fas fa-check-circle"></i>
-                    <span id="checkout-btn-text">COMPLETE ORDER</span>
-                </button>
-                <button class="checkout-btn" id="settle-btn" onclick="settleAndRelease()" style="display: none; background: #10b981;">
-                    <i class="fas fa-hand-holding-dollar"></i>
-                    SETTLE & RELEASE TABLE
-                </button>
-            </div>
+            <button class="checkout-btn" onclick="handleCheckout()">
+                <i class="fas fa-check-circle"></i>
+                <span id="checkout-btn-text">COMPLETE ORDER</span>
+            </button>
+            <button class="checkout-btn" id="settle-btn" onclick="settleAndRelease()" style="display: none; background: #10b981;">
+                <i class="fas fa-money-bill-wave"></i>
+                SETTLE & RELEASE
+            </button>
         </div>
     </aside>
 </div>
 
-<input type="hidden" id="selected-table-id" value="{{ selected_table_id|default:'' }}">
-<input type="hidden" id="selected-order-id" value="{{ selected_order_id|default:'' }}">
+<!-- Pending Modal -->
+<div class="pos-modal" id="pending-modal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 style="margin:0;">Pending Orders</h3>
+            <button onclick="togglePendingModal(false)" style="border:none; background:none; font-size:1.5rem;">&times;</button>
+        </div>
+        <div id="pending-orders-list"></div>
+    </div>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Extend pos.js functionality for better UI
+    // Search Filter
     document.getElementById('item-search')?.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const cards = document.querySelectorAll('.item-card');
-        cards.forEach(card => {
-            const name = card.innerText.toLowerCase();
-            card.style.display = name.includes(query) ? 'flex' : 'none';
+        const q = e.target.value.toLowerCase();
+        document.querySelectorAll('.item-card').forEach(c => {
+            c.style.display = c.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
         });
     });
 
-    // Support for loading existing orders (Append mode)
+    // Load Existing Order on Launch
     window.onload = async function() {
         const orderId = document.getElementById('selected-order-id').value;
         if (orderId) {
-            try {
-                const resp = await fetch(`/api/orders/${orderId}/`);
-                if (resp.ok) {
-                    const order = await resp.json();
-                    cart = order.items.map(item => ({
-                        id: item.menu_item,
-                        name: item.menu_item_name,
-                        price: parseFloat(item.price),
-                        quantity: item.quantity,
-                        isExisting: true
-                    }));
-                    updateCartUI();
-                }
-            } catch (err) { console.error("Error loading order:", err); }
-        }
-    };
-
-    // Override the updateCartUI to support the new breakdown and locked items
-    window.updateCartUI = function() {
-        const cartList = document.getElementById('cart-list');
-        cartList.innerHTML = '';
-        
-        if (cart.length === 0) {
-            cartList.innerHTML = `
-                <div style="padding: 4rem 2rem; text-align: center; color: var(--text-muted);">
-                    <i class="fas fa-shopping-cart fa-3x" style="opacity: 0.1; margin-bottom: 1.5rem;"></i>
-                    <p style="font-weight: 600;">Your cart is empty</p>
-                </div>`;
-            document.getElementById('bill-subtotal').innerText = "₹0.00";
-            document.getElementById('bill-cgst').innerText = "₹0.00";
-            document.getElementById('bill-sgst').innerText = "₹0.00";
-            document.getElementById('bill-service').innerText = "₹0.00";
-            document.getElementById('cart-total').innerText = "0.00";
-            
-            // Hide settle button if cart empty
-            document.getElementById('settle-btn').style.display = 'none';
-            document.getElementById('checkout-btn-text').innerText = "COMPLETE ORDER";
-            return;
-        }
-
-        const isAppendMode = cart.some(item => item.isExisting);
-        const settleBtn = document.getElementById('settle-btn');
-        const checkoutText = document.getElementById('checkout-btn-text');
-        
-        if (isAppendMode) {
-            settleBtn.style.display = 'flex';
-            checkoutText.innerText = "UPDATE BILL / ADD TO KOT";
-        } else {
-            settleBtn.style.display = 'none';
-            checkoutText.innerText = "COMPLETE ORDER";
-        }
-
-        let subtotal = 0;
-        cart.forEach((item, index) => {
-            const row = document.createElement('div');
-            row.className = 'cart-item';
-            row.style.borderLeft = item.isExisting ? '4px solid #cbd5e1' : '4px solid var(--primary)';
-            row.innerHTML = `
-                <div style="flex: 1;">
-                    <div style="font-weight: 700; color: ${item.isExisting ? '#64748b' : 'var(--text-dark)'}; line-height: 1.2;">
-                        ${item.name} 
-                        ${item.isExisting ? '<span style="font-size: 0.65rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">EXISTING</span>' : ''}
-                    </div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        ${item.quantity} x ₹${item.price.toFixed(2)}
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <div style="font-weight: 800; color: ${item.isExisting ? '#94a3b8' : 'var(--primary)'};">₹${(item.price * item.quantity).toFixed(2)}</div>
-                    ${!item.isExisting ? `<div onclick="removeFromCart(${index})" style="color: #ef4444; cursor: pointer; font-size: 0.7rem; font-weight: 700; margin-top: 4px;">REMOVE</div>` : '<div style="font-size: 0.6rem; color: #94a3b8; margin-top: 4px; font-weight: 800;">LOCKED</div>'}
-                </div>
-            `;
-            cartList.appendChild(row);
-            subtotal += item.price * item.quantity;
-        });
-
-        const cgst = subtotal * 0.025;
-        const sgst = subtotal * 0.025;
-        const serviceCharge = 0;
-        const total = subtotal + cgst + sgst + serviceCharge;
-
-        document.getElementById('bill-subtotal').innerText = "₹" + subtotal.toFixed(2);
-        document.getElementById('bill-cgst').innerText = "₹" + cgst.toFixed(2);
-        document.getElementById('bill-sgst').innerText = "₹" + sgst.toFixed(2);
-        document.getElementById('bill-service').innerText = "₹" + serviceCharge.toFixed(2);
-        document.getElementById('cart-total').innerText = total.toFixed(2);
-    };
-
-    window.settleAndRelease = async function() {
-        const orderId = document.getElementById('selected-order-id').value;
-        const newItems = cart.filter(item => !item.isExisting);
-        
-        if (!orderId) return;
-
-        // 1. If there are new items, we must add them first
-        if (newItems.length > 0) {
-            const resp = await fetch(`/api/orders/${orderId}/add_items/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify({
-                    items: newItems.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
-                })
-            });
-            if (!resp.ok) { alert("Failed to add latest items before settling."); return; }
-        }
-
-        // 2. Finalize and Settle
-        if (confirm("Finalize bill and mark table as available?")) {
-            const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify({ status: 'completed' })
-            });
-            if (resp.ok) {
-                alert("Table released successfully!");
-                window.location.href = '/tables/floor/';
-            }
-        }
-    };
-
-    // Updated handleCheckout
-    window.handleCheckout = async function() {
-        const selectedOrderId = document.getElementById('selected-order-id').value;
-        const newItems = cart.filter(item => !item.isExisting);
-        
-        if (cart.length === 0) {
-            alert("Cart is empty!");
-            return;
-        }
-        
-        const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-        const selectedTableId = document.getElementById('selected-table-id').value;
-        
-        let url = '/api/orders/';
-        let method = 'POST';
-        let payload = {
-            order_number: "ORD" + Date.now(),
-            order_type: selectedTableId ? "dine_in" : "takeaway",
-            status: selectedTableId ? "kot_sent" : "completed",
-            payment_status: selectedTableId ? "pending" : "paid",
-            table: selectedTableId || null,
-            subtotal: subtotal,
-            items: cart.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
-        };
-
-        if (selectedOrderId) {
-            if (newItems.length === 0) {
-                alert("No new items to add. Use 'Settle' to complete the bill.");
-                return;
-            }
-            url = `/api/orders/${selectedOrderId}/add_items/`;
-            method = 'POST';
-            payload = {
-                items: newItems.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
-            };
-        }
-
-        try {
-            const resp = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify(payload)
-            });
-
+            const resp = await fetch(`/api/orders/${orderId}/`);
             if (resp.ok) {
                 const data = await resp.json();
-                if (selectedOrderId) {
-                    alert("Items added to KOT! Table remains occupied.");
-                    window.location.href = '/tables/floor/';
-                } else {
-                    cart = [];
-                    updateCartUI();
-                    if (confirm("Order Created! Print bill?")) {
-                        window.open(`/invoice/${data.id}/`, '_blank', 'width=400,height=600');
-                    }
-                }
-            } else { alert("Failed. Check console."); }
-        } catch (err) { console.error(err); }
-    };
-
-    // Override renderCategories to use icons
-    const iconMap = {
-        'Starter': 'fa-bowl-food',
-        'Main Course': 'fa-utensils',
-        'Beverage': 'fa-glass-water',
-        'Dessert': 'fa-ice-cream',
-        'Pizza': 'fa-pizza-slice',
-        'Burger': 'fa-burger'
-    };
-
-    window.renderCategories = function(categories) {
-        const rail = document.querySelector('.cat-rail');
-        rail.innerHTML = '';
-        
-        // All Items
-        const allBtn = document.createElement('div');
-        allBtn.className = 'cat-btn active';
-        allBtn.id = 'cat-all';
-        allBtn.innerHTML = `<i class="fas fa-th-large"></i><span>All</span>`;
-        allBtn.onclick = () => filterByCategory('all');
-        rail.appendChild(allBtn);
-
-        categories.forEach(cat => {
-            const btn = document.createElement('div');
-            btn.className = 'cat-btn';
-            btn.id = `cat-${cat.id}`;
-            const icon = iconMap[cat.name] || 'fa-utensils';
-            btn.innerHTML = `<i class="fas ${icon}"></i><span>${cat.name}</span>`;
-            btn.onclick = () => filterByCategory(cat.id);
-            rail.appendChild(btn);
-        });
-    };
-
-    // Self-Order Approval Logic
-    let pendingOrders = [];
-
-    async function fetchPendingSelfOrders() {
-        try {
-            const resp = await fetch('/api/orders/?status=awaiting_confirmation');
-            const data = await resp.json();
-            pendingOrders = data;
-            
-            const badge = document.getElementById('pending-count');
-            if (data.length > 0) {
-                badge.innerText = data.length;
-                badge.style.display = 'flex';
-            } else {
-                badge.style.display = 'none';
+                cart = data.items.map(i => ({
+                    id: i.menu_item,
+                    name: i.menu_item_name,
+                    price: parseFloat(i.price),
+                    item_type: i.item_type || 'veg',
+                    quantity: i.quantity,
+                    isExisting: true
+                }));
+                updateCartUI();
             }
-
-            if (document.getElementById('pending-modal').classList.contains('active')) {
-                renderPendingList();
-            }
-        } catch (err) { console.error(err); }
-    }
-
-    function renderPendingList() {
-        const list = document.getElementById('pending-orders-list');
-        list.innerHTML = '';
-        
-        if (pendingOrders.length === 0) {
-            list.innerHTML = '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">No pending approvals</div>';
-            return;
         }
-
-        pendingOrders.forEach(order => {
-            const row = document.createElement('div');
-            row.className = 'pending-row';
-            row.innerHTML = `
-                <div>
-                    <div style="font-weight: 800;">${order.order_number}</div>
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        ${order.order_type.toUpperCase()} • ₹${order.total_amount}
-                    </div>
-                </div>
-                <button class="approve-btn" onclick="approveOrder(${order.id})">
-                    Approve & Pay
-                </button>
-            `;
-            list.appendChild(row);
-        });
-    }
-
-    async function approveOrder(id) {
-        try {
-            const resp = await fetch(`/api/orders/${id}/update_status/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ status: 'kot_sent' })
-            });
-
-            if (resp.ok) {
-                fetchPendingSelfOrders();
-                alert("Order approved and sent to kitchen!");
-            }
-        } catch (err) { console.error(err); }
-    }
+    };
 
     function togglePendingModal(show) {
-        const modal = document.getElementById('pending-modal');
-        if (show) {
-            modal.classList.add('active');
-            renderPendingList();
-        } else {
-            modal.classList.remove('active');
-        }
+        document.getElementById('pending-modal').classList.toggle('active', show);
     }
-
-    // Auto-refresh every 10 seconds
-    setInterval(fetchPendingSelfOrders, 10000);
-    document.addEventListener('DOMContentLoaded', fetchPendingSelfOrders);
-
 </script>
 {% endblock %}
