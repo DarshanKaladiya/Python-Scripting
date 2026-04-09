@@ -58,10 +58,35 @@ class OrderViewSet(viewsets.ModelViewSet):
         if new_status in dict(Order.STATUS_CHOICES):
             order.status = new_status
             if new_status == 'kot_sent':
-                order.payment_status = 'paid' # Assuming confirmation means payment received for cash
+                order.payment_status = 'paid'
             order.save()
+                
             return Response({'status': 'updated'})
         return Response({'error': 'invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def add_items(self, request, pk=None):
+        order = self.get_object()
+        items_data = request.data.get('items', [])
+        
+        if not items_data:
+            return Response({'error': 'No items provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        from .models import OrderItem
+        for item_data in items_data:
+            # item_data should contain menu_item (id), quantity, and price
+            OrderItem.objects.create(
+                order=order,
+                menu_item_id=item_data['menu_item'],
+                quantity=item_data['quantity'],
+                price=item_data['price']
+            )
+        
+        # Recalculate totals after adding items
+        order.calculate_totals()
+        
+        serializer = self.get_serializer(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class POSView(TemplateView):
     template_name = 'orders/pos.html'

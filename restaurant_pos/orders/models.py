@@ -73,6 +73,7 @@ class Order(models.Model):
         self.total_amount = self.subtotal + self.tax + self.service_charge
         self.save()
 
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     menu_item = models.ForeignKey(MenuItem, on_delete=models.PROTECT)

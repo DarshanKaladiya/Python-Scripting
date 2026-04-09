@@ -1,7 +1,21 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import OrderItem
+from .models import Order, OrderItem
 from menu.models import RecipeIngredient
+from tables.models import Table
+
+@receiver(post_save, sender=Order)
+def sync_table_status(sender, instance, **kwargs):
+    """Synchronizes table status with the order status."""
+    if instance.table:
+        active_statuses = ['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready']
+        
+        if instance.status == 'completed':
+            instance.table.status = 'available'
+            instance.table.save()
+        elif instance.status in active_statuses and instance.order_type == 'dine_in':
+            instance.table.status = 'occupied'
+            instance.table.save()
 
 @receiver(post_save, sender=OrderItem)
 def deduct_inventory(sender, instance, created, **kwargs):

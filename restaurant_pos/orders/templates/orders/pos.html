@@ -297,6 +297,9 @@
 
 {% block content %}
 <div class="pos-layout">
+    <input type="hidden" id="selected-table-id" value="{{ selected_table_id|default:'' }}">
+    <input type="hidden" id="selected-order-id" value="{{ selected_order_id|default:'' }}">
+    
     <!-- Category Side Rail -->
     <aside class="cat-rail">
         <div class="cat-btn" onclick="togglePendingModal(true)" style="position: relative; border-color: #ef4444; color: #ef4444;">
@@ -385,9 +388,16 @@
                 <span>₹<span id="cart-total">0.00</span></span>
             </div>
             
-            <button class="checkout-btn" onclick="handleCheckout()">
-                <i class="fas fa-lightning"></i> COMPLETE ORDER
-            </button>
+            <div class="checkout-actions" style="display: flex; gap: 10px; flex-direction: column;">
+                <button class="checkout-btn" onclick="handleCheckout()">
+                    <i class="fas fa-check-circle"></i>
+                    <span id="checkout-btn-text">COMPLETE ORDER</span>
+                </button>
+                <button class="checkout-btn" id="settle-btn" onclick="settleAndRelease()" style="display: none; background: #10b981;">
+                    <i class="fas fa-hand-holding-dollar"></i>
+                    SETTLE & RELEASE TABLE
+                </button>
+            </div>
         </div>
     </aside>
 </div>
@@ -409,10 +419,29 @@
         });
     });
 
-    // Override the updateCartUI from pos.js to support the new breakdown
-    const originalUpdateCartUI = window.updateCartUI;
+    // Support for loading existing orders (Append mode)
+    window.onload = async function() {
+        const orderId = document.getElementById('selected-order-id').value;
+        if (orderId) {
+            try {
+                const resp = await fetch(`/api/orders/${orderId}/`);
+                if (resp.ok) {
+                    const order = await resp.json();
+                    cart = order.items.map(item => ({
+                        id: item.menu_item,
+                        name: item.menu_item_name,
+                        price: parseFloat(item.price),
+                        quantity: item.quantity,
+                        isExisting: true
+                    }));
+                    updateCartUI();
+                }
+            } catch (err) { console.error("Error loading order:", err); }
+        }
+    };
+
+    // Override the updateCartUI to support the new breakdown and locked items
     window.updateCartUI = function() {
-        // Original logic
         const cartList = document.getElementById('cart-list');
         cartList.innerHTML = '';
         
@@ -427,23 +456,43 @@
             document.getElementById('bill-sgst').innerText = "₹0.00";
             document.getElementById('bill-service').innerText = "₹0.00";
             document.getElementById('cart-total').innerText = "0.00";
+            
+            // Hide settle button if cart empty
+            document.getElementById('settle-btn').style.display = 'none';
+            document.getElementById('checkout-btn-text').innerText = "COMPLETE ORDER";
             return;
+        }
+
+        const isAppendMode = cart.some(item => item.isExisting);
+        const settleBtn = document.getElementById('settle-btn');
+        const checkoutText = document.getElementById('checkout-btn-text');
+        
+        if (isAppendMode) {
+            settleBtn.style.display = 'flex';
+            checkoutText.innerText = "UPDATE BILL / ADD TO KOT";
+        } else {
+            settleBtn.style.display = 'none';
+            checkoutText.innerText = "COMPLETE ORDER";
         }
 
         let subtotal = 0;
         cart.forEach((item, index) => {
             const row = document.createElement('div');
             row.className = 'cart-item';
+            row.style.borderLeft = item.isExisting ? '4px solid #cbd5e1' : '4px solid var(--primary)';
             row.innerHTML = `
                 <div style="flex: 1;">
-                    <div style="font-weight: 700; color: var(--text-dark);">${item.name}</div>
+                    <div style="font-weight: 700; color: ${item.isExisting ? '#64748b' : 'var(--text-dark)'}; line-height: 1.2;">
+                        ${item.name} 
+                        ${item.isExisting ? '<span style="font-size: 0.65rem; background: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; margin-left: 5px;">EXISTING</span>' : ''}
+                    </div>
                     <div style="font-size: 0.85rem; color: var(--text-muted);">
                         ${item.quantity} x ₹${item.price.toFixed(2)}
                     </div>
                 </div>
                 <div style="text-align: right;">
-                    <div style="font-weight: 800; color: var(--primary);">₹${(item.price * item.quantity).toFixed(2)}</div>
-                    <div onclick="removeFromCart(${index})" style="color: #ef4444; cursor: pointer; font-size: 0.7rem; font-weight: 700; margin-top: 4px;">REMOVE</div>
+                    <div style="font-weight: 800; color: ${item.isExisting ? '#94a3b8' : 'var(--primary)'};">₹${(item.price * item.quantity).toFixed(2)}</div>
+                    ${!item.isExisting ? `<div onclick="removeFromCart(${index})" style="color: #ef4444; cursor: pointer; font-size: 0.7rem; font-weight: 700; margin-top: 4px;">REMOVE</div>` : '<div style="font-size: 0.6rem; color: #94a3b8; margin-top: 4px; font-weight: 800;">LOCKED</div>'}
                 </div>
             `;
             cartList.appendChild(row);
@@ -452,7 +501,7 @@
 
         const cgst = subtotal * 0.025;
         const sgst = subtotal * 0.025;
-        const serviceCharge = 0; // Can be toggled if needed
+        const serviceCharge = 0;
         const total = subtotal + cgst + sgst + serviceCharge;
 
         document.getElementById('bill-subtotal').innerText = "₹" + subtotal.toFixed(2);
@@ -462,8 +511,43 @@
         document.getElementById('cart-total').innerText = total.toFixed(2);
     };
 
-    // Override handleCheckout to use server-side invoicing
+    window.settleAndRelease = async function() {
+        const orderId = document.getElementById('selected-order-id').value;
+        const newItems = cart.filter(item => !item.isExisting);
+        
+        if (!orderId) return;
+
+        // 1. If there are new items, we must add them first
+        if (newItems.length > 0) {
+            const resp = await fetch(`/api/orders/${orderId}/add_items/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({
+                    items: newItems.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
+                })
+            });
+            if (!resp.ok) { alert("Failed to add latest items before settling."); return; }
+        }
+
+        // 2. Finalize and Settle
+        if (confirm("Finalize bill and mark table as available?")) {
+            const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ status: 'completed' })
+            });
+            if (resp.ok) {
+                alert("Table released successfully!");
+                window.location.href = '/tables/floor/';
+            }
+        }
+    };
+
+    // Updated handleCheckout
     window.handleCheckout = async function() {
+        const selectedOrderId = document.getElementById('selected-order-id').value;
+        const newItems = cart.filter(item => !item.isExisting);
+        
         if (cart.length === 0) {
             alert("Cart is empty!");
             return;
@@ -471,42 +555,51 @@
         
         const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
         const selectedTableId = document.getElementById('selected-table-id').value;
-        const selectedOrderId = document.getElementById('selected-order-id').value;
         
-        const payload = {
+        let url = '/api/orders/';
+        let method = 'POST';
+        let payload = {
             order_number: "ORD" + Date.now(),
             order_type: selectedTableId ? "dine_in" : "takeaway",
-            status: "completed",
-            payment_status: "paid",
+            status: selectedTableId ? "kot_sent" : "completed",
+            payment_status: selectedTableId ? "pending" : "paid",
             table: selectedTableId || null,
             subtotal: subtotal,
-            items: cart.map(item => ({
-                menu_item: item.id,
-                quantity: item.quantity,
-                price: item.price
-            }))
+            items: cart.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
         };
 
+        if (selectedOrderId) {
+            if (newItems.length === 0) {
+                alert("No new items to add. Use 'Settle' to complete the bill.");
+                return;
+            }
+            url = `/api/orders/${selectedOrderId}/add_items/`;
+            method = 'POST';
+            payload = {
+                items: newItems.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
+            };
+        }
+
         try {
-            const resp = await fetch('/api/orders/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
+            const resp = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
                 body: JSON.stringify(payload)
             });
 
             if (resp.ok) {
                 const data = await resp.json();
-                cart = [];
-                updateCartUI();
-                if (confirm("Order Completed! Print Bill?")) {
-                    window.open(`/invoice/${data.id}/`, '_blank', 'width=400,height=600');
+                if (selectedOrderId) {
+                    alert("Items added to KOT! Table remains occupied.");
+                    window.location.href = '/tables/floor/';
+                } else {
+                    cart = [];
+                    updateCartUI();
+                    if (confirm("Order Created! Print bill?")) {
+                        window.open(`/invoice/${data.id}/`, '_blank', 'width=400,height=600');
+                    }
                 }
-            } else {
-                alert("Checkout failed. Check console.");
-            }
+            } else { alert("Failed. Check console."); }
         } catch (err) { console.error(err); }
     };
 

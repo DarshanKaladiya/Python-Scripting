@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load table_extras %}
 
-{% block title %}Floor Management - RestoPOS{% endblock %}
+{% block title %}Floor Management 2.0 - RestoPOS{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -9,438 +9,619 @@
         --floor-bg: #0f172a;
         --glass-bg: rgba(255, 255, 255, 0.03);
         --glass-border: rgba(255, 255, 255, 0.1);
-        --accent-glow: rgba(249, 115, 22, 0.15);
+        --accent-glow: rgba(249, 115, 22, 0.2);
         
         --status-available: #10b981;
         --status-occupied: #f97316;
         --status-reserved: #3b82f6;
+        
+        --panel-bg: rgba(15, 23, 42, 0.85);
     }
 
     body {
         margin: 0;
         padding: 0;
-        overflow: hidden; /* Main container handles scroll */
+        overflow: hidden;
+        background: var(--floor-bg);
     }
 
     .floor-dashboard {
-        height: calc(100vh - 64px); /* Navbar height offset */
-        background: var(--floor-bg);
+        height: calc(100vh - 64px);
         display: flex;
-        flex-direction: column;
         position: relative;
         overflow: hidden;
     }
 
-    /* Animated Background */
-    .floor-dashboard::before {
-        content: '';
+    /* Animated Ambient Background */
+    .ambient-bg {
         position: absolute;
         inset: 0;
         background: 
-            radial-gradient(circle at 20% 30%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
-            radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
-        animation: breath 15s ease-in-out infinite alternate;
+            radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.08) 0%, transparent 40%),
+            radial-gradient(circle at 90% 90%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+        filter: blur(80px);
         z-index: 0;
+        animation: pulse-bg 10s ease-in-out infinite alternate;
     }
 
-    @keyframes breath {
-        0% { opacity: 0.3; transform: scale(1); }
-        100% { opacity: 0.7; transform: scale(1.1); }
+    @keyframes pulse-bg {
+        0% { transform: scale(1); opacity: 0.5; }
+        100% { transform: scale(1.2); opacity: 0.8; }
     }
 
-    /* Floating Tab Navigation */
-    .floor-nav {
-        position: absolute;
-        top: 2rem;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 100;
-        display: flex;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        background: rgba(15, 23, 42, 0.8);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--glass-border);
-        border-radius: 50px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .nav-tab {
-        padding: 0.75rem 1.5rem;
-        border-radius: 40px;
-        color: rgba(255,255,255,0.6);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
-        border: none;
-        background: transparent;
-    }
-
-    .nav-tab.active {
-        background: var(--primary);
-        color: white;
-        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
-    }
-
-    .nav-tab:hover:not(.active) {
-        color: white;
-        background: rgba(255,255,255,0.05);
-    }
-
-    /* Floor Canvas Area */
-    .floor-container {
+    /* Main Content Area */
+    .main-canvas {
         flex: 1;
         position: relative;
-        padding: 6rem 2rem 2rem 2rem;
-        overflow-y: auto;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
         z-index: 1;
     }
 
-    .section-canvas {
-        display: none; /* Controlled by JS */
-        position: relative;
-        width: 100%;
-        height: 700px;
-        background: rgba(255,255,255,0.01);
-        border: 1px solid var(--glass-border);
-        border-radius: 32px;
-        overflow: hidden;
+    /* Top Navigation bar */
+    .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 2rem;
+        padding: 0 1rem;
     }
 
-    .section-canvas.active {
-        display: block;
-        animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    .floor-tabs {
+        display: flex;
+        gap: 0.5rem;
+        background: var(--panel-bg);
+        backdrop-filter: blur(20px);
+        padding: 0.4rem;
+        border-radius: 50px;
+        border: 1px solid var(--glass-border);
     }
 
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    .tab-btn {
+        padding: 0.6rem 1.5rem;
+        border-radius: 30px;
+        color: rgba(255,255,255,0.6);
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
-    /* Grid Overlay */
-    .grid-overlay {
+    .tab-btn.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 15px var(--accent-glow);
+    }
+
+    .tab-btn:hover:not(.active) {
+        background: rgba(255,255,255,0.05);
+        color: white;
+    }
+
+    /* Control Actions */
+    .controls {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .control-btn {
+        background: var(--panel-bg);
+        border: 1px solid var(--glass-border);
+        color: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 12px;
+        backdrop-filter: blur(20px);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .control-btn.edit-mode-active {
+        background: #ef4444;
+        border-color: #ef4444;
+    }
+
+    /* Floor Plan Grid */
+    .floor-canvas {
+        flex: 1;
+        position: relative;
+        background: rgba(255,255,255,0.01);
+        border: 2px dashed var(--glass-border);
+        border-radius: 24px;
+        overflow: hidden;
+    }
+
+    .grid-pattern {
         position: absolute;
         inset: 0;
-        background-image: linear-gradient(var(--glass-border) 1px, transparent 1px),
-                          linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
-        background-size: 40px 40px;
-        opacity: 0.3;
+        background-image: 
+            radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+        background-size: 30px 30px;
         pointer-events: none;
     }
 
-    /* Table Node Styles */
-    .table-node {
+    /* Enhanced Table Node */
+    .table-card {
         position: absolute;
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         cursor: pointer;
+        user-select: none;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        color: white;
-        text-align: center;
-        user-select: none;
-        z-index: 10;
-        backdrop-filter: blur(8px);
         border: 1px solid var(--glass-border);
+        backdrop-filter: blur(12px);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+        z-index: 10;
     }
 
-    .table-node::after {
+    .table-card::before {
         content: '';
         position: absolute;
-        inset: -2px;
+        inset: 0;
         border-radius: inherit;
-        background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
-        z-index: -1;
+        background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
     }
 
-    .table-node .table-icon {
-        font-size: 1.5rem;
-        margin-bottom: 0.25rem;
-        opacity: 0.8;
-    }
-
-    .table-node .table-name {
-        font-weight: 700;
-        font-size: 1rem;
-        letter-spacing: 0.5px;
-    }
-
-    .table-node .table-cap {
-        font-size: 0.65rem;
-        opacity: 0.5;
-        font-weight: 500;
-        text-transform: uppercase;
-        margin-top: 2px;
-    }
-
-    /* Status Varients */
-    .table-node.available {
-        background: rgba(16, 185, 129, 0.08);
+    .table-card.available { 
+        background: rgba(16, 185, 129, 0.1); 
         border-color: rgba(16, 185, 129, 0.3);
     }
-    .table-node.available:hover {
-        background: rgba(16, 185, 129, 0.15);
-        box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+    .table-card.occupied { 
+        background: rgba(249, 115, 22, 0.15); 
+        border-color: rgba(249, 115, 22, 0.5);
+    }
+    .table-card.reserved { 
+        background: rgba(59, 130, 246, 0.1); 
+        border-color: rgba(59, 130, 246, 0.4);
     }
 
-    .table-node.occupied {
-        background: rgba(249, 115, 22, 0.12);
-        border-color: rgba(249, 115, 22, 0.4);
-        animation: entry-pulse 3s infinite;
-    }
-    .table-node.occupied .table-name { color: var(--status-occupied); }
-    .table-node.occupied:hover {
-        background: rgba(249, 115, 22, 0.2);
-        box-shadow: 0 0 40px rgba(249, 115, 22, 0.25);
-    }
-
-    .table-node.reserved {
-        background: rgba(59, 130, 246, 0.1);
-        border-color: rgba(59, 130, 246, 0.3);
-    }
-    .table-node.reserved .table-name { color: var(--status-reserved); }
-
-    @keyframes entry-pulse {
-        0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.2); }
-        70% { box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
-    }
-
-    .table-node:hover {
-        transform: scale(1.08) translateY(-8px);
-        z-index: 50;
+    .table-card:hover {
+        transform: scale(1.05) translateY(-5px);
+        z-index: 100;
         border-color: white;
     }
 
-    /* Floating Legend */
-    .floor-legend {
+    .table-card.occupied:hover {
+        box-shadow: 0 0 30px rgba(249, 115, 22, 0.3);
+    }
+
+    .table-card .status-dot {
         position: absolute;
-        bottom: 2rem;
-        left: 2rem;
-        z-index: 100;
-        background: rgba(15, 23, 42, 0.8);
-        backdrop-filter: blur(20px);
-        padding: 1rem 1.5rem;
-        border-radius: 20px;
-        border: 1px solid var(--glass-border);
-        display: flex;
-        gap: 1.5rem;
-    }
-
-    .legend-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        font-size: 0.85rem;
-        color: rgba(255,255,255,0.7);
-        font-weight: 600;
-    }
-
-    .legend-color {
-        width: 10px;
-        height: 10px;
+        top: 10px;
+        right: 10px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
     }
 
-    /* Stats Widget */
-    .floor-stats {
-        position: absolute;
-        bottom: 2rem;
-        right: 2rem;
-        z-index: 100;
-        background: rgba(15, 23, 42, 0.8);
-        backdrop-filter: blur(20px);
-        padding: 1rem 1.5rem;
-        border-radius: 20px;
-        border: 1px solid var(--glass-border);
+    .status-dot.available { background: var(--status-available); box-shadow: 0 0 10px var(--status-available); }
+    .status-dot.occupied { background: var(--status-occupied); box-shadow: 0 0 10px var(--status-occupied); animation: glow 2s infinite; }
+    .status-dot.reserved { background: var(--status-reserved); box-shadow: 0 0 10px var(--status-reserved); }
+
+    @keyframes glow {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 0.5; }
+    }
+
+    .table-name { font-weight: 800; font-size: 1.1rem; color: white; margin-bottom: 2px; }
+    .table-meta { font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; }
+
+    /* Side Inspector Panel */
+    .inspector-panel {
+        width: 0;
+        background: var(--panel-bg);
+        backdrop-filter: blur(50px);
+        border-left: 1px solid var(--glass-border);
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        overflow: hidden;
+        z-index: 200;
+        box-shadow: -20px 0 50px rgba(0,0,0,0.5);
     }
 
-    .stat-row {
+    .inspector-panel.active {
+        width: 400px;
+    }
+
+    .panel-header {
+        padding: 2rem;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .panel-content {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+    }
+
+    .panel-footer {
+        padding: 2rem;
+        border-top: 1px solid var(--glass-border);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    /* Editing Styles */
+    .edit-overlay {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: #ef4444;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        z-index: 1000;
+        display: none;
+    }
+
+    .table-card.dragging {
+        opacity: 0.7;
+        transform: scale(1.1);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        z-index: 2000;
+        border-color: var(--primary);
+    }
+
+    /* Order details in inspector */
+    .order-item-mini {
         display: flex;
         justify-content: space-between;
-        gap: 2rem;
-        color: rgba(255,255,255,0.5);
-        font-size: 0.8rem;
-        font-weight: 500;
+        padding: 1.25rem;
+        background: rgba(255,255,255,0.05);
+        border-radius: 16px;
+        margin-bottom: 0.75rem;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
+        transition: background 0.3s;
+    }
+    .order-item-mini:hover {
+        background: rgba(255,255,255,0.08);
+    }
+    .order-item-mini b {
+        color: var(--primary);
+        margin-right: 5px;
     }
 
-    .stat-row b {
+    .status-badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
         color: white;
     }
 
-    /* Active Orders View */
-    .order-popover {
-        position: absolute;
-        bottom: 120%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: white;
-        color: var(--text-dark);
-        padding: 0.75rem;
-        border-radius: 12px;
-        width: 150px;
-        font-size: 0.75rem;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s;
-        pointer-events: none;
+    .action-btn {
+        width: 100%;
+        padding: 1.1rem;
+        border-radius: 16px;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
     }
 
-    .table-node:hover .order-popover {
-        opacity: 1;
-        visibility: visible;
-        bottom: 110%;
-    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--glass-border); color: white; }
+    .btn-outline:hover { background: rgba(255,255,255,0.05); }
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="floor-dashboard">
-    <!-- Section Navigation -->
-    <div class="floor-nav">
-        {% for section in sections %}
-            <button class="nav-tab {% if forloop.first %}active{% endif %}" 
-                    onclick="switchSection('{{ section.id }}', this)">
-                <i class="fas fa-layer-group" style="margin-right: 8px;"></i>
-                {{ section.name }}
-            </button>
-        {% endfor %}
-    </div>
+    <div class="ambient-bg"></div>
+    
+    <!-- Main View -->
+    <div class="main-canvas">
+        <div class="top-bar">
+            <div class="floor-tabs">
+                {% for section in sections %}
+                    <button class="tab-btn {% if forloop.first %}active{% endif %}" 
+                            onclick="switchSection('{{ section.id }}', this)">
+                        <i class="fas fa-layer-group"></i>
+                        {{ section.name }}
+                    </button>
+                {% endfor %}
+            </div>
 
-    <!-- Floor Canvas Area -->
-    <div class="floor-container">
-        {% for section in sections %}
-        <div id="section-{{ section.id }}" class="section-canvas {% if forloop.first %}active{% endif %}">
-            <div class="grid-overlay"></div>
+            <div class="controls">
+                <button class="control-btn" id="edit-layout-btn" onclick="toggleEditMode()">
+                    <i class="fas fa-arrows-up-down-left-right"></i>
+                    Edit Layout
+                </button>
+            </div>
+        </div>
+
+        <div class="floor-canvas" id="canvas-container">
+            <div class="grid-pattern"></div>
+            <div class="edit-overlay" id="edit-label">LAYOUT MODE ACTIVE - DRAG TABLES</div>
             
-            {% for table in section.tables.all %}
-                {% with order=table_order_map|get_item:table.id %}
-                <div class="table-node {% if order %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"
-                     onclick="handleTableClick('{{ table.id }}', '{{ order.id|default:'' }}')"
-                     style="left: {{ table.x_pos }}%; 
-                            top: {{ table.y_pos }}%; 
-                            width: {{ table.width }}px; 
-                            height: {{ table.height }}px; 
-                            border-radius: {% if table.shape == 'circle' %}50%{% else %}16px{% endif %};">
+            {% for section in sections %}
+                <div id="section-{{ section.id }}" class="section-group" 
+                     style="display: {% if forloop.first %}block{% else %}none{% endif %}; position: absolute; inset: 0;">
                     
-                    <div class="table-icon">
-                        {% if table.shape == 'circle' %}
-                            <i class="fas fa-circle-notch"></i>
-                        {% elif table.width > table.height %}
-                            <i class="fas fa-rectangle-ad"></i>
-                        {% else %}
-                            <i class="fas fa-square-full" style="font-size: 1.2rem;"></i>
-                        {% endif %}
-                    </div>
-                    
-                    <span class="table-name">{{ table.name }}</span>
-                    <span class="table-cap">Cap: {{ table.capacity }}</span>
-
-                    {% if order %}
-                        <div class="order-popover">
-                            <div style="font-weight: 700; border-bottom: 1px solid #eee; margin-bottom: 5px; padding-bottom: 5px;">
-                                Order #{{ order.order_number|slice:":8" }}
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Status:</span>
-                                <b style="color: var(--primary);">{{ order.status|title }}</b>
-                            </div>
-                            <div style="display: flex; justify-content: space-between; margin-top: 3px;">
-                                <span>Total:</span>
-                                <b>₹{{ order.total_amount }}</b>
-                            </div>
+                    {% for table in section.tables.all %}
+                        {% with order=table_order_map|get_item:table.id %}
+                        <div class="table-card {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"
+                             id="table-{{ table.id }}"
+                             data-id="{{ table.id }}"
+                             data-name="{{ table.name }}"
+                             data-capacity="{{ table.capacity }}"
+                             data-status="{{ table.status }}"
+                             data-order-id="{{ order.id|default:'' }}"
+                             onclick="inspectTable('{{ table.id }}')"
+                             style="left: {{ table.x_pos }}%; top: {{ table.y_pos }}%; 
+                                    width: {{ table.width }}px; height: {{ table.height }}px; 
+                                    border-radius: {% if table.shape == 'circle' %}50%{% else %}20px{% endif %};">
+                            
+                            <div class="status-dot {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"></div>
+                            
+                            <span class="table-name">{{ table.name }}</span>
+                            <span class="table-meta">Capacity: {{ table.capacity }}</span>
                         </div>
-                    {% endif %}
+                        {% endwith %}
+                    {% endfor %}
                 </div>
-                {% endwith %}
             {% endfor %}
         </div>
-        {% empty %}
-        <div style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.3);">
-            <i class="fas fa-map-marked-alt fa-4x" style="margin-bottom: 1.5rem;"></i>
-            <h2 style="font-weight: 700;">No floor sections defined</h2>
-            <p>Please configure floor sections and tables in the admin panel.</p>
-        </div>
-        {% endfor %}
     </div>
 
-    <!-- Floating Legend -->
-    <div class="floor-legend">
-        <div class="legend-item">
-            <div class="legend-color" style="background: var(--status-available);"></div>
-            Available
+    <!-- Inspector Panel -->
+    <div class="inspector-panel" id="inspector">
+        <div class="panel-header">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <h2 id="inspect-title" style="margin: 0; color: white;">Select a Table</h2>
+                <button onclick="closeInspector()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
+            </div>
+            <div id="inspect-status" class="status-badge" style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;"></div>
         </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: var(--status-occupied); box-shadow: 0 0 10px var(--status-occupied);"></div>
-            Occupied
+        
+        <div class="panel-content" id="panel-body">
+            <!-- Dynamic Content -->
+            <div id="empty-state" style="text-align: center; margin-top: 4rem; opacity: 0.3;">
+                <i class="fas fa-info-circle fa-4x" style="margin-bottom: 1rem;"></i>
+                <p>Click a table to view details</p>
+            </div>
+            
+            <div id="order-details" style="display: none;">
+                <h4 style="color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; margin-bottom: 1.5rem;">Active Order</h4>
+                <div id="items-list"></div>
+                
+                <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 16px; border: 1px solid var(--glass-border);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span style="color: rgba(255,255,255,0.5);">Subtotal</span>
+                        <b id="inspect-subtotal" style="color: white;">₹0.00</b>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2rem;">
+                        <span style="color: white; font-weight: 800;">TOTAL</span>
+                        <b id="inspect-total" style="color: var(--primary);">₹0.00</b>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="legend-item">
-            <div class="legend-color" style="background: var(--status-reserved);"></div>
-            Reserved
-        </div>
-    </div>
 
-    <!-- Floating Stats -->
-    <div class="floor-stats">
-        <div class="stat-row">
-            <span>Total Tables</span>
-            <b id="total-tables">0</b>
-        </div>
-        <div class="stat-row">
-            <span>Occupancy</span>
-            <b id="occupancy-rate">0%</b>
+        <div class="panel-footer" id="inspect-footer" style="display: none;">
+            <button id="pos-btn" class="action-btn btn-primary" onclick="goToPOS()">
+                <i class="fas fa-cash-register"></i>
+                OPEN POS TERMINAL
+            </button>
+            <button id="print-btn" class="action-btn btn-outline" onclick="printTableBill()">
+                <i class="fas fa-print"></i>
+                PRINT TEMPORARY BILL
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-function switchSection(sectionId, element) {
-    // Update tabs
-    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-    element.classList.add('active');
+    let isEditMode = false;
+    let selectedTableId = null;
+    let currentOrderId = null;
+    let activeSectionId = "{% for s in sections %}{% if forloop.first %}{{ s.id }}{% endif %}{% endfor %}";
 
-    // Update canvas
-    document.querySelectorAll('.section-canvas').forEach(canvas => canvas.classList.remove('active'));
-    document.getElementById(`section-${sectionId}`).classList.add('active');
-    
-    updateStats(sectionId);
-}
+    // Data maps
+    const activeOrders = {
+        {% for sid, order in table_order_map.items %}
+            "{{ sid }}": {
+                id: "{{ order.id }}",
+                number: "{{ order.order_number }}",
+                total: "{{ order.total_amount }}",
+                subtotal: "{{ order.subtotal }}",
+                items: [
+                    {% for item in order.items.all %}
+                        { name: "{{ item.menu_item.name }}", qty: {{ item.quantity }}, price: "{{ item.price }}" },
+                    {% endfor %}
+                ]
+            },
+        {% endfor %}
+    };
 
-function updateStats(sectionId) {
-    const section = document.getElementById(`section-${sectionId}`);
-    if (!section) return;
-    
-    const total = section.querySelectorAll('.table-node').length;
-    const occupied = section.querySelectorAll('.table-node.occupied').length;
-    const rate = total > 0 ? Math.round((occupied / total) * 100) : 0;
-    
-    document.getElementById('total-tables').innerText = total;
-    document.getElementById('occupancy-rate').innerText = `${rate}%`;
-}
-
-function handleTableClick(tableId, orderId) {
-    if (orderId) {
-        window.location.href = `/pos/?table_id=${tableId}&order_id=${orderId}`;
-    } else {
-        window.location.href = `/pos/?table_id=${tableId}`;
+    function switchSection(id, btn) {
+        if (isEditMode) {
+            alert("Please disable Edit Mode before switching sections.");
+            return;
+        }
+        activeSectionId = id;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        document.querySelectorAll('.section-group').forEach(g => g.style.display = 'none');
+        document.getElementById(`section-${id}`).style.display = 'block';
+        closeInspector();
     }
-}
 
-// Initial stats for first section
-document.addEventListener('DOMContentLoaded', () => {
-    const firstTab = document.querySelector('.nav-tab');
-    if (firstTab) {
-        const sectionId = firstTab.getAttribute('onclick').match(/'([^']+)'/)[1];
-        updateStats(sectionId);
+    function inspectTable(id) {
+        if (isEditMode) return; // Don't inspect while dragging
+        
+        selectedTableId = id;
+        const card = document.getElementById(`table-${id}`);
+        const name = card.dataset.name;
+        const status = card.dataset.status;
+        const orderId = card.dataset.orderId;
+        
+        // Update Sidebar UI
+        document.getElementById('inspector').classList.add('active');
+        document.getElementById('inspect-title').innerText = name;
+        
+        const statusBadge = document.getElementById('inspect-status');
+        statusBadge.innerText = orderId ? 'Occupied' : status;
+        statusBadge.style.background = orderId ? 'var(--status-occupied)' : 'var(--status-available)';
+        
+        document.getElementById('empty-state').style.display = 'none';
+        document.getElementById('inspect-footer').style.display = 'flex';
+        
+        if (orderId && activeOrders[id]) {
+            currentOrderId = orderId;
+            const order = activeOrders[id];
+            document.getElementById('order-details').style.display = 'block';
+            document.getElementById('inspect-subtotal').innerText = "₹" + order.subtotal;
+            document.getElementById('inspect-total').innerText = "₹" + order.total;
+            
+            const list = document.getElementById('items-list');
+            list.innerHTML = order.items.map(i => `
+                <div class="order-item-mini">
+                    <div><b>${i.qty}x</b> ${i.name}</div>
+                    <div>₹${(i.qty * i.price).toFixed(2)}</div>
+                </div>
+            `).join('');
+            
+            document.getElementById('print-btn').style.display = 'flex';
+        } else {
+            currentOrderId = null;
+            document.getElementById('order-details').style.display = 'none';
+            document.getElementById('print-btn').style.display = 'none';
+        }
     }
-});
+
+    function closeInspector() {
+        document.getElementById('inspector').classList.remove('active');
+        selectedTableId = null;
+    }
+
+    function goToPOS() {
+        if (currentOrderId) {
+            window.location.href = `/pos/?table_id=${selectedTableId}&order_id=${currentOrderId}`;
+        } else {
+            window.location.href = `/pos/?table_id=${selectedTableId}`;
+        }
+    }
+
+    function printTableBill() {
+        if (currentOrderId) {
+            window.open(`/invoice/${currentOrderId}/`, '_blank', 'width=400,height=600');
+        }
+    }
+
+    // --- DRAG AND DROP ENGINE ---
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        const btn = document.getElementById('edit-layout-btn');
+        const overlay = document.getElementById('edit-label');
+        
+        if (isEditMode) {
+            btn.classList.add('edit-mode-active');
+            btn.innerHTML = '<i class="fas fa-check"></i> Save Layout';
+            overlay.style.display = 'block';
+            enableDragging();
+        } else {
+            btn.classList.remove('edit-mode-active');
+            btn.innerHTML = '<i class="fas fa-arrows-up-down-left-right"></i> Edit Layout';
+            overlay.style.display = 'none';
+            disableDragging();
+        }
+    }
+
+    function enableDragging() {
+        const tables = document.querySelectorAll('.table-card');
+        tables.forEach(table => {
+            table.setAttribute('draggable', true);
+            
+            table.onmousedown = function(e) {
+                if (!isEditMode) return;
+                
+                let shiftX = e.clientX - table.getBoundingClientRect().left;
+                let shiftY = e.clientY - table.getBoundingClientRect().top;
+                const container = document.getElementById('canvas-container');
+                const containerRect = container.getBoundingClientRect();
+
+                table.classList.add('dragging');
+
+                function moveAt(pageX, pageY) {
+                    let leftPct = ((pageX - containerRect.left - shiftX) / containerRect.width) * 100;
+                    let topPct = ((pageY - containerRect.top - shiftY) / containerRect.height) * 100;
+                    
+                    // Clamp to boundaries
+                    leftPct = Math.max(0, Math.min(leftPct, 95));
+                    topPct = Math.max(0, Math.min(topPct, 95));
+                    
+                    table.style.left = leftPct + '%';
+                    table.style.top = topPct + '%';
+                }
+
+                function onMouseMove(e) {
+                    moveAt(e.pageX, e.pageY);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+
+                table.onmouseup = async function() {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    table.onmouseup = null;
+                    table.classList.remove('dragging');
+                    
+                    // Auto-save this table's position
+                    const id = table.dataset.id;
+                    const x_pos = parseFloat(table.style.left);
+                    const y_pos = parseFloat(table.style.top);
+                    
+                    try {
+                        await fetch(`/tables/api/tables/${id}/`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ x_pos: Math.round(x_pos), y_pos: Math.round(y_pos) })
+                        });
+                    } catch (err) { console.error("Save failed", err); }
+                };
+            };
+
+            table.ondragstart = function() { return false; };
+        });
+    }
+
+    function disableDragging() {
+        const tables = document.querySelectorAll('.table-card');
+        tables.forEach(table => {
+            table.removeAttribute('draggable');
+            table.onmousedown = null;
+        });
+    }
+
 </script>
 {% endblock %}
