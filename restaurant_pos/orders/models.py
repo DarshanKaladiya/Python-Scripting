@@ -38,6 +38,10 @@ class Order(models.Model):
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     guest_count = models.IntegerField(default=1)
     
+    # Customer Details
+    customer_name = models.CharField(max_length=100, null=True, blank=True)
+    customer_phone = models.CharField(max_length=15, null=True, blank=True)
+    
     table = models.ForeignKey(Table, null=True, blank=True, on_delete=models.SET_NULL)
     waiter = models.ForeignKey(User, null=True, blank=True, related_name='taken_orders', on_delete=models.SET_NULL)
     

@@ -250,20 +250,53 @@ async function handleCheckout() {
     } catch (err) { console.error(err); }
 }
 
+function toggleSettleModal(show) {
+    const modal = document.getElementById('settle-modal');
+    if (modal) modal.classList.toggle('active', show);
+}
+
+function toggleQRModal(show) {
+    const modal = document.getElementById('qr-modal');
+    if (modal) {
+        const amount = document.getElementById('cart-total').innerText;
+        const amountEl = document.getElementById('qr-amount-pos');
+        if (amountEl) amountEl.innerText = amount;
+        modal.classList.toggle('active', show);
+    }
+}
+
 async function settleAndRelease() {
     const orderId = document.getElementById('selected-order-id').value;
     if (!orderId) return;
+    toggleSettleModal(true);
+}
 
-    if (confirm("Settle this bill and release table?")) {
-        const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-            body: JSON.stringify({ status: 'completed' })
-        });
-        if (resp.ok) {
-            alert("Table Released!");
-            window.location.href = '/tables/floor/';
+function handleSettleChoice(method) {
+    toggleSettleModal(false);
+    if (method === 'upi') {
+        toggleQRModal(true);
+    } else {
+        if (confirm(`Settle this bill via ${method.toUpperCase()} and release table?`)) {
+            confirmSettle(method);
         }
+    }
+}
+
+async function confirmSettle(method) {
+    const orderId = document.getElementById('selected-order-id').value;
+    const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ 
+            status: 'completed',
+            payment_method: method,
+            payment_status: 'paid'
+        })
+    });
+    if (resp.ok) {
+        toggleQRModal(false);
+        alert("Bill Settled successfully!");
+        window.location.href = '/tables/floor/';
     }
 }
 
@@ -322,16 +355,26 @@ function renderPendingOrders(orders) {
         const row = document.createElement('div');
         row.className = 'pending-row';
         row.innerHTML = `
-            <div>
-                <div style="font-weight: 800; color: #1e293b;">Order #${order.order_number.slice(-6)}</div>
-                <div style="font-size: 0.8rem; color: #64748b;">${order.order_type.replace('_', ' ').toUpperCase()} • ₹${order.total_amount}</div>
+            <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 800; color: #1e293b;">Order #${order.order_number.slice(-6)}</div>
+                    <div style="font-size: 0.75rem; background: #fee2e2; color: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: 800;">
+                        ${order.payment_method.toUpperCase()}
+                    </div>
+                </div>
+                <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px;">
+                    ${order.customer_name ? `<i class="fas fa-user"></i> ${order.customer_name} • ` : ''}
+                    ${order.order_type.replace('_', ' ').toUpperCase()} • ₹${order.total_amount}
+                </div>
                 <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--primary); font-weight: 700;">
                     ${order.items.map(i => `${i.quantity}x ${i.menu_item_name}`).join(', ')}
                 </div>
             </div>
-            <button onclick="confirmOrder(${order.id})" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 800; cursor: pointer;">
-                CONFIRM
-            </button>
+            <div style="margin-left: 1rem;">
+                <button onclick="confirmOrder(${order.id})" style="background: var(--primary); color: white; border: none; padding: 0.8rem 1rem; border-radius: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;">
+                    CONFIRM
+                </button>
+            </div>
         `;
         list.appendChild(row);
     });

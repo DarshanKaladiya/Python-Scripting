@@ -271,6 +271,11 @@
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
                         <span class="ticket-type type-{{ order.order_type }}">{{ order.get_order_type_display }}</span>
+                        {% if order.customer_name %}
+                            <span style="font-weight: 800; color: var(--accent-warning); font-size: 0.85rem; text-transform: uppercase;">
+                                <i class="fas fa-user"></i> {{ order.customer_name }}
+                            </span>
+                        {% endif %}
                         {% if order.table %}
                             <span style="font-weight: 900; color: white; font-size: 0.9rem;">TABLE {{ order.table.name }}</span>
                         {% endif %}
