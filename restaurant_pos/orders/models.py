@@ -57,12 +57,16 @@ class Order(models.Model):
     def __str__(self):
         return self.order_number
 
-    def calculate_totals(self):
+    def calculate_totals(self, force_subtotal=None):
         """Calculates subtotal, taxes, and final total based on order items."""
-        from django.db.models import Sum, F
-        self.subtotal = self.items.aggregate(
-            total=Sum(F('price') * F('quantity'), output_field=models.DecimalField())
-        )['total'] or 0
+        from .models import OrderItem
+        
+        if force_subtotal is not None:
+            self.subtotal = Decimal(str(force_subtotal))
+        else:
+            items = OrderItem.objects.filter(order=self)
+            subtotal = sum(item.price * item.quantity for item in items)
+            self.subtotal = Decimal(str(subtotal))
         
         # Standard 5% GST (2.5% CGST + 2.5% SGST)
         self.cgst = self.subtotal * Decimal('0.025')

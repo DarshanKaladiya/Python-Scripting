@@ -19,7 +19,16 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
+        
+        # Calculate subtotal directly from input data to avoid DB query lag
+        subtotal = sum(item['price'] * item['quantity'] for item in items_data)
+        
         order = Order.objects.create(**validated_data)
+        order.subtotal = subtotal # Seed the subtotal
+        
         for item_data in items_data:
             OrderItem.objects.create(order=order, **item_data)
+        
+        # Final calculation (GST, Total)
+        order.calculate_totals()
         return order

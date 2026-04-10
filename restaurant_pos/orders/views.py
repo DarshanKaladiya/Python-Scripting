@@ -18,14 +18,23 @@ class OrderViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         
-        # Determine status based on payment method
+        # Determine status based on payment method and user role
         payment_method = data.get('payment_method', 'cash')
-        if payment_method == 'cash':
-            data['status'] = 'awaiting_confirmation'
-            data['payment_status'] = 'pending'
+        # Determine if the user is a staff member (Admin, Cashier, Captain, or Chef)
+        is_staff = request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['admin', 'cashier', 'captain', 'chef'])
+        
+        if is_staff:
+            # Staff/POS orders go straight to kitchen
+            data['status'] = data.get('status', 'kot_sent')
+            data['payment_status'] = 'pending' if payment_method == 'cash' else 'paid'
         else:
-            data['status'] = 'kot_sent'
-            data['payment_status'] = 'paid'
+            # Customer self-orders need confirmation if not pre-paid
+            if payment_method == 'cash':
+                data['status'] = 'awaiting_confirmation'
+                data['payment_status'] = 'pending'
+            else:
+                data['status'] = 'kot_sent'
+                data['payment_status'] = 'paid'
 
         # Smart Table Assignment for Dine-in
         order_type = data.get('order_type', 'takeaway')
@@ -124,7 +133,21 @@ class KDSView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['orders'] = Order.objects.filter(status__in=['kot_sent', 'preparing']).order_by('created_at')
+        all_active = Order.objects.filter(status__in=['kot_sent', 'preparing'])
+        
+        context['orders'] = all_active.order_by('created_at')
+        context['new_count'] = all_active.filter(status='kot_sent').count()
+        context['prep_count'] = all_active.filter(status='preparing').count()
+        
+        # Calculate Capacity Load
+        max_load = 20 # Threshold for high load
+        load_score = (all_active.count() / max_load) * 100
+        context['capacity_label'] = "HIGH" if load_score > 70 else "MEDIUM" if load_score > 30 else "OPTIMAL"
+        context['load_percentage'] = min(load_score, 100)
+        
+        # Simulated Avg Prep Time (Real would use completed orders)
+        context['avg_prep_time'] = "12:45" 
+        
         return context
 
 class SelfOrderView(TemplateView):

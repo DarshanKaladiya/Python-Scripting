@@ -222,7 +222,7 @@ async function handleCheckout() {
     let payload = {
         order_number: "ORD" + Date.now(),
         order_type: selectedTableId ? "dine_in" : "takeaway",
-        status: selectedTableId ? "kot_sent" : "completed",
+        status: "kot_sent",
         table: selectedTableId || null,
         items: cart.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
     };
