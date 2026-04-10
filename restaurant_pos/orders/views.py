@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from accounts.decorators import chef_required
+from accounts.decorators import chef_required, staff_required
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets, status
 from rest_framework.response import Response
@@ -102,6 +102,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             'total_amount': order.total_amount
         })
 
+    @action(detail=False, methods=['get'])
+    def pending(self, request):
+        """Returns orders that were placed by customers and are awaiting confirmation."""
+        orders = Order.objects.filter(status='awaiting_confirmation').order_by('-created_at')
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data)
+
 class POSView(TemplateView):
     template_name = 'orders/pos.html'
 
@@ -111,7 +118,7 @@ class POSView(TemplateView):
         context['selected_order_id'] = self.request.GET.get('order_id')
         return context
 
-@method_decorator(chef_required, name='dispatch')
+@method_decorator(staff_required, name='dispatch')
 class KDSView(LoginRequiredMixin, TemplateView):
     template_name = 'orders/kds.html'
 

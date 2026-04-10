@@ -29,8 +29,9 @@ async function fetchMenuData() {
 
 // UI Rendering functions
 function renderCategories(categories) {
-    const rail = document.querySelector('.cat-rail');
-    rail.innerHTML = '';
+    const list = document.getElementById('category-list');
+    if (!list) return;
+    list.innerHTML = '';
     
     // Add "All" category
     const allBtn = document.createElement('div');
@@ -38,7 +39,7 @@ function renderCategories(categories) {
     allBtn.id = 'cat-all';
     allBtn.innerHTML = `<i class="fas fa-th-large"></i><span>All</span>`;
     allBtn.onclick = () => filterByCategory('all');
-    rail.appendChild(allBtn);
+    list.appendChild(allBtn);
 
     categories.forEach(cat => {
         const btn = document.createElement('div');
@@ -47,7 +48,7 @@ function renderCategories(categories) {
         const icon = iconMap[cat.name] || 'fa-utensils';
         btn.innerHTML = `<i class="fas ${icon}"></i><span>${cat.name}</span>`;
         btn.onclick = () => filterByCategory(cat.id);
-        rail.appendChild(btn);
+        list.appendChild(btn);
     });
 }
 
@@ -281,4 +282,81 @@ function getCookie(name) {
     return cookieValue;
 }
 
-document.addEventListener('DOMContentLoaded', fetchMenuData);
+async function fetchPendingOrders() {
+    try {
+        const response = await fetch('/api/orders/pending/');
+        if (response.ok) {
+            const data = await response.json();
+            renderPendingOrders(data);
+            updateAlertBadge(data.length);
+        }
+    } catch (err) {
+        console.error("Error fetching pending orders:", err);
+    }
+}
+
+function updateAlertBadge(count) {
+    const badge = document.getElementById('pending-count-badge');
+    if (badge) {
+        if (count > 0) {
+            badge.innerText = count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+}
+
+function renderPendingOrders(orders) {
+    const list = document.getElementById('pending-orders-list');
+    if (!list) return;
+    
+    list.innerHTML = '';
+    
+    if (orders.length === 0) {
+        list.innerHTML = '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No pending customer orders</div>';
+        return;
+    }
+
+    orders.forEach(order => {
+        const row = document.createElement('div');
+        row.className = 'pending-row';
+        row.innerHTML = `
+            <div>
+                <div style="font-weight: 800; color: #1e293b;">Order #${order.order_number.slice(-6)}</div>
+                <div style="font-size: 0.8rem; color: #64748b;">${order.order_type.replace('_', ' ').toUpperCase()} • ₹${order.total_amount}</div>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--primary); font-weight: 700;">
+                    ${order.items.map(i => `${i.quantity}x ${i.menu_item_name}`).join(', ')}
+                </div>
+            </div>
+            <button onclick="confirmOrder(${order.id})" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 800; cursor: pointer;">
+                CONFIRM
+            </button>
+        `;
+        list.appendChild(row);
+    });
+}
+
+async function confirmOrder(orderId) {
+    try {
+        const response = await fetch(`/api/orders/${orderId}/update_status/`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-CSRFToken': getCookie('csrftoken') 
+            },
+            body: JSON.stringify({ status: 'kot_sent' })
+        });
+        if (response.ok) {
+            fetchPendingOrders();
+        }
+    } catch (err) {
+        console.error("Error confirming order:", err);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    fetchMenuData();
+    fetchPendingOrders();
+    setInterval(fetchPendingOrders, 20000); // Poll every 20 seconds
+});

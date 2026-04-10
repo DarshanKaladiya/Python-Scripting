@@ -222,9 +222,36 @@
         z-index: 2000;
     }
     .pos-modal.active { display: flex; }
-    .modal-card { background: white; width: 500px; border-radius: 20px; overflow: hidden; }
-    .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; }
-    .pending-row { padding: 1.25rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
+    .modal-card { 
+        background: white; 
+        width: 500px; 
+        max-height: 80vh; 
+        border-radius: 20px; 
+        overflow: hidden; 
+        display: flex; 
+        flex-direction: column; 
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+    .modal-header { 
+        padding: 1.5rem; 
+        border-bottom: 1px solid var(--border-color); 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        background: white;
+    }
+    #pending-orders-list {
+        overflow-y: auto;
+        flex: 1;
+        padding: 0.5rem;
+    }
+    .pending-row { 
+        padding: 1.25rem; 
+        border-bottom: 1px solid #f1f5f9; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+    }
 
     /* Custom Scrollbars */
     ::-webkit-scrollbar { width: 4px; }
@@ -239,9 +266,10 @@
 
     <!-- Column 1: Categories -->
     <aside class="cat-rail">
-        <div class="cat-btn" onclick="togglePendingModal(true)" style="color: #ef4444; border-color: #fee2e2;">
+        <div class="cat-btn" onclick="togglePendingModal(true)" style="color: #ef4444; border-color: #fee2e2; position: relative;">
             <i class="fas fa-bell"></i>
             <span>Alerts</span>
+            <span id="pending-count-badge" style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800; border: 2px solid white;">0</span>
         </div>
         <div style="height: 1px; background: #f1f5f9; margin: 0.5rem 0;"></div>
         <div id="category-list" style="display:contents;">
