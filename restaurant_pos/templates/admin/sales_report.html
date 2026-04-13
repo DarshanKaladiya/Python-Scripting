@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sales Analytics - EasyServe{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+    }
+    
+    .page-header h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin: 0;
+        color: white;
+    }
+
+    .report-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .report-stat-card {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .rs-label {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .rs-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: white;
+    }
+
+    .orders-table-container {
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .orders-table th {
+        padding: 1.25rem 1.5rem;
+        background: rgba(255,255,255,0.02);
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .orders-table td {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+        font-size: 0.9rem;
+        color: white;
+    }
+
+    .payment-tag {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        background: rgba(255,255,255,0.05);
+        color: var(--text-muted);
+    }
+
+    .pt-cash { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .pt-upi { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .pt-card { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Revenue Intelligence</h1>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">Historical performance and order logs</p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+        <button class="sidebar-link active no-print" onclick="window.print()" style="border: none; cursor: pointer; padding: 0.75rem 1.5rem;">
+            <i class="fas fa-download"></i> EXPORT PDF
+        </button>
+    </div>
+</div>
+
+<div class="report-stats">
+    <div class="glass-card report-stat-card">
+        <span class="rs-label">Total Revenue</span>
+        <span class="rs-value">₹{{ total_sales|floatformat:2 }}</span>
+    </div>
+    <div class="glass-card report-stat-card">
+        <span class="rs-label">Gross Orders</span>
+        <span class="rs-value">{{ orders.count }}</span>
+    </div>
+    <div class="glass-card report-stat-card">
+        <span class="rs-label">Avg Order Value</span>
+        <span class="rs-value">₹245.00</span> <!-- Simulated for now -->
+    </div>
+</div>
+
+<div class="glass-card orders-table-container">
+    <table class="orders-table">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Time</th>
+                <th>Guest</th>
+                <th>Method</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr class="inv-row">
+                <td><span style="font-weight: 800; font-family: 'JetBrains Mono';">#{{ order.order_number }}</span></td>
+                <td style="color: var(--text-muted);">{{ order.created_at|date:"M d, H:i" }}</td>
+                <td style="font-weight: 600;">{{ order.customer_name|default:"Guest" }}</td>
+                <td>
+                    <span class="payment-tag pt-{{ order.payment_method }}">{{ order.payment_method }}</span>
+                </td>
+                <td style="font-weight: 800; color: #10b981;">₹{{ order.total_amount }}</td>
+                <td>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted);">
+                        <i class="fas fa-check-circle" style="color: #3b82f6;"></i> Completed
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

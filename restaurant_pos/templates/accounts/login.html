@@ -1,37 +1,75 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Login - RestoPOS{% endblock %}
+{% block title %}Login - EasyServe{% endblock %}
+
+{% block body_class %}login-page-body{% endblock %}
+
+{% block navbar %}{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: center; align-items: center; min-height: calc(100vh - 60px);">
-    <div class="glass-card" style="width: 100%; max-width: 400px; padding: 2.5rem;">
-        <h2 style="margin-bottom: 1.5rem; text-align: center; color: var(--primary);">Welcome Back</h2>
-        <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Sign in to your account</p>
-        
-        <form method="post">
-            {% csrf_token %}
-            <div style="margin-bottom: 1.25rem;">
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Username</label>
-                <input type="text" name="username" required 
-                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem;">
+<div class="login-wrapper">
+    <!-- Hero Branding Side -->
+    <div class="login-hero">
+        <div class="hero-content-box">
+            <span style="color: var(--primary); font-weight: 800; letter-spacing: 2px; text-transform: uppercase; font-size: 0.8rem;">Restaurant Management Platform</span>
+            <h1 class="hero-brand">EasyServe</h1>
+            <p style="font-size: 1.25rem; opacity: 0.8; max-width: 480px; line-height: 1.6; font-weight: 300;">
+                Empowering restaurant teams with smart data, real-time inventory, and effortless point-of-sale intelligence.
+            </p>
+            <div style="margin-top: 2.5rem; display: flex; gap: 1rem; opacity: 0.6;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-check-circle"></i> Live Sync</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-check-circle"></i> Inventory AI</div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;"><i class="fas fa-check-circle"></i> Sales Intel</div>
             </div>
-            <div style="margin-bottom: 2rem;">
-                <label style="display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Password</label>
-                <input type="password" name="password" required 
-                       style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem;">
+        </div>
+    </div>
+
+    <!-- Form Side -->
+    <div class="login-form-side">
+        <div class="login-box">
+            <div style="margin-bottom: 2.5rem;">
+                <h2 style="font-size: 2rem; font-weight: 800; color: white; margin-bottom: 0.5rem;">Welcome back</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Enter your credentials to access the station</p>
             </div>
-            
-            {% if form.errors %}
-                <div style="color: #ef4444; font-size: 0.875rem; margin-bottom: 1rem; text-align: center;">
-                    Invalid username or password.
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="auth-input-group">
+                    <label class="auth-label">Identification</label>
+                    <div class="auth-field-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" name="username" class="auth-input" placeholder="Username / ID" required autocomplete="username">
+                    </div>
                 </div>
-            {% endif %}
-            
-            <button type="submit" 
-                    style="width: 100%; padding: 0.75rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s;">
-                Sign In
-            </button>
-        </form>
+
+                <div class="auth-input-group">
+                    <label class="auth-label">Security Key</label>
+                    <div class="auth-field-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" name="password" class="auth-input" placeholder="Enter Password" required autocomplete="current-password">
+                    </div>
+                </div>
+
+                {% if form.errors %}
+                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 12px; color: #f87171; font-size: 0.85rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    Authentication failed. Please check your credentials.
+                </div>
+                {% endif %}
+
+                <button type="submit" class="auth-submit-btn">
+                    SIGN IN TO STATION
+                </button>
+
+                <div style="margin-top: 2rem; text-align: center;">
+                    <p style="color: rgba(255, 255, 255, 0.2); font-size: 0.75rem; letter-spacing: 1px;">
+                        &copy; 2026 EASYSERVE PLATFORMS. SECURE ACCESS ONLY.
+                    </p>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

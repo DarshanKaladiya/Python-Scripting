@@ -24,9 +24,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         is_staff = request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['admin', 'cashier', 'captain', 'chef'])
         
         if is_staff:
-            # Staff/POS orders go straight to kitchen
+            # Staff/POS orders go straight to kitchen unless explicitly set to completed (Direct Bill)
             data['status'] = data.get('status', 'kot_sent')
-            data['payment_status'] = 'pending' if payment_method == 'cash' else 'paid'
+            if 'payment_status' not in data:
+                data['payment_status'] = 'pending' if payment_method == 'cash' else 'paid'
         else:
             # Customer self-orders need confirmation if not pre-paid
             if payment_method == 'cash':
@@ -66,10 +67,22 @@ class OrderViewSet(viewsets.ModelViewSet):
         new_status = request.data.get('status')
         if new_status in dict(Order.STATUS_CHOICES):
             order.status = new_status
-            if new_status == 'kot_sent':
-                order.payment_status = 'paid'
-            order.save()
+            
+            # Optional: handle payment details if provided during settlement
+            if 'payment_method' in request.data:
+                order.payment_method = request.data['payment_method']
+            if 'payment_status' in request.data:
+                order.payment_status = request.data['payment_status']
+            if 'customer_name' in request.data:
+                order.customer_name = request.data['customer_name']
+            if 'customer_phone' in request.data:
+                order.customer_phone = request.data['customer_phone']
                 
+            if new_status == 'kot_sent' and order.payment_status == 'pending':
+                # Logic for KOT: if not paid yet, usually stays pending
+                pass 
+            
+            order.save()
             return Response({'status': 'updated'})
         return Response({'error': 'invalid status'}, status=status.HTTP_400_BAD_REQUEST)
 

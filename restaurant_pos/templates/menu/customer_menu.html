@@ -1,24 +1,24 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Digital Menu - RestoPOS{% endblock %}
+{% block title %}Digital Menu - EasyServe{% endblock %}
 
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
 <style>
     :root {
-        --glass-bg: rgba(255, 255, 255, 0.75);
-        --glass-border: rgba(255, 255, 255, 0.4);
+        --glass-bg: rgba(15, 23, 42, 0.75);
+        --glass-border: rgba(255, 255, 255, 0.1);
         --accent: #f59e0b; /* Golden Amber */
         --accent-dark: #b45309;
-        --surface: #0f172a; /* Slate 900 */
-        --item-card-bg: rgba(255, 255, 255, 0.9);
+        --surface: #0B0F19; /* Deep space */
+        --item-card-bg: #151a2a;
     }
 
     body {
         font-family: 'Outfit', sans-serif;
-        background-color: #f8fafc;
-        color: #1e293b;
+        background-color: var(--surface);
+        color: #f8fafc;
     }
 
     .menu-wrapper {
@@ -123,8 +123,9 @@
         width: 100%;
         padding: 0.8rem 1rem 0.8rem 3rem;
         border-radius: 16px;
-        border: 1px solid #e2e8f0;
-        background: white;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(0,0,0,0.2);
+        color: white;
         font-family: inherit;
         font-weight: 600;
         outline: none;
@@ -150,8 +151,9 @@
 
     .chip {
         padding: 0.6rem 1.25rem;
-        background: white;
-        border: 1px solid #e2e8f0;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        color: #94a3b8;
         border-radius: 50px;
         white-space: nowrap;
         font-weight: 600;
@@ -160,10 +162,10 @@
     }
 
     .chip.active {
-        background: var(--surface);
+        background: var(--accent);
         color: white;
-        border-color: var(--surface);
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        border-color: var(--accent);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
     }
 
     /* Menu Cards */
@@ -248,8 +250,8 @@
         background: var(--item-card-bg);
         border-radius: 32px;
         overflow: hidden;
-        border: 1px solid #f1f5f9;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         display: flex;
         flex-direction: column;
@@ -316,7 +318,7 @@
         font-size: 1.35rem;
         font-weight: 800;
         margin-bottom: 0.5rem;
-        color: var(--surface);
+        color: white;
     }
 
     .item-meta p {
@@ -339,7 +341,7 @@
     .price {
         font-size: 1.5rem;
         font-weight: 800;
-        color: var(--surface);
+        color: var(--accent);
     }
 
     .add-btn {
@@ -419,7 +421,7 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background: white;
+        background: var(--item-card-bg);
         border-radius: 40px 40px 0 0;
         height: 85vh;
         transform: translateY(100%);
@@ -427,6 +429,7 @@
         display: flex;
         flex-direction: column;
         padding-bottom: env(safe-area-inset-bottom);
+        border-top: 1px solid rgba(255,255,255,0.1);
     }
     .side-sheet.active .sheet-panel { transform: translateY(0); }
 
@@ -435,11 +438,11 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
     .sheet-body { flex: 1; overflow-y: auto; padding: 2rem; }
-    .sheet-footer { padding: 2rem; background: #f8fafc; }
+    .sheet-footer { padding: 2rem; background: var(--surface); border-top: 1px solid rgba(255,255,255,0.1); }
 
     .confirm-btn {
         width: 100%;
@@ -458,15 +461,15 @@
 
     /* Table info overlay */
     .table-banner {
-        background: #fffbeb;
-        border: 1px solid #fef3c7;
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.2);
         padding: 1rem;
         border-radius: 16px;
         margin-bottom: 2rem;
         display: flex;
         align-items: center;
         gap: 1rem;
-        color: #92400e;
+        color: var(--accent);
         font-weight: 600;
     }
 
@@ -519,11 +522,12 @@
     
     .modal-container {
         position: relative;
-        background: white;
+        background: var(--item-card-bg);
         width: 100%;
         max-width: 450px;
         border-radius: 32px;
         overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
@@ -541,14 +545,15 @@
         font-weight: 700;
         margin-bottom: 0.5rem;
         font-size: 0.9rem;
-        color: var(--surface);
+        color: white;
     }
     .form-group input, .form-group select {
         width: 100%;
         padding: 1rem;
         border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        background: #f8fafc;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(0,0,0,0.2);
+        color: white;
         font-family: inherit;
         font-weight: 600;
         outline: none;
@@ -562,25 +567,35 @@
         margin-top: 1rem;
     }
     .pay-btn {
-        padding: 1rem 0.5rem;
-        border-radius: 12px;
-        border: 1px solid #e2e8f0;
-        background: #f8fafc;
+        padding: 2rem 0.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.05);
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+        color: #94a3b8;
         cursor: pointer;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 0.5rem;
-        transition: all 0.2s;
-        font-weight: 700;
-        font-size: 0.8rem;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 800;
+        font-size: 0.95rem;
+    }
+    .pay-btn:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+        border-color: rgba(255,255,255,0.1);
+        color: white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     }
     .pay-btn.active {
-        background: var(--surface);
+        background: linear-gradient(135deg, var(--accent), var(--accent-dark));
         color: white;
-        border-color: var(--surface);
+        border-color: transparent;
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        transform: translateY(-2px);
     }
-    .pay-btn i { font-size: 1.2rem; }
+    .pay-btn i { font-size: 1.75rem; margin-bottom: 0.75rem; }
 
     .qr-container {
         text-align: center;
@@ -612,8 +627,8 @@
                     TABLE {{ table.name }} • {{ table.section.name }}
                 </div>
             {% endif %}
-            <h1>Gourmet Experience</h1>
-            <p>Savor the finest ingredients, handpicked by our chefs to create memories on a plate.</p>
+            <h1>Dining Made Easy</h1>
+            <p>Your favorite dishes are just a few taps away. Experience the ease of EasyServe.</p>
             
             <div class="service-selector">
                 <button class="service-option {% if not table %}active{% endif %}" id="opt-takeaway" onclick="setServiceType('takeaway')">
@@ -645,9 +660,9 @@
                     <i class="fas fa-search"></i>
                     <input type="text" id="menu-search" placeholder="Looking for something specific?" onkeyup="filterItems()">
                 </div>
-                <div style="background: white; border: 1px solid #e2e8f0; height: 100%; padding: 0.8rem 1rem; border-radius: 16px; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700;">
+                <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); height: 100%; padding: 0.8rem 1rem; border-radius: 16px; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; font-weight: 700;">
                     <i class="fas fa-leaf" style="color: #10b981;"></i>
-                    <span class="d-none d-md-inline">Veg Only</span>
+                    <span class="d-none d-md-inline" style="color: white;">Veg Only</span>
                     <input type="checkbox" id="veg-toggle" onchange="filterItems()">
                 </div>
             </div>
@@ -716,8 +731,8 @@
         <div class="sheet-backdrop" onclick="toggleCart(false)"></div>
         <div class="sheet-panel">
             <div class="sheet-header">
-                <h2 style="margin:0; font-family: 'Playfair Display', serif; font-size: 1.75rem;">Your Selection</h2>
-                <button onclick="toggleCart(false)" style="background:none; border:none; font-size: 1.5rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+                <h2 style="margin:0; font-family: 'Playfair Display', serif; font-size: 1.75rem; color: white;">Your Selection</h2>
+                <button onclick="toggleCart(false)" style="background:none; border:none; font-size: 1.5rem; cursor:pointer; color: white;"><i class="fas fa-times"></i></button>
             </div>
             <div class="sheet-body" id="cart-list">
                 <!-- Items injected here -->
@@ -729,7 +744,7 @@
                         Dining {% if table %}at Table {{ table.name }} ({{ table.section.name }}){% else %}at Table (Not Selected){% endif %}
                     </div>
                 {% endif %}
-                <div class="table-banner" id="takeaway-banner" style="display: {% if not table %}flex{% else %}none{% endif %}; background: #f1f5f9; border-color: #e2e8f0; color: #475569;">
+                <div class="table-banner" id="takeaway-banner" style="display: {% if not table %}flex{% else %}none{% endif %}; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); color: #94a3b8;">
                     <i class="fas fa-bag-shopping"></i>
                     Preparing for Takeaway
                 </div>
@@ -775,14 +790,19 @@
                     <input type="hidden" id="selected-payment" value="cash">
                 </div>
 
-                <div id="cash-notice" style="margin-top: 1.5rem; padding: 1rem; background: #fff7ed; border-radius: 12px; font-size: 0.85rem; color: #9a3412; font-weight: 600; display: block;">
+                <div id="cash-notice" style="margin-top: 1.5rem; padding: 1rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 12px; font-size: 0.85rem; color: var(--accent); font-weight: 600; display: block;">
                     <i class="fas fa-info-circle"></i>
                     Please proceed to the cashier for payment after placing order.
                 </div>
 
-                <button class="confirm-btn" style="margin-top: 2rem; justify-content: center;" onclick="finalizeOrder()">
-                    CONFIRM & ORDER
-                </button>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="confirm-btn" style="flex: 1; justify-content: center; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white;" onclick="closeCheckout()">
+                        CANCEL
+                    </button>
+                    <button class="confirm-btn" style="flex: 2; justify-content: center; background: var(--accent); color: white;" onclick="finalizeOrder()">
+                        CONFIRM & ORDER
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -897,13 +917,13 @@
             row.style.cssText = "display: flex; justify-content: space-between; align-items:center; margin-bottom: 1.5rem;";
             row.innerHTML = `
                 <div>
-                    <div style="font-weight: 700;">${item.name}</div>
-                    <div style="font-size: 0.85rem; color: #64748b;">₹${item.price} each</div>
+                    <div style="font-weight: 700; color: white;">${item.name}</div>
+                    <div style="font-size: 0.85rem; color: #94a3b8;">₹${item.price} each</div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 1rem; background: #f1f5f9; padding: 0.25rem; border-radius: 12px;">
-                    <button onclick="updateQty('${item.id}', -1)" style="width:28px; height:28px; border:none; border-radius:8px; background:white; font-weight:800; cursor:pointer;">-</button>
-                    <span style="font-weight: 800; min-width: 20px; text-align:center;">${item.qty}</span>
-                    <button onclick="updateQty('${item.id}', 1)" style="width:28px; height:28px; border:none; border-radius:8px; background:white; font-weight:800; cursor:pointer;">+</button>
+                <div style="display: flex; align-items: center; gap: 1rem; background: rgba(0,0,0,0.2); padding: 0.25rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                    <button onclick="updateQty('${item.id}', -1)" style="width:28px; height:28px; border:none; border-radius:8px; background:rgba(255,255,255,0.1); color:white; font-weight:800; cursor:pointer;">-</button>
+                    <span style="font-weight: 800; min-width: 20px; text-align:center; color: white;">${item.qty}</span>
+                    <button onclick="updateQty('${item.id}', 1)" style="width:28px; height:28px; border:none; border-radius:8px; background:rgba(255,255,255,0.1); color:white; font-weight:800; cursor:pointer;">+</button>
                 </div>
             `;
             list.appendChild(row);

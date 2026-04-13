@@ -1,261 +1,204 @@
 {% extends 'base.html' %}
 
-{% block title %}Admin Dashboard - RestoPOS{% endblock %}
+{% block title %}Admin Dashboard - EasyServe{% endblock %}
 
 {% block extra_css %}
 <style>
-    .dashboard-wrapper {
-        padding: 2.5rem;
-        background: radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.03) 0%, transparent 50%),
-                    radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
-        min-height: calc(100vh - 64px);
+    .welcome-header {
+        margin-bottom: 2.5rem;
     }
-
-    .header-section {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 3rem;
-    }
-
-    .welcome-text h1 {
-        font-size: 2.5rem;
-        font-weight: 800;
+    
+    .welcome-header h1 {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.75rem;
+        font-weight: 900;
         margin: 0;
-        letter-spacing: -1px;
-        background: linear-gradient(135deg, var(--text-dark), #475569);
+        background: linear-gradient(to right, #fff, var(--text-muted));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 
-    .welcome-text p {
-        color: var(--text-muted);
-        margin: 0.5rem 0 0 0;
-        font-size: 1.1rem;
-    }
-
-    .quick-stats {
+    .top-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 2rem;
-        margin-bottom: 3rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
     }
 
-    .stat-card {
+    .premium-card {
         padding: 2rem;
         position: relative;
         overflow: hidden;
-        transition: transform 0.3s;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .stat-card:hover {
-        transform: translateY(-5px);
+    .premium-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        border-color: rgba(249, 115, 22, 0.4);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6);
     }
 
-    .stat-card i {
+    .premium-card::after {
+        content: "";
         position: absolute;
-        right: -10px;
-        bottom: -10px;
-        font-size: 5rem;
-        opacity: 0.05;
-        transform: rotate(-15deg);
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.4s;
     }
 
-    .stat-info .label {
-        font-size: 0.85rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        color: var(--text-muted);
-        display: block;
-        margin-bottom: 0.5rem;
+    .premium-card:hover::after {
+        opacity: 1;
     }
 
-    .stat-info .value {
-        font-size: 2.25rem;
-        font-weight: 800;
-        color: var(--text-dark);
-        display: block;
+    .pc-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
     }
 
-    .dash-grid {
+    .pc-revenue { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .pc-orders { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+    .pc-stock { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+    .chart-box {
+        padding: 2rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .live-feed-grid {
         display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 2.5rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
     }
 
-    .chart-container {
-        padding: 2rem;
-        height: 450px;
-    }
-
-    .stock-card {
-        padding: 2rem;
-    }
-
-    .stock-list {
-        list-style: none;
-        padding: 0;
-        margin: 1.5rem 0 0 0;
-    }
-
-    .stock-item {
-        padding: 1rem;
-        border-radius: 12px;
-        background: rgba(0,0,0,0.02);
-        margin-bottom: 0.75rem;
+    .order-feed-item {
+        padding: 1.25rem;
+        border-radius: 16px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.05);
+        margin-bottom: 1rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border: 1px solid transparent;
         transition: all 0.2s;
     }
 
-    .stock-item:hover {
-        background: white;
-        border-color: rgba(239, 68, 68, 0.2);
-        box-shadow: var(--shadow-sm);
+    .order-feed-item:hover {
+        background: rgba(255,255,255,0.07);
+        border-color: rgba(255,255,255,0.1);
     }
 
-    .stock-name {
-        font-weight: 600;
-        color: var(--text-dark);
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
     }
 
-    .stock-qty {
-        font-family: 'JetBrains Mono', monospace;
-        font-weight: 700;
-        color: #ef4444;
-        background: #fef2f2;
-        padding: 0.25rem 0.75rem;
+    .sb-preparing { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .sb-ready { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .sb-completed { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+
+    .stock-pill {
+        padding: 2px 8px;
         border-radius: 6px;
-        font-size: 0.85rem;
-    }
-
-    .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background: #ef4444;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 8px;
-        animation: pulse-red 2s infinite;
-    }
-
-    @keyframes pulse-red {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        font-size: 0.7rem;
+        font-weight: 700;
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-wrapper">
-    <header class="header-section">
-        <div class="welcome-text">
-            <h1>Business Overview</h1>
-            <p>Welcome back, <b>{{ user.username }}</b>. Here's your restaurant's performance.</p>
-        </div>
-        <div class="date-display" style="text-align: right;">
-            <div style="font-weight: 700; color: var(--text-dark);" id="current-date"></div>
-            <div style="font-size: 0.85rem; color: var(--text-muted);">Real-time Insights</div>
-        </div>
-    </header>
+<div class="welcome-header">
+    <h1>Management Station</h1>
+    <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 0.5rem;">
+        Synchronized insights for <b>{{ user.username }}</b>
+    </p>
+</div>
 
-    <!-- Stat Overview -->
-    <div class="quick-stats">
-        <div class="glass-card stat-card">
-            <i class="fas fa-coins"></i>
-            <div class="stat-info">
-                <span class="label">Total Revenue</span>
-                <span class="value">₹{{ total_sales|floatformat:2 }}</span>
-                <div style="font-size: 0.75rem; color: #10b981; margin-top: 0.5rem; font-weight: 600;">
-                    <i class="fas fa-arrow-up"></i> +12% from last week
-                </div>
-            </div>
-        </div>
+<!-- Key Stat Hub -->
+<div class="top-stats">
+    <div class="glass-card premium-card">
+        <div class="pc-icon pc-revenue"><i class="fas fa-coins"></i></div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Revenue Analytics</div>
+        <div style="font-size: 2.25rem; font-weight: 800; color: white; margin: 0.5rem 0;">₹{{ total_sales|floatformat:2 }}</div>
+        <div style="font-size: 0.8rem; color: #10b981; font-weight: 700;"><i class="fas fa-trending-up"></i> +12.4% yield</div>
+    </div>
 
-        <div class="glass-card stat-card">
-            <i class="fas fa-shopping-basket"></i>
-            <div class="stat-info">
-                <span class="label">Orders Today</span>
-                <span class="value">{{ order_count }}</span>
-                <div style="font-size: 0.75rem; color: #3b82f6; margin-top: 0.5rem; font-weight: 600;">
-                    <i class="fas fa-concierge-bell"></i> 4 active now
-                </div>
-            </div>
-        </div>
+    <div class="glass-card premium-card">
+        <div class="pc-icon pc-orders"><i class="fas fa-concierge-bell"></i></div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Order Velocity</div>
+        <div style="font-size: 2.25rem; font-weight: 800; color: white; margin: 0.5rem 0;">{{ order_count }}</div>
+        <div style="font-size: 0.8rem; color: #3b82f6; font-weight: 700;"><i class="fas fa-bolt"></i> Peak activity: 14:00</div>
+    </div>
 
-        <div class="glass-card stat-card">
-            <i class="fas fa-exclamation-triangle"></i>
-            <div class="stat-info">
-                <span class="label">Stock Alerts</span>
-                <span class="value" style="color: {% if low_stock_items %}#ef4444{% else %}#10b981{% endif %};">
-                    {{ low_stock_items.count }}
-                </span>
-                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; font-weight: 600;">
-                    {% if low_stock_items %}Action required immediately{% else %}All levels optimal{% endif %}
-                </div>
-            </div>
+    <div class="glass-card premium-card" style="border-color: {% if low_stock_items %}rgba(239, 68, 68, 0.3){% else %}var(--border-color){% endif %};">
+        <div class="pc-icon pc-stock"><i class="fas fa-exclamation-triangle"></i></div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Stock Integrity</div>
+        <div style="font-size: 2.25rem; font-weight: 800; color: {% if low_stock_items %}#ef4444{% else %}white{% endif %}; margin: 0.5rem 0;">{{ low_stock_items.count }} Alerts</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">
+            {% if low_stock_items %}Reordering highly recommended{% else %}Logistics fully synchronized{% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Main Analysis Grid -->
+<div class="live-feed-grid">
+    <div class="glass-card chart-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <h3 style="margin:0; font-weight: 800; letter-spacing: -0.5px;">Revenue Flux</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px;">LAST 7 DAYS</span>
+        </div>
+        <div style="height: 350px;">
+            <canvas id="revenueChart"></canvas>
         </div>
     </div>
 
-    <!-- Main Analytics Section -->
-    <div class="dash-grid">
-        <div class="glass-card chart-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h3 style="margin: 0; font-weight: 700;">Revenue Trends</h3>
-                <select style="padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.8rem; font-weight: 600;">
-                    <option>Last 7 Days</option>
-                    <option>Last 30 Days</option>
-                </select>
+    <div class="glass-card" style="padding: 2rem;">
+        <h3 style="margin:0; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 2rem;">Live Orders Feed</h3>
+        <div class="order-feed-list">
+            {% for order in recent_orders %}
+            <div class="order-feed-item">
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-weight: 800; font-size: 0.95rem; color: white;">#{{ order.order_number }}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">{{ order.customer_name|default:"Guest" }} • ₹{{ order.total_amount }}</span>
+                </div>
+                <span class="status-badge sb-{{ order.status }}">
+                    {{ order.get_status_display }}
+                </span>
             </div>
-            <canvas id="revenueChart"></canvas>
+            {% empty %}
+            <div style="text-align: center; color: var(--text-muted); padding: 4rem 0;">
+                <i class="fas fa-clock fa-2x" style="opacity:0.2; margin-bottom: 1rem; display:block;"></i>
+                Monitoring active sessions...
+            </div>
+            {% endfor %}
         </div>
-
-        <div class="glass-card stock-card">
-            <h3 style="margin: 0; font-weight: 700;">Critical Stock</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Items below reorder level</p>
-            
-            <ul class="stock-list">
-                {% for item in low_stock_items %}
-                    <li class="stock-item">
-                        <div style="display: flex; align-items: center;">
-                            <span class="pulse-dot"></span>
-                            <span class="stock-name">{{ item.name }}</span>
-                        </div>
-                        <span class="stock-qty">{{ item.current_stock }} {{ item.unit.short_code }}</span>
-                    </li>
-                {% empty %}
-                    <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
-                        <i class="fas fa-check-circle fa-3x" style="color: #10b981; opacity: 0.2; margin-bottom: 1rem; display: block;"></i>
-                        Stock is fully replenished
-                    </div>
-                {% endfor %}
-            </ul>
-            
-            {% if low_stock_items %}
-                <button style="width: 100%; margin-top: 1rem; padding: 1rem; background: var(--text-dark); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;">
-                    Generate Purchase Orders
-                </button>
-            {% endif %}
-        </div>
+        <a href="{% url 'inventory:sales_report' %}" style="text-decoration: none;">
+            <button class="sidebar-link active" style="width: 100%; justify-content: center; margin-top: 1rem; border: none; cursor: pointer;">
+                VIEW FULL LOGS
+            </button>
+        </a>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Date Display
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    document.getElementById('current-date').innerText = new Date().toLocaleDateString(undefined, options);
-
-    // Chart.js Revenue Chart
     const ctx = document.getElementById('revenueChart').getContext('2d');
-    
-    // Gradient for chart
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(249, 115, 22, 0.4)');
+    gradient.addColorStop(0, 'rgba(249, 115, 22, 0.3)');
     gradient.addColorStop(1, 'rgba(249, 115, 22, 0)');
 
     new Chart(ctx, {
@@ -263,35 +206,32 @@
         data: {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
             datasets: [{
-                label: 'Daily Revenue',
-                data: [4500, 5200, 4800, 6100, 7500, 9200, 8800], // Simulated data
+                data: [4200, 5800, 4900, 7200, 8500, 9800, 9400],
                 borderColor: '#f97316',
                 borderWidth: 4,
                 fill: true,
                 backgroundColor: gradient,
                 tension: 0.4,
-                pointBackgroundColor: '#fff',
-                pointBorderColor: '#f97316',
-                pointBorderWidth: 2,
-                pointRadius: 6,
-                pointHoverRadius: 8
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: '#f97316',
+                pointHoverBorderColor: '#fff',
+                pointHoverBorderWidth: 3,
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
+            plugins: { legend: { display: false } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
-                    ticks: { font: { weight: '600' } }
+                    grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+                    ticks: { color: '#64748b', font: { family: 'Outfit', weight: '600' } }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: { font: { weight: '600' } }
+                    ticks: { color: '#64748b', font: { family: 'Outfit', weight: '600' } }
                 }
             }
         }

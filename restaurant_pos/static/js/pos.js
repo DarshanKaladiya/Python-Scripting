@@ -83,12 +83,22 @@ function renderItems(categoryId) {
         if (item.item_type === 'veg') dietClass = 'dot-v';
         else if (item.item_type === 'egg') dietClass = 'dot-e';
 
+        let imageHtml = '';
+        if (item.image) {
+            imageHtml = `<div class="item-img" style="background-image: url('${item.image}')"></div>`;
+        } else {
+            imageHtml = `<div class="item-img fallback"><span>${item.name.charAt(0)}</span></div>`;
+        }
+
         card.innerHTML = `
-            <div style="font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span class="diet-dot ${dietClass}"><i class="fa-solid fa-circle"></i></span>
-                ${item.name}
+            ${imageHtml}
+            <div class="item-details">
+                <div style="font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: start; gap: 8px; text-align: left; line-height: 1.2;">
+                    <span class="diet-dot ${dietClass}" style="flex-shrink:0; margin-top:2px;"><i class="fa-solid fa-circle"></i></span>
+                    ${item.name}
+                </div>
+                <div style="color: var(--primary); font-weight: 800; font-size: 1.1rem; text-align: left;">₹${parseFloat(item.base_price).toFixed(2)}</div>
             </div>
-            <div style="color: var(--primary); font-weight: 800; font-size: 1.1rem;">₹${parseFloat(item.base_price).toFixed(2)}</div>
         `;
         grid.appendChild(card);
     });
@@ -104,6 +114,7 @@ function addToCart(item) {
             name: item.name,
             price: parseFloat(item.base_price),
             item_type: item.item_type,
+            image: item.image,
             quantity: 1,
             isExisting: false
         });
@@ -140,11 +151,24 @@ function updateCartUI() {
     const selectedOrderId = document.getElementById('selected-order-id')?.value;
     const isAppendMode = !!selectedOrderId;
     const settleBtn = document.getElementById('settle-btn');
-    const checkoutText = document.getElementById('checkout-btn-text');
+    const directBillBtn = document.getElementById('direct-bill-btn');
+    const kotBtn = document.getElementById('kot-btn');
     
     if (isAppendMode) {
         if (settleBtn) settleBtn.style.display = 'flex';
-        if (checkoutText) checkoutText.innerText = "UPDATE KOT / ADD ITEMS";
+        // Hide direct bill for existing orders, KOT becomes "Update"
+        if (directBillBtn) directBillBtn.style.display = 'none';
+        if (kotBtn) {
+            kotBtn.innerHTML = '<i class="fas fa-receipt"></i> UPDATE KOT';
+            kotBtn.style.flex = "1";
+        }
+    } else {
+        if (settleBtn) settleBtn.style.display = 'none';
+        if (directBillBtn) directBillBtn.style.display = 'flex';
+        if (kotBtn) {
+            kotBtn.innerHTML = '<i class="fas fa-receipt"></i> KOT';
+            kotBtn.style.flex = "1";
+        }
     }
 
     let subtotal = 0;
@@ -160,10 +184,10 @@ function updateCartUI() {
         card.innerHTML = `
             <div class="cic-header">
                 <div>
-                    <div class="cic-name">
-                        <span class="diet-dot ${dietClass}"><i class="fa-solid fa-circle"></i></span>
+                    <div class="cic-name" style="display:flex; align-items:center;">
+                        <span class="diet-dot ${dietClass}" style="margin-top:0px;"><i class="fa-solid fa-circle"></i></span>
                         ${item.name}
-                        ${item.isExisting ? '<span style="font-size: 0.6rem; color: #64748b; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-left: 4px;">KOT</span>' : ''}
+                        ${item.isExisting ? '<span style="font-size: 0.6rem; color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; margin-left: 6px;">KOT</span>' : ''}
                     </div>
                 </div>
                 <div class="cic-price">₹${(item.price * item.quantity).toFixed(2)}</div>
@@ -172,13 +196,13 @@ function updateCartUI() {
                 <div style="display: flex; align-items: center; gap: 1rem;">
                     ${!item.isExisting ? `
                         <button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button>
-                        <span style="font-weight: 800; font-size: 1rem; min-width: 20px; text-align: center;">${item.quantity}</span>
+                        <span style="font-weight: 800; font-size: 1rem; min-width: 20px; text-align: center; color: white;">${item.quantity}</span>
                         <button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button>
-                    ` : `<span style="font-weight: 700; color: #64748b;">Qty: ${item.quantity}</span>`}
+                    ` : `<span style="font-weight: 700; color: var(--text-muted);">Qty: ${item.quantity}</span>`}
                 </div>
                 ${!item.isExisting ? `
-                    <button onclick="updateQty('${item.id}', -${item.quantity})" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 0.75rem;">REMOVE</button>
-                ` : `<span style="font-size: 0.65rem; font-weight: 800; color: #94a3b8;">LOCKED</span>`}
+                    <button onclick="updateQty('${item.id}', -${item.quantity})" style="background: none; border: none; color: #ef4444; font-weight: 700; cursor: pointer; font-size: 0.75rem; transition: color 0.2s;" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color='#ef4444'">REMOVE</button>
+                ` : `<span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); opacity:0.8;">LOCKED</span>`}
             </div>
         `;
         cartList.appendChild(card);
@@ -272,6 +296,23 @@ async function settleAndRelease() {
 }
 
 function handleSettleChoice(method) {
+    posSetPayment(method);
+}
+
+function posSetPayment(method) {
+    const hiddenInput = document.getElementById('pos-selected-payment');
+    if (hiddenInput) hiddenInput.value = method;
+    
+    document.querySelectorAll('#settle-modal .pay-btn').forEach(b => b.classList.remove('active'));
+    const activeBtn = document.getElementById(`pos-pay-${method}`);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+function executeSettle() {
+    const hiddenInput = document.getElementById('pos-selected-payment');
+    if (!hiddenInput) return;
+    const method = hiddenInput.value;
+    
     toggleSettleModal(false);
     if (method === 'upi') {
         toggleQRModal(true);
@@ -282,20 +323,68 @@ function handleSettleChoice(method) {
     }
 }
 
+function openTakeawaySettle() {
+    if (cart.length === 0) {
+        alert("Cart is empty!");
+        return;
+    }
+    toggleSettleModal(true);
+}
+
 async function confirmSettle(method) {
     const orderId = document.getElementById('selected-order-id').value;
+    const custName = document.getElementById('pos-cust-name').value;
+    const custPhone = document.getElementById('pos-cust-phone').value;
+    
+    if (!orderId) {
+        // Direct Takeaway Settle
+        const selectedTableId = document.getElementById('selected-table-id').value;
+        const payload = {
+            order_number: "ORD" + Date.now(),
+            order_type: selectedTableId ? "dine_in" : "takeaway",
+            status: "completed",
+            payment_method: method,
+            payment_status: "paid",
+            customer_name: custName || null,
+            customer_phone: custPhone || null,
+            table: selectedTableId || null,
+            items: cart.map(item => ({ menu_item: item.id, quantity: item.quantity, price: item.price }))
+        };
+
+        const resp = await fetch('/api/orders/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify(payload)
+        });
+
+        if (resp.ok) {
+            toggleQRModal(false);
+            alert("Direct Bill Created & Settled!");
+            document.getElementById('pos-cust-name').value = '';
+            document.getElementById('pos-cust-phone').value = '';
+            cart = [];
+            updateCartUI();
+        }
+        return;
+    }
+
+    // Existing Order Settle
     const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
         body: JSON.stringify({ 
             status: 'completed',
             payment_method: method,
-            payment_status: 'paid'
+            payment_status: 'paid',
+            customer_name: custName || undefined,
+            customer_phone: custPhone || undefined
         })
     });
     if (resp.ok) {
         toggleQRModal(false);
         alert("Bill Settled successfully!");
+        document.getElementById('pos-cust-name').value = '';
+        document.getElementById('pos-cust-phone').value = '';
         window.location.href = '/tables/floor/';
     }
 }

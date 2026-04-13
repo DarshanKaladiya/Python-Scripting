@@ -1,17 +1,49 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}POS Terminal - RestoPOS{% endblock %}
+{% block title %}POS Terminal - EasyServe{% endblock %}
 
 {% block extra_css %}
 <style>
     .pos-layout {
         display: grid;
         grid-template-columns: 100px 1fr 400px;
-        height: calc(100vh - 100px); /* Clean viewport constraint */
-        background: #f8fafc;
+        height: calc(100vh - 100px);
+        background: var(--bg-light);
         overflow: hidden;
     }
+
+    .payment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .pay-btn {
+        padding: 2rem 0.5rem;
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.05);
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+        color: #94a3b8;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 800;
+        font-size: 0.95rem;
+    }
+    .pay-btn:hover {
+        transform: translateY(-2px);
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+        border-color: rgba(255,255,255,0.1);
+        color: white;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+    .pay-btn.active {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 8px 25px rgba(249, 115, 22, 0.4);
+        transform: translateY(-2px);
+    }
+    .pay-btn i { font-size: 1.75rem; margin-bottom: 0.75rem; }
 
     /* Fixed Columns & Scrolling Content */
     .cat-rail, .pos-main, .cart-sidebar {
@@ -23,10 +55,11 @@
 
     /* Left Sidebar: Categories */
     .cat-rail {
-        background: white;
+        background: rgba(21, 26, 42, 0.4);
+        backdrop-filter: blur(16px);
         border-right: 1px solid var(--border-color);
-        padding: 1rem 0.5rem;
-        gap: 0.75rem;
+        padding: 1.5rem 0.5rem;
+        gap: 1rem;
         overflow-y: auto;
     }
 
@@ -38,29 +71,36 @@
         align-items: center;
         justify-content: center;
         text-align: center;
-        border-radius: 12px;
+        border-radius: 16px;
         cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.7rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.75rem;
         font-weight: 700;
         color: var(--text-muted);
-        border: 2px solid transparent;
+        border: 1px solid transparent;
+        background: transparent;
+    }
+
+    .cat-btn:hover {
+        background: rgba(255,255,255,0.05);
+        color: var(--white);
     }
 
     .cat-btn.active {
-        background: #fff7ed;
+        background: rgba(249, 115, 22, 0.15);
         color: var(--primary);
-        border-color: var(--primary);
+        border-color: rgba(249, 115, 22, 0.3);
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.2);
     }
     
-    .cat-btn i { font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .cat-btn i { font-size: 1.4rem; margin-bottom: 0.4rem; }
 
     /* Middle: Menu Items */
-    .pos-main { background: #f1f5f9; }
+    .pos-main { background: transparent; }
 
     .pos-header {
         padding: 1.5rem 2rem;
-        background: white;
+        background: transparent;
         border-bottom: 1px solid var(--border-color);
         display: flex;
         justify-content: space-between;
@@ -70,20 +110,27 @@
     .search-bar {
         position: relative;
         flex: 1;
-        max-width: 300px;
+        max-width: 350px;
     }
 
     .search-bar input {
         width: 100%;
-        padding: 0.6rem 1rem 0.6rem 2.5rem;
-        border-radius: 10px;
-        border: 1px solid var(--border-color);
+        padding: 0.75rem 1rem 0.75rem 2.8rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(0,0,0,0.2);
+        color: white;
         outline: none;
+        transition: border-color 0.2s;
+    }
+    
+    .search-bar input:focus {
+        border-color: var(--primary);
     }
     
     .search-bar i {
         position: absolute;
-        left: 0.85rem;
+        left: 1rem;
         top: 50%;
         transform: translateY(-50%);
         color: var(--text-muted);
@@ -94,36 +141,62 @@
         overflow-y: auto;
         padding: 2rem;
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         grid-auto-rows: min-content;
         gap: 1.5rem;
     }
 
     .item-card {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        background: var(--bg-card);
+        border-radius: 24px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.3s ease;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        text-align: center;
-        border: 2px solid transparent;
+        border: 1px solid var(--border-color);
+        overflow: hidden;
     }
     
     .item-card:hover { 
-        transform: translateY(-4px); 
+        transform: translateY(-6px) scale(1.02); 
         border-color: var(--primary); 
-        box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+        box-shadow: 0 12px 24px rgba(249, 115, 22, 0.15);
+    }
+
+    .item-img {
+        height: 140px;
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        background-color: rgba(255,255,255,0.05);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .item-img.fallback {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+        font-size: 3rem;
+        font-weight: 800;
+        color: rgba(255,255,255,0.1);
+    }
+
+    .item-details {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        background: rgba(21, 26, 42, 0.6);
+        backdrop-filter: blur(8px);
     }
 
     /* Right Sidebar: Cart */
     .cart-sidebar {
-        background: white;
+        background: rgba(21, 26, 42, 0.4);
+        backdrop-filter: blur(16px);
         border-left: 1px solid var(--border-color);
-        box-shadow: -10px 0 30px rgba(0,0,0,0.02);
+        box-shadow: -10px 0 30px rgba(0,0,0,0.5);
     }
 
     .cart-header {
@@ -141,81 +214,106 @@
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
-        background: #f8fafc;
     }
 
     .cart-item-card {
-        background: white;
+        background: var(--bg-card);
         padding: 1rem;
-        border-radius: 12px;
-        border: 1px solid #f1f5f9;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.75rem;
+        transition: transform 0.2s;
     }
 
     .cic-header { display: flex; justify-content: space-between; align-items: start; }
-    .cic-name { font-weight: 700; font-size: 0.9rem; color: #1e293b; }
+    .cic-name { font-weight: 700; font-size: 0.95rem; color: var(--white); }
     .cic-price { font-weight: 800; color: var(--primary); }
 
     .cic-controls {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        background: #f1f5f9;
-        padding: 0.4rem 0.75rem;
-        border-radius: 8px;
+        background: rgba(0,0,0,0.2);
+        padding: 0.5rem 0.75rem;
+        border-radius: 10px;
     }
 
     .qty-btn {
-        width: 24px;
-        height: 24px;
-        border-radius: 6px;
-        border: none;
-        background: white;
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: rgba(255,255,255,0.05);
+        color: white;
         font-weight: 800;
         cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .qty-btn:hover {
+        background: rgba(255,255,255,0.15);
     }
 
     .cart-footer {
         padding: 1.5rem;
         border-top: 1px solid var(--border-color);
-        background: white;
+        background: rgba(21, 26, 42, 0.8);
     }
 
-    .bill-row { display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem; color: #64748b; }
+    .bill-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; color: var(--text-muted); }
     .total-row { 
         display: flex; 
         justify-content: space-between; 
-        margin-top: 0.75rem; 
-        padding-top: 0.75rem; 
-        border-top: 2px dashed #e2e8f0; 
+        margin-top: 1rem; 
+        padding-top: 1rem; 
+        border-top: 1px solid rgba(255,255,255,0.1); 
         font-weight: 800; 
-        font-size: 1.4rem; 
-        color: #1e293b; 
+        font-size: 1.5rem; 
+        color: var(--white); 
     }
 
     .checkout-btn {
-        width: 100%;
-        background: var(--text-dark);
+        background: var(--primary);
         color: white;
         border: none;
-        padding: 1rem;
-        border-radius: 12px;
+        padding: 1.1rem;
+        border-radius: 14px;
         font-weight: 800;
+        font-size: 0.95rem;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        margin-top: 1rem;
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.3);
+        transition: all 0.3s;
+    }
+
+    .checkout-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+    }
+
+    .btn-outline-primary {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        box-shadow: none;
+    }
+    .btn-outline-primary:hover {
+        background: rgba(255,255,255,0.1);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     .pos-modal {
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(4px);
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(8px);
         display: none;
         align-items: center;
         justify-content: center;
@@ -223,14 +321,15 @@
     }
     .pos-modal.active { display: flex; }
     .modal-card { 
-        background: white; 
+        background: var(--bg-card); 
         width: 500px; 
         max-height: 80vh; 
-        border-radius: 20px; 
+        border-radius: 24px; 
+        border: 1px solid var(--border-color);
         overflow: hidden; 
         display: flex; 
         flex-direction: column; 
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
     .modal-header { 
         padding: 1.5rem; 
@@ -238,7 +337,7 @@
         display: flex; 
         justify-content: space-between; 
         align-items: center; 
-        background: white;
+        background: transparent;
     }
     #pending-orders-list {
         overflow-y: auto;
@@ -247,15 +346,16 @@
     }
     .pending-row { 
         padding: 1.25rem; 
-        border-bottom: 1px solid #f1f5f9; 
+        border-bottom: 1px solid rgba(255,255,255,0.05); 
         display: flex; 
         justify-content: space-between; 
         align-items: center;
     }
 
     /* Custom Scrollbars */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 </style>
 {% endblock %}
 
@@ -303,16 +403,21 @@
             <!-- Items filled by pos.js -->
         </div>
         <div class="cart-footer">
-            <div class="bill-row"><span>Subtotal</span><span id="bill-subtotal">₹0.00</span></div>
-            <div class="bill-row"><span>CGST (2.5%)</span><span id="bill-cgst">₹0.00</span></div>
-            <div class="bill-row"><span>SGST (2.5%)</span><span id="bill-sgst">₹0.00</span></div>
-            <div class="total-row"><span>Total</span><span id="cart-total">0.00</span></div>
+            <div class="bill-row"><span>Subtotal:</span><span id="bill-subtotal">₹0.00</span></div>
+            <div class="bill-row"><span>CGST (2.5%):</span><span id="bill-cgst">₹0.00</span></div>
+            <div class="bill-row"><span>SGST (2.5%):</span><span id="bill-sgst">₹0.00</span></div>
+            <div class="total-row"><span>TOTAL</span><span>₹<span id="cart-total">0.00</span></span></div>
+
+            <div id="cart-actions-new" style="display: flex; gap: 0.75rem; margin-top: 1.25rem;">
+                <button id="kot-btn" class="checkout-btn btn-outline-primary" style="flex: 1;" onclick="handleCheckout()">
+                    <i class="fas fa-receipt"></i> KOT
+                </button>
+                <button id="direct-bill-btn" class="checkout-btn" style="flex: 2; width: 100%;" onclick="openTakeawaySettle()">
+                    <i class="fas fa-bolt"></i> DIRECT BILL
+                </button>
+            </div>
             
-            <button class="checkout-btn" onclick="handleCheckout()">
-                <i class="fas fa-check-circle"></i>
-                <span id="checkout-btn-text">COMPLETE ORDER</span>
-            </button>
-            <button class="checkout-btn" id="settle-btn" onclick="settleAndRelease()" style="display: none; background: #10b981;">
+            <button class="checkout-btn" id="settle-btn" onclick="settleAndRelease()" style="display: none; background: #10b981; margin-top: 1rem; width: 100%;">
                 <i class="fas fa-money-bill-wave"></i>
                 SETTLE & RELEASE
             </button>
@@ -359,19 +464,38 @@
             <button onclick="toggleSettleModal(false)" style="border:none; background:none; font-size:1.5rem;">&times;</button>
         </div>
         <div style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
-            <p style="margin-bottom: 1rem; color: #64748b;">Select payment method to complete the bill and release the table.</p>
+            <!-- Customer Details for Takeaway / Optional -->
+            <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
+                <div style="flex: 1;">
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">CUSTOMER NAME (Opt)</label>
+                    <input type="text" id="pos-cust-name" placeholder="Guest" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none; box-sizing: border-box;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">PHONE (Opt)</label>
+                    <input type="tel" id="pos-cust-phone" placeholder="+91..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none; box-sizing: border-box;">
+                </div>
+            </div>
+
+            <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Select payment method to complete the bill and release the table.</p>
             
-            <button onclick="handleSettleChoice('cash')" class="action-btn btn-outline" style="justify-content: flex-start; padding: 1.25rem;">
-                <i class="fas fa-money-bill-wave" style="color: #10b981;"></i>
-                CASH PAYMENT
-            </button>
-            <button onclick="handleSettleChoice('upi')" class="action-btn btn-outline" style="justify-content: flex-start; padding: 1.25rem;">
-                <i class="fas fa-qrcode" style="color: #3b82f6;"></i>
-                UPI / QR PAYMENT
-            </button>
-            <button onclick="handleSettleChoice('card')" class="action-btn btn-outline" style="justify-content: flex-start; padding: 1.25rem;">
-                <i class="fas fa-credit-card" style="color: #f59e0b;"></i>
-                CARD PAYMENT
+            <div class="payment-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem;">
+                <button class="pay-btn active" id="pos-pay-cash" onclick="posSetPayment('cash')">
+                    <i class="fas fa-money-bill-wave" style="font-size:1.5rem; margin-bottom:0.5rem"></i><br>
+                    CASH
+                </button>
+                <button class="pay-btn" id="pos-pay-upi" onclick="posSetPayment('upi')">
+                    <i class="fas fa-qrcode" style="font-size:1.5rem; margin-bottom:0.5rem"></i><br>
+                    UPI
+                </button>
+                <button class="pay-btn" id="pos-pay-card" onclick="posSetPayment('card')">
+                    <i class="fas fa-credit-card" style="font-size:1.5rem; margin-bottom:0.5rem"></i><br>
+                    CARD
+                </button>
+            </div>
+            <input type="hidden" id="pos-selected-payment" value="cash">
+
+            <button class="checkout-btn" style="margin-top: 2rem; justify-content: center;" onclick="executeSettle()">
+                CONFIRM SETTLEMENT
             </button>
         </div>
     </div>

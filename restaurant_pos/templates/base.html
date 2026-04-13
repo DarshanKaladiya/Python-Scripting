@@ -4,60 +4,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Restaurant POS{% endblock %}</title>
+    <title>{% block title %}EasyServe{% endblock %}</title>
     <!-- Modern Typography & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=2">
     <style>
-        :root {
-            --primary: #f97316; /* Petpooja Orange */
-            --bg-light: #f8fafc;
-            --text-dark: #0f172a;
-            --border-color: #e2e8f0;
-        }
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-light);
-            color: var(--text-dark);
             margin: 0;
             overflow-x: hidden;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
+{% block navbar %}
     <nav class="navbar">
-        <div class="nav-brand">RestoPOS</div>
+        <div class="nav-brand">EasyServe</div>
         <div class="nav-links">
             {% if user.is_authenticated %}
-                {% if user.role == 'admin' %}
-                    <a href="{% url 'inventory:admin_dashboard' %}">Dashboard</a>
-                    <a href="/admin/">Admin Panel</a>
-                {% elif user.role == 'chef' %}
-                    <a href="{% url 'orders:kds' %}">KDS (Kitchen)</a>
-                {% elif user.role == 'customer' %}
-                    <a href="{% url 'menu:customer_menu' %}">Menu</a>
-                {% endif %}
+                <div class="nav-user-info" style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">
+                    Logged in as <span style="color: white; font-weight: 800;">{{ user.username }}</span>
+                </div>
                 
-                {% if user.role in 'admin,cashier,captain' %}
-                    <a href="{% url 'tables:floor_map' %}">Floor Map</a>
-                    <a href="{% url 'orders:pos_home' %}">POS Terminal</a>
+                {% if user.role != 'admin' %}
+                    {% if user.role == 'chef' %}
+                        <a href="{% url 'orders:kds' %}">KDS (Kitchen)</a>
+                    {% elif user.role == 'customer' %}
+                        <a href="{% url 'menu:customer_menu' %}">Menu</a>
+                    {% endif %}
+                    
+                    {% if user.role in 'cashier,captain' %}
+                        <a href="{% url 'tables:floor_map' %}">Floor Map</a>
+                        <a href="{% url 'orders:pos_home' %}">POS Terminal</a>
+                    {% endif %}
                 {% endif %}
                 
                 <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
                     {% csrf_token %}
-                    <button type="submit" class="logout-btn">Logout ({{ user.username }})</button>
+                    <button type="submit" class="logout-btn">Logout</button>
                 </form>
             {% else %}
                 <a href="{% url 'accounts:login' %}">Login</a>
             {% endif %}
         </div>
     </nav>
-    <div class="app-container">
-        {% block content %}{% endblock %}
+{% endblock %}
+    <div class="{% if user.is_authenticated and user.role == 'admin' %}admin-layout{% endif %}">
+        {% if user.is_authenticated and user.role == 'admin' %}
+        <aside class="sidebar">
+            <div class="sidebar-label">Analytics</div>
+            <a href="{% url 'inventory:admin_dashboard' %}" class="sidebar-link {% if 'dashboard' in request.path %}active{% endif %}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            
+            <div class="sidebar-label">Operations</div>
+            <a href="{% url 'tables:floor_map' %}" class="sidebar-link {% if 'floor' in request.path %}active{% endif %}">
+                <i class="fas fa-map"></i> Floor Map
+            </a>
+            <a href="{% url 'orders:pos_home' %}" class="sidebar-link {% if 'pos' in request.path %}active{% endif %}">
+                <i class="fas fa-cash-register"></i> POS Terminal
+            </a>
+            <a href="{% url 'orders:kds' %}" class="sidebar-link {% if 'kds' in request.path %}active{% endif %}">
+                <i class="fas fa-utensils"></i> KDS (Kitchen)
+            </a>
+
+            <div class="sidebar-label">Management</div>
+            <a href="{% url 'inventory:inventory_list' %}" class="sidebar-link {% if 'inventory/list' in request.path %}active{% endif %}">
+                <i class="fas fa-box"></i> Inventory
+            </a>
+            <a href="{% url 'inventory:sales_report' %}" class="sidebar-link {% if 'sales' in request.path %}active{% endif %}">
+                <i class="fas fa-file-invoice-dollar"></i> Sales Reports
+            </a>
+            <a href="/admin/" class="sidebar-link">
+                <i class="fas fa-user-shield"></i> Django Admin
+            </a>
+        </aside>
+        {% endif %}
+
+        <div class="{% if user.is_authenticated and user.role == 'admin' %}main-content{% else %}app-container{% endif %}">
+            {% block content %}{% endblock %}
+        </div>
     </div>
-    <script src="{% static 'js/pos.js' %}"></script>
+    <script src="{% static 'js/pos.js' %}?v=2"></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
