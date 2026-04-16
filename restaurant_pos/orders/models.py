@@ -44,6 +44,7 @@ class Order(models.Model):
     
     table = models.ForeignKey(Table, null=True, blank=True, on_delete=models.SET_NULL)
     waiter = models.ForeignKey(User, null=True, blank=True, related_name='taken_orders', on_delete=models.SET_NULL)
+    customer_user = models.ForeignKey(User, null=True, blank=True, related_name='customer_orders', on_delete=models.SET_NULL)
     
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     cgst = models.DecimalField(max_digits=10, decimal_places=2, default=0)

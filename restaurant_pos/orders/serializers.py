@@ -15,11 +15,17 @@ class OrderSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Order
-        fields = ['id', 'order_number', 'order_type', 'status', 'payment_method', 'payment_status', 'guest_count', 'customer_name', 'customer_phone', 'table', 'waiter', 'subtotal', 'cgst', 'sgst', 'tax', 'service_charge', 'total_amount', 'items', 'tracking_uuid']
+        fields = ['id', 'order_number', 'order_type', 'status', 'payment_method', 'payment_status', 'guest_count', 'customer_name', 'customer_phone', 'table', 'waiter', 'customer_user', 'subtotal', 'cgst', 'sgst', 'tax', 'service_charge', 'total_amount', 'items', 'tracking_uuid']
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
         
+        # Auto-assign customer if authenticated and not already set
+        request = self.context.get('request')
+        if request and request.user.is_authenticated and not validated_data.get('customer_user'):
+            if request.user.role == 'customer' or request.user.is_superuser:
+                validated_data['customer_user'] = request.user
+
         # Calculate subtotal directly from input data to avoid DB query lag
         subtotal = sum(item['price'] * item['quantity'] for item in items_data)
         

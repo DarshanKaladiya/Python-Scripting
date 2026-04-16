@@ -1090,6 +1090,7 @@
                     // Show High-End Success Screen
                     document.getElementById('success-ord-num').innerText = `#${data.order_number}`;
                     if (data.tracking_uuid) {
+                        localStorage.setItem('last_tracking_id', data.tracking_uuid);
                         document.getElementById('modal-track-link').href = `/track/${data.tracking_uuid}/`;
                         // Redirect or show bar? Let's reload with specific track param to keep it clean
                         setTimeout(() => {
@@ -1116,13 +1117,13 @@
         let activeIdx = 0;
         
         switch(status) {
-            case 'Draft':
-            case 'Awaiting Confirmation':
-            case 'KOT Sent': activeIdx = 0; break;
-            case 'Preparing': activeIdx = 1; break;
-            case 'Ready': activeIdx = 2; break;
-            case 'Completed': 
-            case 'Served': activeIdx = 3; break;
+            case 'draft':
+            case 'awaiting_confirmation':
+            case 'kot_sent': activeIdx = 0; break;
+            case 'preparing': activeIdx = 1; break;
+            case 'ready': activeIdx = 2; break;
+            case 'completed': 
+            case 'served': activeIdx = 3; break;
         }
         
         for(let i=0; i<=activeIdx; i++) {
@@ -1138,11 +1139,41 @@
                 const resp = await fetch(`/api/orders/check_status/?order_number=${orderNumber}`);
                 const data = await resp.json();
                 document.getElementById('current-order-status').innerText = data.display_status;
-                updateTrackingIcons(data.display_status);
+                updateTrackingIcons(data.status);
+
+                // Auto-hide bar if order is finished
+                if (['completed', 'cancelled'].includes(data.status)) {
+                    setTimeout(() => {
+                        const bar = document.getElementById('active-order-tracker');
+                        if (bar) bar.style.display = 'none';
+                        localStorage.removeItem('last_tracking_id');
+                    }, 3000); // 3-second delay so they see the 'Served' icon one last time
+                }
             } catch (e) {}
         };
         checkStatus(); // Initial run
         setInterval(checkStatus, 15000);
+    } else {
+        // Fallback: Check localStorage if no order was passed from server
+        const lastTrackId = localStorage.getItem('last_tracking_id');
+        const currentUrl = new URL(window.location.href);
+        if (lastTrackId && !currentUrl.searchParams.has('track') && !currentUrl.searchParams.has('table')) {
+            // Check if this last track ID is still active
+            (async () => {
+                try {
+                    const resp = await fetch(`/api/orders/check_status/?tracking_uuid=${lastTrackId}`);
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (['completed', 'cancelled'].includes(data.status)) {
+                            localStorage.removeItem('last_tracking_id');
+                        } else {
+                            // Auto-load it!
+                            window.location.href = `/menu/?track=${lastTrackId}`;
+                        }
+                    }
+                } catch(e) {}
+            })();
+        }
     }
 
 </script>

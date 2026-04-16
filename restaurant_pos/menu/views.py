@@ -32,23 +32,35 @@ class CustomerMenuView(ListView):
         table_id = self.request.GET.get('table')
         active_order = None
         
-        # Priority 1: Table-based detection (Dine-in)
-        if table_id:
+        # Priority 1: UUID-based detection (Most explicit - from Redirect or Click)
+        order_uuid = self.request.GET.get('track')
+        if order_uuid:
+            active_order = Order.objects.filter(tracking_uuid=order_uuid).first()
+
+        # Priority 2: Table-based detection (Local context)
+        if not active_order and table_id:
             try:
                 table = Table.objects.get(id=table_id)
                 context['table'] = table
                 active_order = Order.objects.filter(
                     table=table, 
-                    status__in=['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready', 'completed']
+                    status__in=['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready']
                 ).order_by('-created_at').first()
             except (Table.DoesNotExist, ValueError):
                 pass
         
-        # Priority 2: UUID-based detection (Direct Link / Takeaway Tracking)
-        if not active_order:
-            order_uuid = self.request.GET.get('track')
-            if order_uuid:
-                active_order = Order.objects.filter(tracking_uuid=order_uuid).first()
+        # Priority 3: User-based detection (Deeper persistence)
+        if not active_order and self.request.user.is_authenticated:
+            active_order = Order.objects.filter(
+                customer_user=self.request.user,
+                status__in=['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready']
+            ).order_by('-created_at').first()
+
+        # Final check for Table model if not set by Priority 2
+        if table_id and not context.get('table'):
+             try:
+                context['table'] = Table.objects.get(id=table_id)
+             except: pass
 
         # If order is completed, only show it if recent (last 2 hours)
         from django.utils import timezone
