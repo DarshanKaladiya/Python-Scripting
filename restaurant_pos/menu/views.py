@@ -28,19 +28,34 @@ class CustomerMenuView(ListView):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all().order_by('order')
         
-        # Smart Table Detection
+        # Smart Active Order Detection
         table_id = self.request.GET.get('table')
+        active_order = None
+        
+        # Priority 1: Table-based detection (Dine-in)
         if table_id:
             try:
                 table = Table.objects.get(id=table_id)
                 context['table'] = table
-                # Check for active dine-in order on this table
                 active_order = Order.objects.filter(
                     table=table, 
-                    status__in=['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready']
-                ).first()
-                context['active_order'] = active_order
+                    status__in=['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready', 'completed']
+                ).order_by('-created_at').first()
             except (Table.DoesNotExist, ValueError):
                 pass
-                
+        
+        # Priority 2: UUID-based detection (Direct Link / Takeaway Tracking)
+        if not active_order:
+            order_uuid = self.request.GET.get('track')
+            if order_uuid:
+                active_order = Order.objects.filter(tracking_uuid=order_uuid).first()
+
+        # If order is completed, only show it if recent (last 2 hours)
+        from django.utils import timezone
+        import datetime
+        if active_order and active_order.status == 'completed':
+            if active_order.updated_at < timezone.now() - datetime.timedelta(hours=2):
+                active_order = None
+
+        context['active_order'] = active_order
         return context
