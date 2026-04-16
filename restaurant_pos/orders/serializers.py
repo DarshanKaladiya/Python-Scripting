@@ -22,8 +22,10 @@ class OrderSerializer(serializers.ModelSerializer):
         
         # Auto-assign customer if authenticated and not already set
         request = self.context.get('request')
-        if request and request.user.is_authenticated and not validated_data.get('customer_user'):
-            if request.user.role == 'customer' or request.user.is_superuser:
+        if request and request.user.is_authenticated:
+            if request.user.role in ['admin', 'cashier', 'captain', 'waiter']:
+                validated_data['waiter'] = request.user
+            elif (request.user.role == 'customer' or request.user.is_superuser) and not validated_data.get('customer_user'):
                 validated_data['customer_user'] = request.user
 
         # Calculate subtotal directly from input data to avoid DB query lag

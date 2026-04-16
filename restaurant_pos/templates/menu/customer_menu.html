@@ -1078,11 +1078,13 @@
         } else if (isStaffMode) {
             // Staff bypassing guest collection form
             payload = {
+                order_number: "STAFF" + Date.now(),
                 order_type: selectedOrderType,
                 table: selectedOrderType === 'dine_in' ? (tableId || null) : null,
                 guest_count: 1,
                 payment_method: 'cash',
                 customer_name: 'Walk-in / Staff',
+                customer_phone: '0000000000',
                 items: cart.map(i => ({ menu_item: i.id, quantity: i.qty, price: i.price }))
             };
         } else {
