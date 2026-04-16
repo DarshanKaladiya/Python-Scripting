@@ -357,9 +357,12 @@ function openTakeawaySettle() {
 
 async function confirmSettle(method) {
     const orderId = document.getElementById('selected-order-id').value;
-        const custName = document.getElementById('pos-cust-name-sidebar').value;
-        const custPhone = document.getElementById('pos-cust-phone-sidebar').value;
-        
+    const custName = document.getElementById('pos-cust-name-sidebar').value;
+    const custPhone = document.getElementById('pos-cust-phone-sidebar').value;
+    const selectedTableId = document.getElementById('selected-table-id').value;
+    
+    if (!orderId) {
+        // Direct Takeaway Settle
         const payload = {
             order_number: "ORD" + Date.now(),
             order_type: selectedTableId ? "dine_in" : "takeaway",
@@ -389,9 +392,6 @@ async function confirmSettle(method) {
     }
 
     // Existing Order Settle
-    const custName = document.getElementById('pos-cust-name-sidebar').value;
-    const custPhone = document.getElementById('pos-cust-phone-sidebar').value;
-
     const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
@@ -406,11 +406,10 @@ async function confirmSettle(method) {
     if (resp.ok) {
         toggleQRModal(false);
         alert("Bill Settled successfully!");
-        document.getElementById('pos-cust-name').value = '';
-        document.getElementById('pos-cust-phone').value = '';
         window.location.href = '/tables/floor/';
     }
 }
+
 
 function getCookie(name) {
     let cookieValue = null;
