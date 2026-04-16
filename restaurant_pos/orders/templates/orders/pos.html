@@ -404,6 +404,18 @@
             <div style="font-weight: 800; font-size: 1.1rem;">Live Cart</div>
             <button onclick="cart = []; updateCartUI();" style="border:none; background:none; color:#ef4444; font-weight:700; cursor:pointer;">Clear</button>
         </div>
+
+        <!-- Customer Identity Section -->
+        <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;">
+            <div>
+                <label style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.4rem;">Customer Name</label>
+                <input type="text" id="pos-cust-name-sidebar" placeholder="Guest Name" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem; color: white; font-size: 0.85rem; outline: none; box-sizing: border-box;">
+            </div>
+            <div>
+                <label style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 0.4rem;">Mobile No.</label>
+                <input type="tel" id="pos-cust-phone-sidebar" placeholder="+91..." style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 0.5rem; color: white; font-size: 0.85rem; outline: none; box-sizing: border-box;">
+            </div>
+        </div>
         <div class="cart-content" id="cart-list">
             <!-- Items filled by pos.js -->
         </div>
@@ -469,17 +481,7 @@
             <button onclick="toggleSettleModal(false)" style="border:none; background:none; font-size:1.5rem;">&times;</button>
         </div>
         <div style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem;">
-            <!-- Customer Details for Takeaway / Optional -->
-            <div style="display: flex; gap: 1rem; margin-bottom: 0.5rem;">
-                <div style="flex: 1;">
-                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">CUSTOMER NAME (Opt)</label>
-                    <input type="text" id="pos-cust-name" placeholder="Guest" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none; box-sizing: border-box;">
-                </div>
-                <div style="flex: 1;">
-                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">PHONE (Opt)</label>
-                    <input type="tel" id="pos-cust-phone" placeholder="+91..." style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; outline: none; box-sizing: border-box;">
-                </div>
-            </div>
+            <p style="margin-bottom: 0.5rem; color: var(--text-muted); text-align: center;">Select payment method to complete the bill and release the table.</p>
 
             <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Select payment method to complete the bill and release the table.</p>
             
@@ -555,6 +557,11 @@
             if (resp.ok) {
                 const data = await resp.json();
                 currentOrderStatus = data.status; // Store for Serve button logic
+                
+                // Pre-fill customer info in sidebar
+                if (data.customer_name) document.getElementById('pos-cust-name-sidebar').value = data.customer_name;
+                if (data.customer_phone) document.getElementById('pos-cust-phone-sidebar').value = data.customer_phone;
+
                 cart = data.items.map(i => ({
                     id: i.menu_item,
                     name: i.menu_item_name,
