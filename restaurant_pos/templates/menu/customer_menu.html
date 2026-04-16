@@ -634,17 +634,10 @@
     }
     .pay-btn i { font-size: 1.75rem; margin-bottom: 0.75rem; }
 
-    .checkout-modal#welcome-modal {
-        z-index: 2000;
-        visibility: hidden;
-        opacity: 0;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .checkout-modal#welcome-modal.active {
-        visibility: visible;
-        opacity: 1;
-    }
+    /* Removed redundant welcome-modal specific visibility logic to use global active class */
     .welcome-card {
+        position: relative;
+        z-index: 10;
         background: #1e293b;
         padding: 2.5rem 1.5rem;
         border-radius: 30px;
@@ -652,7 +645,8 @@
         border: 1px solid rgba(255,255,255,0.1);
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         max-width: 400px;
-        width: 90%;
+        width: 100%;
+        animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .welcome-btn {
         width: 100%;
