@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from .models import Order
 from .serializers import OrderSerializer
-from tables.models import Table
+from tables.models import Table, FloorSection
 from menu.models import Category, MenuItem
 
 class OrderViewSet(viewsets.ModelViewSet):
