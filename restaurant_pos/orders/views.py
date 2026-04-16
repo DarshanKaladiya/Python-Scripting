@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from accounts.decorators import chef_required, staff_required
+from accounts.decorators import chef_required, staff_required, pos_required
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets, status
 from rest_framework.response import Response
