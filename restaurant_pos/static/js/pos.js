@@ -1,7 +1,8 @@
-// Central POS cart state
 let cart = [];
 let allCategories = [];
 let allItems = [];
+let currentOrderStatus = '';
+let currentTableUUID = '';
 
 const iconMap = {
     'Starter': 'fa-bowl-food',
@@ -155,9 +156,6 @@ function updateCartUI() {
     const kotBtn = document.getElementById('kot-btn');
     
     if (isAppendMode) {
-        if (settleBtn) settleBtn.style.display = 'flex';
-        // Hide direct bill for existing orders, KOT becomes "Update"
-        if (directBillBtn) directBillBtn.style.display = 'none';
         if (kotBtn) {
             kotBtn.innerHTML = '<i class="fas fa-receipt"></i> UPDATE KOT';
             kotBtn.style.flex = "1";
@@ -169,6 +167,25 @@ function updateCartUI() {
             kotBtn.innerHTML = '<i class="fas fa-receipt"></i> KOT';
             kotBtn.style.flex = "1";
         }
+    }
+
+    // "SERVE" Button Logic for Waiters
+    const serveBtnId = 'waiter-serve-btn';
+    let serveBtn = document.getElementById(serveBtnId);
+    if (currentOrderStatus === 'ready') {
+        if (!serveBtn) {
+            serveBtn = document.createElement('button');
+            serveBtn.id = serveBtnId;
+            serveBtn.className = 'checkout-btn';
+            serveBtn.style.background = '#818cf8';
+            serveBtn.style.marginTop = '1rem';
+            serveBtn.style.width = '100%';
+            serveBtn.innerHTML = '<i class="fas fa-hand-holding-heart"></i> MARK AS SERVED';
+            serveBtn.onclick = () => changeOrderStatus(selectedOrderId, 'completed');
+            kotBtn.parentNode.parentNode.appendChild(serveBtn);
+        }
+    } else if (serveBtn) {
+        serveBtn.remove();
     }
 
     let subtotal = 0;
@@ -485,6 +502,60 @@ async function confirmOrder(orderId) {
     } catch (err) {
         console.error("Error confirming order:", err);
     }
+}
+
+// Tracker Sharing Modal Logic
+function toggleTrackerModal(show) {
+    const modal = document.getElementById('tracker-modal');
+    if (modal) modal.classList.toggle('active', show);
+}
+
+async function showTrackerModal() {
+    const tableId = document.getElementById('selected-table-id').value;
+    if (!tableId) return;
+
+    try {
+        const resp = await fetch(`/tables/api/tables/${tableId}/`);
+        if (resp.ok) {
+            const table = await resp.json();
+            const uuid = table.qr_code_uuid;
+            if (!uuid) {
+                alert("This table doesn't have a QR code assigned yet.");
+                return;
+            }
+
+            const trackUrl = `${window.location.origin}/track/${uuid}/`;
+            document.getElementById('tracker-url-input').value = trackUrl;
+            
+            // Generate QR via qrserver.com
+            const qrImg = document.getElementById('tracker-qr-img');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(trackUrl)}`;
+            
+            toggleTrackerModal(true);
+        }
+    } catch (err) { console.error("Error fetching table QR:", err); }
+}
+
+function copyTrackerLink() {
+    const input = document.getElementById('tracker-url-input');
+    input.select();
+    document.execCommand('copy');
+    alert("Tracking link copied to clipboard!");
+}
+
+async function changeOrderStatus(orderId, status) {
+    if (!confirm(`Mark this order as ${status.toUpperCase()}?`)) return;
+    try {
+        const resp = await fetch(`/api/orders/${orderId}/update_status/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ status: status })
+        });
+        if (resp.ok) {
+            alert("Order status updated!");
+            location.reload(); // Refresh to catch new state
+        }
+    } catch (err) { console.error(err); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

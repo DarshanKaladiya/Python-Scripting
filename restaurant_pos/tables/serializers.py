@@ -4,7 +4,7 @@ from .models import Table, FloorSection
 class TableSerializer(serializers.ModelSerializer):
     class Meta:
         model = Table
-        fields = ['id', 'section', 'name', 'capacity', 'status', 'x_pos', 'y_pos', 'width', 'height', 'shape']
+        fields = ['id', 'section', 'name', 'capacity', 'status', 'x_pos', 'y_pos', 'width', 'height', 'shape', 'qr_code_uuid']
 
 class FloorSectionSerializer(serializers.ModelSerializer):
     tables = TableSerializer(many=True, read_only=True)

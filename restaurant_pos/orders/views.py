@@ -146,7 +146,7 @@ class KDSView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        all_active = Order.objects.filter(status__in=['kot_sent', 'preparing'])
+        all_active = Order.objects.filter(status__in=['kot_sent', 'preparing', 'ready'])
         
         context['orders'] = all_active.order_by('created_at')
         context['new_count'] = all_active.filter(status='kot_sent').count()
@@ -161,6 +161,56 @@ class KDSView(LoginRequiredMixin, TemplateView):
         # Simulated Avg Prep Time (Real would use completed orders)
         context['avg_prep_time'] = "12:45" 
         
+        return context
+
+class LiveOrderTrackerView(TemplateView):
+    template_name = 'orders/live_tracker.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        qr_uuid = self.kwargs.get('qr_uuid')
+        table = get_object_or_404(Table, qr_code_uuid=qr_uuid)
+        
+        # Find the most recent active order for this table
+        # Statuses that imply the order is still "live" or recently "ready"
+        active_order = Order.objects.filter(
+            table=table, 
+            status__in=['awaiting_confirmation', 'kot_sent', 'preparing', 'ready', 'completed']
+        ).order_by('-created_at').first()
+        
+        # If the order is "completed", we only show it if it was created in the last 2 hours
+        from django.utils import timezone
+        import datetime
+        if active_order and active_order.status == 'completed':
+            if active_order.updated_at < timezone.now() - datetime.timedelta(hours=2):
+                active_order = None
+
+        context['table'] = table
+        context['order'] = active_order
+        
+        # Upsell / Recommendations logic (Category Matching)
+        if active_order:
+            # Get IDs of categories already represented in the order
+            ordered_cat_ids = active_order.items.values_list('menu_item__category_id', flat=True).distinct()
+            
+            # Suggest items from categories NOT yet ordered (e.g. if they ordered Main, suggest Dessert/Bev)
+            recommendations = MenuItem.objects.filter(
+                is_active=True
+            ).exclude(
+                category_id__in=ordered_cat_ids
+            ).order_by('?')[:4]
+            
+            # Fallback if they ordered everything or no other categories exist
+            if not recommendations.exists():
+                recommendations = MenuItem.objects.filter(is_active=True).exclude(
+                    id__in=active_order.items.values_list('menu_item_id', flat=True)
+                ).order_by('?')[:4]
+                
+            context['recommendations'] = recommendations
+        else:
+            # Static recommendations for new sessions
+            context['recommendations'] = MenuItem.objects.filter(is_active=True).order_by('?')[:4]
+            
         return context
 
 class SelfOrderView(TemplateView):

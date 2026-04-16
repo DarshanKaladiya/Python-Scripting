@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Tracker - {{ table.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: radial-gradient(circle at top left, #1e293b, #0f172a);
+        color: white;
+        min-height: 100vh;
+    }
+    
+    .tracker-container {
+        padding: 2rem 1.5rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .header-section {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .table-badge {
+        display: inline-block;
+        padding: 0.5rem 1.25rem;
+        background: rgba(249, 115, 22, 0.1);
+        border: 1px solid rgba(249, 115, 22, 0.3);
+        color: var(--primary);
+        border-radius: 99px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 1rem;
+    }
+
+    /* Live Progress Stepper */
+    .stepper {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin-bottom: 4rem;
+        padding: 0 1rem;
+    }
+    .stepper::before {
+        content: '';
+        position: absolute;
+        top: 25px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: rgba(255,255,255,0.05);
+        z-index: 1;
+    }
+    .stepper-progress {
+        position: absolute;
+        top: 25px;
+        left: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), #fb923c);
+        z-index: 2;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 15px rgba(249, 115, 22, 0.4);
+    }
+
+    .step {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .step-icon {
+        width: 54px;
+        height: 54px;
+        background: #1e293b;
+        border: 4px solid #0f172a;
+        color: #475569;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        transition: all 0.5s ease;
+    }
+
+    .step.active .step-icon {
+        background: var(--primary);
+        color: white;
+        border-color: rgba(15, 23, 42, 0.5);
+        box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+        transform: scale(1.1);
+    }
+    
+    .step.completed .step-icon {
+        background: #10b981;
+        color: white;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+    }
+    .step.active .step-label { color: white; }
+
+    /* Order Details Card */
+    .status-card {
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .status-glow {
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 150px;
+        height: 150px;
+        background: var(--primary);
+        filter: blur(100px);
+        opacity: 0.15;
+    }
+
+    .order-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .pulsing-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+        box-shadow: 0 0 10px var(--primary);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+    }
+
+    /* Recommendations */
+    .recommendations {
+        margin-top: 3rem;
+    }
+    .rec-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    .rec-card {
+        background: rgba(255,255,255,0.03);
+        border-radius: 16px;
+        padding: 1rem;
+        border: 1px solid rgba(255,255,255,0.05);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        transition: transform 0.3s;
+    }
+    .rec-card:hover { transform: translateY(-4px); background: rgba(255,255,255,0.05); }
+    .rec-card img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 12px;
+    }
+    .rec-name { font-weight: 700; font-size: 0.9rem; }
+    .rec-price { color: var(--primary); font-weight: 800; font-size: 0.85rem; }
+
+    .bottom-info {
+        text-align: center;
+        margin-top: 4rem;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tracker-container">
+    <div class="header-section">
+        <div class="table-badge">{{ table.name }}</div>
+        <h1 style="font-weight: 800; margin: 0;">Live Tracker</h1>
+        <p style="color: #94a3b8; font-size: 0.9rem;">
+            {% if order %}Order #{{ order.order_number }}{% else %}Ready to taste something new?{% endif %}
+        </p>
+    </div>
+
+    {% if order %}
+    <!-- Stepper UI -->
+    <div class="stepper">
+        <div class="stepper-progress" id="progress-line" style="width: 0%;"></div>
+        
+        <div class="step" id="step-ordered">
+            <div class="step-icon"><i class="fas fa-file-invoice"></i></div>
+            <div class="step-label">Placed</div>
+        </div>
+        <div class="step" id="step-preparing">
+            <div class="step-icon"><i class="fas fa-fire"></i></div>
+            <div class="step-label">Cooking</div>
+        </div>
+        <div class="step" id="step-ready">
+            <div class="step-icon"><i class="fas fa-bell"></i></div>
+            <div class="step-label">Ready</div>
+        </div>
+        <div class="step" id="step-served">
+            <div class="step-icon"><i class="fas fa-utensils"></i></div>
+            <div class="step-label">Served</div>
+        </div>
+    </div>
+
+    <!-- Status Details -->
+    <div class="status-card">
+        <div class="status-glow"></div>
+        <div class="order-header">
+            <div>
+                <span class="pulsing-dot"></span>
+                <span id="display-status" style="font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">{{ order.get_status_display }}</span>
+            </div>
+            <div style="font-weight: 700; color: var(--primary); font-size: 1.25rem;">₹{{ order.total_amount }}</div>
+        </div>
+        
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1rem;">
+            <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.75rem;">Your Selections:</p>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                {% for item in order.items.all %}
+                <div style="display: flex; justify-content: space-between; font-size: 0.95rem;">
+                    <span>{{ item.quantity }}x {{ item.menu_item.name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="status-card" style="text-align: center; padding: 4rem 2rem;">
+        <i class="fas fa-utensils" style="font-size: 3rem; color: #475569; margin-bottom: 2rem;"></i>
+        <h2 style="font-weight: 800;">No Active Order</h2>
+        <p style="color: #94a3b8;">Scanning for your hot plate... If you haven't ordered yet, you can browse the menu below.</p>
+        <a href="{% url 'orders:self_order' %}" class="logout-btn" style="background: var(--primary); color: white; margin-top: 2rem; display: inline-block;">Browse Menu</a>
+    </div>
+    {% endif %}
+
+    <!-- Upsell Section -->
+    <div class="recommendations">
+        <h3 style="font-weight: 800; border-left: 4px solid var(--primary); padding-left: 1rem;">Chef Recommends</h3>
+        <div class="rec-grid">
+            {% for item in recommendations %}
+            <div class="rec-card">
+                {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                {% else %}
+                <div style="height:100px; background: rgba(255,255,255,0.05); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#475569;">
+                    <i class="fas fa-image fa-2x"></i>
+                </div>
+                {% endif %}
+                <div class="rec-name">{{ item.name }}</div>
+                <div class="rec-price">₹{{ item.base_price }}</div>
+                <button onclick="window.location.href='{% url 'orders:self_order' %}?add={{ item.id }}'" style="background: rgba(255,255,255,0.1); border:none; color:white; padding:0.4rem; border-radius:8px; font-size:0.75rem; font-weight:700; cursor:pointer;">ADD TO ORDER</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bottom-info">
+        <i class="fas fa-sync-alt fa-spin" style="margin-right: 0.5rem;"></i> Updating live every 15s • EasyServe Premium POS
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<input type="hidden" id="order-number" value="{{ order.order_number|default:'' }}">
+<input type="hidden" id="raw-order-status" value="{{ order.status|default:'' }}">
+<script src="{% static 'js/tracker.js' %}"></script>
+{% endblock %}

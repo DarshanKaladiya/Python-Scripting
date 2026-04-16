@@ -380,8 +380,13 @@
     <!-- Column 2: Items -->
     <main class="pos-main">
         <header class="pos-header">
-            <h2 style="margin:0; font-weight: 800;">
+            <h2 style="margin:0; font-weight: 800; display: flex; align-items: center; gap: 1rem;">
                 {% if selected_table_id %}Table {{ selected_table_id }}{% else %}New Sale{% endif %}
+                {% if selected_table_id %}
+                    <button id="track-live-btn" onclick="showTrackerModal()" style="padding: 0.5rem 1rem; border-radius: 99px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); color: var(--primary); font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+                        <i class="fas fa-satellite-dish"></i> TRACK LIVE
+                    </button>
+                {% endif %}
             </h2>
             <div class="search-bar">
                 <i class="fas fa-search"></i>
@@ -501,6 +506,35 @@
     </div>
 </div>
 
+<!-- Tracker Sharing Modal -->
+<div class="pos-modal" id="tracker-modal">
+    <div class="modal-card" style="width: 400px; text-align: center;">
+        <div class="modal-header">
+            <h3 style="margin:0;">Live Tracker Sharing</h3>
+            <button onclick="toggleTrackerModal(false)" style="border:none; background:none; font-size:1.5rem;">&times;</button>
+        </div>
+        <div style="padding: 2rem;">
+            <div id="qrcode-container" style="background: white; padding: 1rem; border-radius: 16px; display: inline-block; margin-bottom: 2rem;">
+                <img id="tracker-qr-img" src="" alt="Tracker QR" style="width: 200px; height: 200px;">
+            </div>
+            
+            <div style="text-align: left; margin-top: 1rem;">
+                <label style="font-size: 0.75rem; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">TRACKING URL</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="tracker-url-input" readonly style="flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                    <button onclick="copyTrackerLink()" style="background: var(--primary); color: white; border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer;">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button class="checkout-btn" style="width: 100%; margin-top: 2rem;" onclick="toggleTrackerModal(false)">
+                DONE
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -520,6 +554,7 @@
             const resp = await fetch(`/api/orders/${orderId}/`);
             if (resp.ok) {
                 const data = await resp.json();
+                currentOrderStatus = data.status; // Store for Serve button logic
                 cart = data.items.map(i => ({
                     id: i.menu_item,
                     name: i.menu_item_name,
