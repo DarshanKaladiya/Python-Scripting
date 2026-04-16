@@ -71,6 +71,12 @@
     <div class="bill-info">
         <div><strong>Order:</strong> #{{ order.order_number }}</div>
         <div><strong>Type:</strong> {{ order.get_order_type_display }}</div>
+        {% if order.customer_name %}
+            <div><strong>Customer:</strong> {{ order.customer_name }}</div>
+        {% endif %}
+        {% if order.customer_phone %}
+            <div><strong>Mobile:</strong> {{ order.customer_phone }}</div>
+        {% endif %}
         {% if order.table %}
             <div><strong>Table:</strong> {{ order.table.number }}</div>
         {% endif %}
