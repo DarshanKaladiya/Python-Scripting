@@ -655,6 +655,11 @@
 {% endblock %}
 
 {% block content %}
+{% if request.user.is_authenticated and request.user.role in 'admin,captain,waiter,cashier' %}
+<div style="background: var(--accent); color: white; padding: 0.5rem; text-align: center; font-weight: 800; font-size: 0.8rem; letter-spacing: 2px;">
+    <i class="fas fa-user-shield"></i> STAFF MODE ACTIVE
+</div>
+{% endif %}
 <div class="menu-wrapper">
     <!-- Hero -->
     <div class="hero-container">
@@ -933,6 +938,10 @@
     const existingOrderType = "{{ active_order.order_type|default:'' }}";
     const orderNumber = "{{ active_order.order_number|default:'' }}";
     let selectedOrderType = (tableId && !existingOrderId) ? 'dine_in' : (existingOrderType || 'takeaway');
+    
+    // Check if user is staff mode
+    const isStaffMode = {% if request.user.is_authenticated and request.user.role in 'admin,captain,waiter,cashier' %}true{% else %}false{% endif %};
+
 
     function setServiceType(type) {
         selectedOrderType = type;
@@ -949,9 +958,13 @@
         if (!btn) return;
         
         if (existingOrderId && selectedOrderType === existingOrderType) {
-            btn.innerText = "ADD TO EXISTING BILL";
+            btn.innerText = isStaffMode ? "SEND ADD-ON KOT" : "ADD TO EXISTING BILL";
         } else {
-            btn.innerText = (selectedOrderType === 'dine_in') ? "CONFIRM DINE-IN ORDER" : "CONFIRM TAKEAWAY ORDER";
+            if (isStaffMode) {
+                btn.innerText = "SEND DIRECT KOT";
+            } else {
+                btn.innerText = (selectedOrderType === 'dine_in') ? "CONFIRM DINE-IN ORDER" : "CONFIRM TAKEAWAY ORDER";
+            }
         }
     }
 
@@ -1042,8 +1055,8 @@
     function sendOrder() {
         if (cart.length === 0) return;
         
-        // Only bypass details if adding to a bill of the SAME type
-        if (existingOrderId && selectedOrderType === existingOrderType) {
+        // Bypass details if adding to bill OR if using Staff Mode
+        if ((existingOrderId && selectedOrderType === existingOrderType) || isStaffMode) {
             finalizeOrder();
         } else {
             toggleCart(false);
@@ -1060,6 +1073,16 @@
         if (existingOrderId) {
             url = `/api/orders/${existingOrderId}/add_items/`;
             payload = {
+                items: cart.map(i => ({ menu_item: i.id, quantity: i.qty, price: i.price }))
+            };
+        } else if (isStaffMode) {
+            // Staff bypassing guest collection form
+            payload = {
+                order_type: selectedOrderType,
+                table: selectedOrderType === 'dine_in' ? (tableId || null) : null,
+                guest_count: 1,
+                payment_method: 'cash',
+                customer_name: 'Walk-in / Staff',
                 items: cart.map(i => ({ menu_item: i.id, quantity: i.qty, price: i.price }))
             };
         } else {

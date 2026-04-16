@@ -13,6 +13,8 @@ class RoleBasedLoginView(LoginView):
             return reverse_lazy('orders:kds')
         elif user.role == 'customer':
             return reverse_lazy('menu:customer_menu')
+        elif user.role == 'waiter':
+            return reverse_lazy('orders:waiter_dashboard')
         elif user.role in ['cashier', 'captain']:
             return reverse_lazy('orders:pos_home')
         return reverse_lazy('orders:pos_home') # Default

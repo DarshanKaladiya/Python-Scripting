@@ -18,4 +18,8 @@ def customer_required(view_func):
     return role_required(['customer'])(view_func)
 
 def staff_required(view_func):
-    return role_required(['admin', 'cashier', 'captain', 'chef'])(view_func)
+    return role_required(['admin', 'cashier', 'captain', 'chef', 'waiter'])(view_func)
+
+def pos_required(view_func):
+    return role_required(['admin', 'cashier', 'captain'])(view_func)
+

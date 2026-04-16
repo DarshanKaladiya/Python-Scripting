@@ -20,8 +20,9 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         # Determine status based on payment method and user role
         payment_method = data.get('payment_method', 'cash')
-        # Determine if the user is a staff member (Admin, Cashier, Captain, or Chef)
-        is_staff = request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['admin', 'cashier', 'captain', 'chef'])
+        
+        # Determine if the user is a staff member (Admin, Cashier, Captain, Waiter, or Chef)
+        is_staff = request.user.is_staff or (hasattr(request.user, 'role') and request.user.role in ['admin', 'cashier', 'captain', 'chef', 'waiter'])
         
         if is_staff:
             # Staff/POS orders go straight to kitchen unless explicitly set to completed (Direct Bill)
@@ -56,10 +57,11 @@ class OrderViewSet(viewsets.ModelViewSet):
                 return Response({'error': 'No suitable table available at the moment.'}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.get_serializer(data=data)
-        if serializer.is_valid():
-            order = serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
     @action(detail=True, methods=['post'])
     def update_status(self, request, pk=None):
@@ -67,6 +69,14 @@ class OrderViewSet(viewsets.ModelViewSet):
         new_status = request.data.get('status')
         if new_status in dict(Order.STATUS_CHOICES):
             order.status = new_status
+            
+            # Special logic for final states
+            if new_status == 'completed' and order.payment_status == 'pending':
+                order.payment_status = 'paid' # Assume paid if marked complete
+                
+            if new_status == 'kot_sent' and order.payment_status == 'pending':
+                # Logic for KOT: if not paid yet, usually stays pending
+                pass 
             
             # Optional: handle payment details if provided during settlement
             if 'payment_method' in request.data:
@@ -78,10 +88,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             if 'customer_phone' in request.data:
                 order.customer_phone = request.data['customer_phone']
                 
-            if new_status == 'kot_sent' and order.payment_status == 'pending':
-                # Logic for KOT: if not paid yet, usually stays pending
-                pass 
-            
             order.save()
             return Response({'status': 'updated'})
         return Response({'error': 'invalid status'}, status=status.HTTP_400_BAD_REQUEST)
@@ -113,15 +119,23 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def check_status(self, request):
         order_number = request.query_params.get('order_number')
-        if not order_number:
-            return Response({'error': 'No order number provided'}, status=status.HTTP_400_BAD_REQUEST)
+        tracking_uuid = request.query_params.get('tracking_uuid')
         
-        order = get_object_or_404(Order, order_number=order_number)
+        if tracking_uuid:
+            order = get_object_or_404(Order, tracking_uuid=tracking_uuid)
+        elif order_number:
+            order = get_object_or_404(Order, order_number=order_number)
+        else:
+            return Response({'error': 'No order identifier provided'}, status=status.HTTP_400_BAD_REQUEST)
+        
         return Response({
             'id': order.id,
             'status': order.status,
+            'order_type': order.order_type,
+            'order_number': order.order_number,
             'display_status': order.get_status_display(),
-            'total_amount': order.total_amount
+            'total_amount': order.total_amount,
+            'tracking_uuid': order.tracking_uuid
         })
 
     @action(detail=False, methods=['get'])
@@ -131,7 +145,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)
 
-class POSView(TemplateView):
+@method_decorator(pos_required, name='dispatch')
+class POSView(LoginRequiredMixin, TemplateView):
     template_name = 'orders/pos.html'
 
     def get_context_data(self, **kwargs):
@@ -139,6 +154,21 @@ class POSView(TemplateView):
         context['selected_table_id'] = self.request.GET.get('table_id')
         context['selected_order_id'] = self.request.GET.get('order_id')
         return context
+
+@method_decorator(staff_required, name='dispatch')
+class WaiterDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = 'orders/waiter_dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['sections'] = FloorSection.objects.all().prefetch_related('tables')
+        # Map tables to any active dine-in orders
+        active_statuses = ['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready']
+        active_orders = Order.objects.filter(status__in=active_statuses, order_type='dine_in')
+        table_order_map = {order.table_id: order for order in active_orders if order.table_id}
+        context['table_order_map'] = table_order_map
+        return context
+
 
 @method_decorator(staff_required, name='dispatch')
 class KDSView(LoginRequiredMixin, TemplateView):
