@@ -185,6 +185,51 @@
         padding: 3rem;
     }
 
+    .success-icon {
+        width: 100px;
+        height: 100px;
+        background: #10b981;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin: 0 auto 2rem;
+        box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+        animation: scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes scaleUp {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .pulsing-track-btn {
+        background: var(--kiosk-primary);
+        color: white;
+        padding: 1.5rem 3rem;
+        border-radius: 24px;
+        font-weight: 800;
+        font-size: 1.25rem;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 2rem auto;
+        animation: subtlePulse 2s infinite;
+        box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4);
+        text-decoration: none;
+        width: fit-content;
+    }
+
+    @keyframes subtlePulse {
+        0% { transform: scale(1); box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); }
+        50% { transform: scale(1.03); box-shadow: 0 15px 35px rgba(249, 115, 22, 0.5); }
+        100% { transform: scale(1); box-shadow: 0 10px 25px rgba(249, 115, 22, 0.4); }
+    }
+
 </style>
 {% endblock %}
 
@@ -316,6 +361,32 @@
             <h2 id="loading-text">Finalizing your order...</h2>
         </div>
     </div>
+
+    <!-- Screen 5: Success & Tracking -->
+    <div class="screen" id="screen-success">
+        <div class="payment-modal">
+            <div class="success-icon">
+                <i class="fas fa-check"></i>
+            </div>
+            <h1 style="font-weight: 900; font-size: 3rem; margin-bottom: 0.5rem;">Order Received!</h1>
+            <p style="font-size: 1.25rem; color: var(--text-muted); margin-bottom: 2rem;">
+                Your order <strong id="success-order-number" style="color: var(--text-dark);">#XXXXXX</strong> is now in our kitchen.
+            </p>
+            
+            <a href="#" id="track-order-link" class="pulsing-track-btn">
+                <i class="fas fa-satellite-dish"></i>
+                TRACK YOUR ORDER LIVE
+            </a>
+
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                You can also scan the QR code at your table to see live updates.
+            </p>
+            
+            <button class="btn-secondary" onclick="window.location.reload()" style="margin-top: 3rem;">
+                Back to Menu
+            </button>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -430,17 +501,19 @@
             const data = await response.json();
             
             if (response.ok) {
-                let msg = `Order Success! #${data.order_number}`;
-                if (data.table) {
-                    msg += `\nYour table: ${data.table}`;
+                // Update Success Screen
+                document.getElementById('success-order-number').innerText = `#${data.order_number}`;
+                
+                if (data.tracking_uuid) {
+                    const trackUrl = `${window.location.origin}/track/${data.tracking_uuid}/`;
+                    document.getElementById('track-order-link').href = trackUrl;
                 }
-                if (orderData.payment === 'cash') {
-                    msg += `\nPlease pay at the counter to start your order.`;
-                } else {
-                    msg += `\nYour order is being prepared!`;
-                }
-                alert(msg);
-                window.location.reload();
+
+                // Show success screen
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById('screen-success').classList.add('active');
+                
+                // Done! No window.reload here so customer can click tracking
             } else {
                 alert("Order failed: " + (data.error || "Unknown error"));
                 location.reload();
