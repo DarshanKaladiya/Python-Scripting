@@ -163,20 +163,20 @@
                     {% with order=table_order_map|get_item:table.id %}
                     
                     {% if order and order.status == 'ready' %}
-                        <a href="{% url 'menu:customer_menu' %}?table={{ table.id }}" class="table-card ready">
+                        <a href="{% url 'orders:pos_home' %}?table_id={{ table.id }}&order_id={{ order.id }}" class="table-card ready">
                             <i class="fas fa-bell" style="position: absolute; top: 1rem; right: 1rem; color: var(--status-ready);"></i>
                             <div class="t-name">{{ table.name }}</div>
                             <div class="t-meta"><i class="fas fa-user-friends"></i> {{ table.capacity }}</div>
                             <div class="t-status-text" style="background: var(--status-ready);">FOOD READY</div>
                         </a>
                     {% elif order %}
-                        <a href="{% url 'menu:customer_menu' %}?table={{ table.id }}" class="table-card occupied">
+                        <a href="{% url 'orders:pos_home' %}?table_id={{ table.id }}&order_id={{ order.id }}" class="table-card occupied">
                             <div class="t-name">{{ table.name }}</div>
                             <div class="t-meta">₹{{ order.total_amount|floatformat:0 }}</div>
                             <div class="t-status-text" style="background: var(--status-occupied);"><i class="fas fa-fire"></i> {{ order.get_status_display }}</div>
                         </a>
                     {% else %}
-                        <a href="{% url 'menu:customer_menu' %}?table={{ table.id }}" class="table-card available">
+                        <a href="{% url 'orders:pos_home' %}?table_id={{ table.id }}" class="table-card available">
                             <div class="t-name">{{ table.name }}</div>
                             <div class="t-meta"><i class="fas fa-user-friends"></i> {{ table.capacity }}</div>
                             <div class="t-status-text">AVAILABLE</div>
