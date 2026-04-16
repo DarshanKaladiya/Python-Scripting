@@ -1,5 +1,7 @@
 from django.db import models
 
+import uuid
+
 class FloorSection(models.Model):
     name = models.CharField(max_length=100)
     
@@ -16,7 +18,7 @@ class Table(models.Model):
         ('reserved', 'Reserved'),
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')
-    qr_code_uuid = models.UUIDField(null=True, blank=True)
+    qr_code_uuid = models.UUIDField(default=uuid.uuid4, unique=True)
     
     # Layout fields
     x_pos = models.IntegerField(default=0, help_text="X position in percentage (0-100)")

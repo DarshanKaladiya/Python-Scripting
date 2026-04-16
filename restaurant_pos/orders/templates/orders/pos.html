@@ -382,7 +382,7 @@
         <header class="pos-header">
             <h2 style="margin:0; font-weight: 800; display: flex; align-items: center; gap: 1rem;">
                 {% if selected_table_id %}Table {{ selected_table_id }}{% else %}New Sale{% endif %}
-                {% if selected_table_id %}
+                {% if selected_table_id or selected_order_id %}
                     <button id="track-live-btn" onclick="showTrackerModal()" style="padding: 0.5rem 1rem; border-radius: 99px; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); color: var(--primary); font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: all 0.2s;">
                         <i class="fas fa-satellite-dish"></i> TRACK LIVE
                     </button>

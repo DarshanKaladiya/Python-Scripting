@@ -55,8 +55,9 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Offline sync field
+    # Tracking fields
     offline_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    tracking_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     def __str__(self):
         return self.order_number

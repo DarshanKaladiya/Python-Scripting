@@ -281,11 +281,13 @@ async function handleCheckout() {
         });
 
         if (response.ok) {
+            const data = await response.json();
             alert(selectedOrderId ? "Added to KOT!" : "Order Success!");
-            if (selectedTableId) window.location.href = '/tables/floor/';
-            else {
-                cart = [];
-                updateCartUI();
+            if (selectedTableId) {
+                window.location.href = '/tables/floor/';
+            } else {
+                // For Takeaway, load the new order so Tracking is visible
+                window.location.href = `/pos/?order_id=${data.id}`;
             }
         }
     } catch (err) { console.error(err); }
@@ -375,12 +377,11 @@ async function confirmSettle(method) {
         });
 
         if (resp.ok) {
+            const data = await resp.json();
             toggleQRModal(false);
             alert("Direct Bill Created & Settled!");
-            document.getElementById('pos-cust-name').value = '';
-            document.getElementById('pos-cust-phone').value = '';
-            cart = [];
-            updateCartUI();
+            // Load the settled order so we can access tracking or print invoice
+            window.location.href = `/pos/?order_id=${data.id}`;
         }
         return;
     }
@@ -512,28 +513,43 @@ function toggleTrackerModal(show) {
 
 async function showTrackerModal() {
     const tableId = document.getElementById('selected-table-id').value;
-    if (!tableId) return;
+    const orderId = document.getElementById('selected-order-id').value;
+    
+    if (!tableId && !orderId) return;
 
+    let uuid = '';
+    
     try {
-        const resp = await fetch(`/tables/api/tables/${tableId}/`);
-        if (resp.ok) {
-            const table = await resp.json();
-            const uuid = table.qr_code_uuid;
-            if (!uuid) {
-                alert("This table doesn't have a QR code assigned yet.");
-                return;
+        if (tableId) {
+            // For Dine-in, prioritize Table-based tracking (standard QR on table)
+            const resp = await fetch(`/tables/api/tables/${tableId}/`);
+            if (resp.ok) {
+                const table = await resp.json();
+                uuid = table.qr_code_uuid;
             }
-
-            const trackUrl = `${window.location.origin}/track/${uuid}/`;
-            document.getElementById('tracker-url-input').value = trackUrl;
-            
-            // Generate QR via qrserver.com
-            const qrImg = document.getElementById('tracker-qr-img');
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(trackUrl)}`;
-            
-            toggleTrackerModal(true);
+        } else if (orderId) {
+            // For Takeaway, use the specific Order's tracking UUID
+            const resp = await fetch(`/api/orders/${orderId}/`);
+            if (resp.ok) {
+                const order = await resp.json();
+                uuid = order.tracking_uuid;
+            }
         }
-    } catch (err) { console.error("Error fetching table QR:", err); }
+
+        if (!uuid) {
+            alert("No tracking ID available for this selection.");
+            return;
+        }
+
+        const trackUrl = `${window.location.origin}/track/${uuid}/`;
+        document.getElementById('tracker-url-input').value = trackUrl;
+        
+        // Generate QR via qrserver.com
+        const qrImg = document.getElementById('tracker-qr-img');
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(trackUrl)}`;
+        
+        toggleTrackerModal(true);
+    } catch (err) { console.error("Error fetching tracking ID:", err); }
 }
 
 function copyTrackerLink() {

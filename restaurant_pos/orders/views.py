@@ -168,16 +168,27 @@ class LiveOrderTrackerView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        qr_uuid = self.kwargs.get('qr_uuid')
-        table = get_object_or_404(Table, qr_code_uuid=qr_uuid)
+        target_uuid = self.kwargs.get('qr_uuid')
         
-        # Find the most recent active order for this table
-        # Statuses that imply the order is still "live" or recently "ready"
-        active_order = Order.objects.filter(
-            table=table, 
-            status__in=['awaiting_confirmation', 'kot_sent', 'preparing', 'ready', 'completed']
-        ).order_by('-created_at').first()
+        # Smart Resolver: Try to find a specific Order first (Takeaway or Direct Link)
+        active_order = Order.objects.filter(tracking_uuid=target_uuid).first()
+        table = None
         
+        if active_order:
+            table = active_order.table
+        else:
+            # Try to find a Table QR (Static)
+            table = Table.objects.filter(qr_code_uuid=target_uuid).first()
+            if table:
+                # Find the most recent active order for this table
+                active_order = Order.objects.filter(
+                    table=table, 
+                    status__in=['awaiting_confirmation', 'kot_sent', 'preparing', 'ready', 'completed']
+                ).order_by('-created_at').first()
+        
+        if not active_order and not table:
+            raise Http404("Invalid tracking ID")
+
         # If the order is "completed", we only show it if it was created in the last 2 hours
         from django.utils import timezone
         import datetime
