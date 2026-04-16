@@ -930,17 +930,29 @@
     let cart = [];
     const tableId = "{{ table.id|default:'' }}";
     const existingOrderId = "{{ active_order.id|default:'' }}";
+    const existingOrderType = "{{ active_order.order_type|default:'' }}";
     const orderNumber = "{{ active_order.order_number|default:'' }}";
-    let selectedOrderType = tableId ? 'dine_in' : 'takeaway';
+    let selectedOrderType = (tableId && !existingOrderId) ? 'dine_in' : (existingOrderType || 'takeaway');
 
     function setServiceType(type) {
         selectedOrderType = type;
         document.querySelectorAll('.service-option').forEach(opt => opt.classList.remove('active'));
-        document.getElementById(`opt-${type}`).classList.add('active');
-        const dineInfo = document.getElementById('dine-in-info');
-        const takeawayBanner = document.getElementById('takeaway-banner');
-        if (dineInfo) dineInfo.style.display = (type === 'dine_in') ? 'flex' : 'none';
-        if (takeawayBanner) takeawayBanner.style.display = (type === 'takeaway') ? 'flex' : 'none';
+        const activeBtn = document.getElementById(`opt-${type}`);
+        if(activeBtn) activeBtn.classList.add('active');
+        
+        // Update cart button label if needed
+        updateCartLabel();
+    }
+
+    function updateCartLabel() {
+        const btn = document.querySelector('.side-sheet .confirm-btn span:first-child');
+        if (!btn) return;
+        
+        if (existingOrderId && selectedOrderType === existingOrderType) {
+            btn.innerText = "ADD TO EXISTING BILL";
+        } else {
+            btn.innerText = (selectedOrderType === 'dine_in') ? "CONFIRM DINE-IN ORDER" : "CONFIRM TAKEAWAY ORDER";
+        }
     }
 
     // Modal Controls
@@ -1029,8 +1041,9 @@
     // Stepped checkout
     function sendOrder() {
         if (cart.length === 0) return;
-        if (existingOrderId) {
-            // Bypass details for existing bill
+        
+        // Only bypass details if adding to a bill of the SAME type
+        if (existingOrderId && selectedOrderType === existingOrderType) {
             finalizeOrder();
         } else {
             toggleCart(false);
@@ -1175,6 +1188,12 @@
             })();
         }
     }
+
+    // Initialize UI on Load
+    document.addEventListener('DOMContentLoaded', () => {
+        setServiceType(selectedOrderType);
+        updateCartLabel();
+    });
 
 </script>
 {% endblock %}
