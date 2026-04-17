@@ -4,18 +4,20 @@
 {% block title %}Floor Management 2.0 - EasyServe{% endblock %}
 
 {% block extra_css %}
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <style>
     :root {
-        --floor-bg: #0f172a;
-        --glass-bg: rgba(255, 255, 255, 0.03);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --accent-glow: rgba(249, 115, 22, 0.2);
+        --floor-bg: #020617; /* Deep midnight blue */
+        --grid-line: rgba(56, 189, 248, 0.08); /* Electric blue grid */
+        --glass-bg: rgba(15, 23, 42, 0.6);
+        --glass-border: rgba(255, 255, 255, 0.12);
         
-        --status-available: #10b981;
-        --status-occupied: #f97316;
-        --status-reserved: #3b82f6;
+        --status-available: #22d3ee; /* Cyan */
+        --status-occupied: #f97316; /* Orange */
+        --status-reserved: #818cf8; /* Indigo */
+        --status-ready: #d946ef; /* Magenta pulse */
         
-        --panel-bg: rgba(15, 23, 42, 0.85);
+        --panel-bg: rgba(2, 6, 23, 0.9);
     }
 
     body {
@@ -23,6 +25,7 @@
         padding: 0;
         overflow: hidden;
         background: var(--floor-bg);
+        font-family: 'Inter', sans-serif;
     }
 
     .floor-dashboard {
@@ -32,24 +35,16 @@
         overflow: hidden;
     }
 
-    /* Animated Ambient Background */
     .ambient-bg {
         position: absolute;
         inset: 0;
         background: 
-            radial-gradient(circle at 10% 10%, rgba(249, 115, 22, 0.08) 0%, transparent 40%),
-            radial-gradient(circle at 90% 90%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+            radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
+            radial-gradient(circle at 90% 90%, rgba(217, 70, 239, 0.05) 0%, transparent 40%);
         filter: blur(80px);
         z-index: 0;
-        animation: pulse-bg 10s ease-in-out infinite alternate;
     }
 
-    @keyframes pulse-bg {
-        0% { transform: scale(1); opacity: 0.5; }
-        100% { transform: scale(1.2); opacity: 0.8; }
-    }
-
-    /* Main Content Area */
     .main-canvas {
         flex: 1;
         position: relative;
@@ -59,7 +54,6 @@
         z-index: 1;
     }
 
-    /* Top Navigation bar */
     .top-bar {
         display: flex;
         justify-content: space-between;
@@ -82,8 +76,8 @@
         padding: 0.6rem 1.5rem;
         border-radius: 30px;
         color: rgba(255,255,255,0.6);
-        font-weight: 600;
-        font-size: 0.85rem;
+        font-weight: 700;
+        font-size: 0.8rem;
         border: none;
         background: transparent;
         cursor: pointer;
@@ -91,20 +85,17 @@
         display: flex;
         align-items: center;
         gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
     .tab-btn.active {
-        background: var(--primary);
-        color: white;
-        box-shadow: 0 4px 15px var(--accent-glow);
+        background: rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.3);
     }
 
-    .tab-btn:hover:not(.active) {
-        background: rgba(255,255,255,0.05);
-        color: white;
-    }
-
-    /* Control Actions */
     .controls {
         display: flex;
         gap: 1rem;
@@ -118,38 +109,53 @@
         border-radius: 12px;
         backdrop-filter: blur(20px);
         cursor: pointer;
-        font-weight: 600;
+        font-weight: 700;
+        font-size: 0.8rem;
         transition: all 0.3s;
         display: flex;
         align-items: center;
         gap: 8px;
+        text-transform: uppercase;
     }
 
     .control-btn.edit-mode-active {
         background: #ef4444;
         border-color: #ef4444;
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
     }
 
-    /* Floor Plan Grid */
+    /* Technical Blueprint Background */
     .floor-canvas {
         flex: 1;
         position: relative;
-        background: rgba(255,255,255,0.01);
-        border: 2px dashed var(--glass-border);
-        border-radius: 24px;
+        background: var(--floor-bg);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 12px;
         overflow: hidden;
+        box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
     }
 
     .grid-pattern {
         position: absolute;
         inset: 0;
-        background-image: 
-            radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
-        background-size: 30px 30px;
+        background-size: 40px 40px;
+        background-image:
+            linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
         pointer-events: none;
     }
 
-    /* Enhanced Table Node */
+    .grid-pattern::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-size: 200px 200px;
+        background-image:
+            linear-gradient(to right, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+    }
+
+    /* Table Node - Premium Glassmorphism */
     .table-card {
         position: absolute;
         cursor: pointer;
@@ -158,66 +164,118 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        background: var(--glass-bg);
+        backdrop-filter: blur(8px);
         border: 1px solid var(--glass-border);
-        backdrop-filter: blur(12px);
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+        box-shadow: 
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 10;
     }
 
-    .table-card::before {
+    .table-card::after {
         content: '';
         position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
+        bottom: -10px;
+        width: 80%;
+        height: 10px;
+        background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%);
+        opacity: 0.5;
+        transition: all 0.3s;
     }
 
-    .table-card.available { 
-        background: rgba(16, 185, 129, 0.1); 
-        border-color: rgba(16, 185, 129, 0.3);
-    }
-    .table-card.occupied { 
-        background: rgba(249, 115, 22, 0.15); 
-        border-color: rgba(249, 115, 22, 0.5);
-    }
-    .table-card.reserved { 
-        background: rgba(59, 130, 246, 0.1); 
-        border-color: rgba(59, 130, 246, 0.4);
-    }
+    .table-card.available { border-top: 3px solid var(--status-available); }
+    .table-card.occupied { border-top: 3px solid var(--status-occupied); }
+    .table-card.reserved { border-top: 3px solid var(--status-reserved); }
 
     .table-card:hover {
-        transform: scale(1.05) translateY(-5px);
-        z-index: 100;
-        border-color: white;
+        transform: translateY(-8px) scale(1.02);
+        border-color: rgba(255,255,255,0.4);
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
     }
 
-    .table-card.occupied:hover {
-        box-shadow: 0 0 30px rgba(249, 115, 22, 0.3);
+    /* Food Ready Pulse - Technical Indicator */
+    .food-ready-pulse {
+        animation: pulse-ready-glow 1.5s infinite;
+        border: 2px solid var(--status-ready) !important;
     }
 
-    .table-card .status-dot {
+    @keyframes pulse-ready-glow {
+        0%, 100% { box-shadow: 0 0 15px rgba(217, 70, 239, 0.2); background: rgba(217, 70, 239, 0.05); }
+        50% { box-shadow: 0 0 30px rgba(217, 70, 239, 0.5); background: rgba(217, 70, 239, 0.15); }
+    }
+
+    .status-dot {
         position: absolute;
-        top: 10px;
-        right: 10px;
-        width: 8px;
-        height: 8px;
+        top: 12px;
+        right: 12px;
+        width: 6px;
+        height: 6px;
         border-radius: 50%;
     }
 
     .status-dot.available { background: var(--status-available); box-shadow: 0 0 10px var(--status-available); }
-    .status-dot.occupied { background: var(--status-occupied); box-shadow: 0 0 10px var(--status-occupied); animation: glow 2s infinite; }
+    .status-dot.occupied { background: var(--status-occupied); filter: drop-shadow(0 0 8px var(--status-occupied)); }
     .status-dot.reserved { background: var(--status-reserved); box-shadow: 0 0 10px var(--status-reserved); }
-
-    @keyframes glow {
-        0% { opacity: 0.5; }
-        50% { opacity: 1; }
-        100% { opacity: 0.5; }
+    
+    /* Attached / Combined Table Styles */
+    .table-card.is-attached {
+        border-radius: 0;
+        box-shadow: none;
+        border-left: 1px dashed rgba(255,255,255,0.1) !important;
+    }
+    
+    .table-card.selection-active {
+        outline: 3px solid #38bdf8;
+        outline-offset: 4px;
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+        transform: scale(1.05);
+    }
+    
+    .merge-badge {
+        position: absolute;
+        top: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #38bdf8;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 0.6rem;
+        font-weight: 800;
+        z-index: 100;
+        white-space: nowrap;
     }
 
     .table-name { font-weight: 800; font-size: 1.1rem; color: white; margin-bottom: 2px; }
     .table-meta { font-size: 0.7rem; color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; }
 
-    /* Side Inspector Panel */
+    /* Decor Styles */
+    .decor-item {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255,255,255,0.2);
+        z-index: 5;
+    }
+
+    .type-plant { background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.3); color: #22c55e; }
+    .type-wall { background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.1); }
+    .type-counter { background: rgba(255,255,255,0.08); border-bottom: 4px solid rgba(255,255,255,0.2); }
+    .type-pillar { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+
+    .decor-label {
+        position: absolute;
+        bottom: -20px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.3);
+    }
+
+    /* Inspector Panel */
     .inspector-panel {
         width: 0;
         background: var(--panel-bg);
@@ -228,33 +286,39 @@
         flex-direction: column;
         overflow: hidden;
         z-index: 200;
-        box-shadow: -20px 0 50px rgba(0,0,0,0.5);
     }
 
-    .inspector-panel.active {
-        width: 400px;
-    }
+    .inspector-panel.active { width: 400px; }
+    .panel-header { padding: 2rem; border-bottom: 1px solid var(--glass-border); }
+    .panel-content { flex: 1; padding: 2rem; overflow-y: auto; }
+    .panel-footer { padding: 2rem; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 1rem; }
 
-    .panel-header {
-        padding: 2rem;
-        border-bottom: 1px solid var(--glass-border);
-    }
-
-    .panel-content {
-        flex: 1;
-        padding: 2rem;
-        overflow-y: auto;
-    }
-
-    .panel-footer {
-        padding: 2rem;
-        border-top: 1px solid var(--glass-border);
+    .order-item-mini {
         display: flex;
-        flex-direction: column;
-        gap: 1rem;
+        justify-content: space-between;
+        padding: 1.25rem;
+        background: rgba(255,255,255,0.05);
+        border-radius: 16px;
+        margin-bottom: 0.75rem;
+        border: 1px solid rgba(255,255,255,0.1);
+        color: white;
     }
 
-    /* Editing Styles */
+    .action-btn {
+        width: 100%;
+        padding: 1.1rem;
+        border-radius: 16px;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+    .btn-primary { background: #f97316; color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--glass-border); color: white; }
+
     .edit-overlay {
         position: absolute;
         top: 1rem;
@@ -269,65 +333,7 @@
         display: none;
     }
 
-    .table-card.dragging {
-        opacity: 0.7;
-        transform: scale(1.1);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        z-index: 2000;
-        border-color: var(--primary);
-    }
-
-    /* Order details in inspector */
-    .order-item-mini {
-        display: flex;
-        justify-content: space-between;
-        padding: 1.25rem;
-        background: rgba(255,255,255,0.05);
-        border-radius: 16px;
-        margin-bottom: 0.75rem;
-        border: 1px solid rgba(255,255,255,0.1);
-        color: white;
-        transition: background 0.3s;
-    }
-    .order-item-mini:hover {
-        background: rgba(255,255,255,0.08);
-    }
-    .order-item-mini b {
-        color: var(--primary);
-        margin-right: 5px;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 6px 14px;
-        border-radius: 50px;
-        font-size: 0.7rem;
-        font-weight: 800;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        color: white;
-    }
-
-    .action-btn {
-        width: 100%;
-        padding: 1.1rem;
-        border-radius: 16px;
-        border: none;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        font-size: 0.9rem;
-        letter-spacing: 0.5px;
-    }
-
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-outline { background: transparent; border: 1px solid var(--glass-border); color: white; }
-    .btn-outline:hover { background: rgba(255,255,255,0.05); }
-
+    .dragging { opacity: 0.7; transform: scale(1.1); z-index: 2000; outline: 2px solid white; }
 </style>
 {% endblock %}
 
@@ -335,7 +341,6 @@
 <div class="floor-dashboard">
     <div class="ambient-bg"></div>
     
-    <!-- Main View -->
     <div class="main-canvas">
         <div class="top-bar">
             <div class="floor-tabs">
@@ -349,44 +354,37 @@
             </div>
 
             <div class="controls">
+                <button class="control-btn" id="combine-mode-btn" onclick="toggleCombineMode()" style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3);">
+                    <i class="fas fa-link"></i>
+                    Combine Tables
+                </button>
                 <button class="control-btn" id="edit-layout-btn" onclick="toggleEditMode()">
                     <i class="fas fa-arrows-up-down-left-right"></i>
                     Edit Layout
                 </button>
             </div>
         </div>
+        
+        <div id="combine-bar" style="display: none; background: #38bdf8; color: white; padding: 1rem 2rem; border-radius: 12px; margin-bottom: 1rem; justify-content: space-between; align-items: center; box-shadow: 0 10px 20px rgba(56, 189, 248, 0.2);">
+            <div>
+                <b id="selection-count">0</b> tables selected for merging
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="commitCombination()" class="action-btn" style="background: white; color: #38bdf8; padding: 0.5rem 1.5rem; border-radius: 8px; border: none; font-weight: 800; cursor: pointer;">CONFIRM MERGE</button>
+                <button onclick="toggleCombineMode()" class="action-btn" style="background: rgba(0,0,0,0.2); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">CANCEL</button>
+            </div>
+        </div>
 
-        <div class="floor-canvas" id="canvas-container">
+        <div class="floor-canvas" id="canvas-container"
+             hx-get="{{ request.path }}" 
+             hx-trigger="every 10s" 
+             hx-swap="innerHTML"
+             hx-headers='{"HX-Request": "true"}'
+             hx-vals='js:{active_section_id: activeSectionId}'>
             <div class="grid-pattern"></div>
-            <div class="edit-overlay" id="edit-label">LAYOUT MODE ACTIVE - DRAG TABLES</div>
+            <div class="edit-overlay" id="edit-label">LAYOUT MODE ACTIVE - DRAG ELEMENTS</div>
             
-            {% for section in sections %}
-                <div id="section-{{ section.id }}" class="section-group" 
-                     style="display: {% if forloop.first %}block{% else %}none{% endif %}; position: absolute; inset: 0;">
-                    
-                    {% for table in section.tables.all %}
-                        {% with order=table_order_map|get_item:table.id %}
-                        <div class="table-card {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"
-                             id="table-{{ table.id }}"
-                             data-id="{{ table.id }}"
-                             data-name="{{ table.name }}"
-                             data-capacity="{{ table.capacity }}"
-                             data-status="{{ table.status }}"
-                             data-order-id="{{ order.id|default:'' }}"
-                             onclick="inspectTable('{{ table.id }}')"
-                             style="left: {{ table.x_pos }}%; top: {{ table.y_pos }}%; 
-                                    width: {{ table.width }}px; height: {{ table.height }}px; 
-                                    border-radius: {% if table.shape == 'circle' %}50%{% else %}20px{% endif %};">
-                            
-                            <div class="status-dot {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"></div>
-                            
-                            <span class="table-name">{{ table.name }}</span>
-                            <span class="table-meta">Capacity: {{ table.capacity }}</span>
-                        </div>
-                        {% endwith %}
-                    {% endfor %}
-                </div>
-            {% endfor %}
+            {% include 'tables/includes/map_grid.html' %}
         </div>
     </div>
 
@@ -397,17 +395,21 @@
                 <h2 id="inspect-title" style="margin: 0; color: white;">Select a Table</h2>
                 <button onclick="closeInspector()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
             </div>
-            <div id="inspect-status" class="status-badge" style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;"></div>
+            <div id="inspect-status" style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: white;"></div>
         </div>
         
         <div class="panel-content" id="panel-body">
-            <!-- Dynamic Content -->
             <div id="empty-state" style="text-align: center; margin-top: 4rem; opacity: 0.3;">
                 <i class="fas fa-info-circle fa-4x" style="margin-bottom: 1rem;"></i>
                 <p>Click a table to view details</p>
             </div>
             
             <div id="order-details" style="display: none;">
+                <div id="associated-tables" style="margin-bottom: 1rem; padding: 10px; background: rgba(56, 189, 248, 0.1); border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.2); display: none;">
+                    <div style="font-size: 0.65rem; color: #38bdf8; font-weight: 800; text-transform: uppercase; margin-bottom: 5px;">Linked Tables (GROUP)</div>
+                    <div id="linked-list" style="color: white; font-size: 0.85rem; font-weight: 600;"></div>
+                </div>
+                
                 <h4 style="color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; margin-bottom: 1.5rem;">Active Order</h4>
                 <div id="items-list"></div>
                 
@@ -418,7 +420,7 @@
                     </div>
                     <div style="display: flex; justify-content: space-between; font-size: 1.2rem;">
                         <span style="color: white; font-weight: 800;">TOTAL</span>
-                        <b id="inspect-total" style="color: var(--primary);">₹0.00</b>
+                        <b id="inspect-total" style="color: #f97316;">₹0.00</b>
                     </div>
                 </div>
             </div>
@@ -427,11 +429,19 @@
         <div class="panel-footer" id="inspect-footer" style="display: none;">
             <button id="pos-btn" class="action-btn btn-primary" onclick="goToPOS()">
                 <i class="fas fa-cash-register"></i>
-                OPEN POS TERMINAL
+                OPEN POS
+            </button>
+            <button id="split-btn" class="action-btn btn-outline" style="border-color: #ef4444; color: #ef4444; display: none;" onclick="commitSplit()">
+                <i class="fas fa-unlink"></i>
+                UNGROUP TABLES
+            </button>
+            <button id="mark-available-btn" class="action-btn btn-outline" style="border-color: #10b981; color: #10b981; display: none;" onclick="commitMarkAvailable()">
+                <i class="fas fa-check-circle"></i>
+                MARK AS AVAILABLE
             </button>
             <button id="print-btn" class="action-btn btn-outline" onclick="printTableBill()">
                 <i class="fas fa-print"></i>
-                PRINT TEMPORARY BILL
+                PRINT BILL
             </button>
         </div>
     </div>
@@ -439,81 +449,163 @@
 
 <script>
     let isEditMode = false;
+    let isCombineMode = false;
+    let selectedTables = [];
     let selectedTableId = null;
     let currentOrderId = null;
     let activeSectionId = "{% for s in sections %}{% if forloop.first %}{{ s.id }}{% endif %}{% endfor %}";
 
-    // Data maps
-    const activeOrders = {
-        {% for sid, order in table_order_map.items %}
-            "{{ sid }}": {
-                id: "{{ order.id }}",
-                number: "{{ order.order_number }}",
-                total: "{{ order.total_amount }}",
-                subtotal: "{{ order.subtotal }}",
-                items: [
-                    {% for item in order.items.all %}
-                        { name: "{{ item.menu_item.name }}", qty: {{ item.quantity }}, price: "{{ item.price }}" },
-                    {% endfor %}
-                ]
-            },
-        {% endfor %}
-    };
+    function toggleCombineMode() {
+        if (isEditMode) return;
+        isCombineMode = !isCombineMode;
+        selectedTables = [];
+        
+        const btn = document.getElementById('combine-mode-btn');
+        const bar = document.getElementById('combine-bar');
+        
+        if (isCombineMode) {
+            btn.classList.add('active');
+            bar.style.display = 'flex';
+            document.querySelectorAll('.table-card').forEach(t => t.classList.remove('selection-active'));
+        } else {
+            btn.classList.remove('active');
+            bar.style.display = 'none';
+            document.querySelectorAll('.table-card').forEach(t => t.classList.remove('selection-active'));
+        }
+        closeInspector();
+    }
 
-    function switchSection(id, btn) {
-        if (isEditMode) {
-            alert("Please disable Edit Mode before switching sections.");
+    function selectTable(id) {
+        if (!isCombineMode) {
+            inspectTable(id);
             return;
         }
+        
+        const index = selectedTables.indexOf(id);
+        const card = document.getElementById(`table-${id}`);
+        
+        if (index > -1) {
+            selectedTables.splice(index, 1);
+            card.classList.remove('selection-active');
+        } else {
+            selectedTables.push(id);
+            card.classList.add('selection-active');
+        }
+        
+        document.getElementById('selection-count').innerText = selectedTables.length;
+    }
+
+    async function commitCombination() {
+        if (selectedTables.length < 2) {
+            alert("Select at least 2 tables to merge");
+            return;
+        }
+        
+        const primaryId = selectedTables[0];
+        const secondaryIds = selectedTables.slice(1);
+        
+        try {
+            const res = await fetch('/api/orders/combine_tables/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                body: JSON.stringify({ primary_table_id: primaryId, secondary_table_ids: secondaryIds })
+            });
+            const data = await res.json();
+            if (data.status === 'tables_combined') {
+                toggleCombineMode();
+                location.reload(); // Refresh to show snapped positions and updated data
+            }
+        } catch (err) {
+            console.error("Combination failed", err);
+        }
+    }
+
+    async function commitSplit() {
+        if (!currentOrderId) return;
+        if (!confirm("Are you sure you want to ungroup these tables?")) return;
+        
+        try {
+            const res = await fetch(`/api/orders/${currentOrderId}/split_tables/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+            const data = await res.json();
+            if (data.status === 'tables_split') {
+                location.reload();
+            }
+        } catch (err) {
+            console.error("Split failed", err);
+        }
+    }
+
+    async function commitMarkAvailable() {
+        if (!selectedTableId) return;
+        if (!confirm("Manually clear this table and mark as Available?")) return;
+        
+        try {
+            const res = await fetch(`/tables/api/tables/${selectedTableId}/mark_available/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+            const data = await res.json();
+            if (data.status === 'table_cleared') {
+                location.reload();
+            }
+        } catch (err) {
+            console.error("Clear failed", err);
+        }
+    }
+
+    function switchSection(id, btn) {
+        if (isEditMode) return;
         activeSectionId = id;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        
         document.querySelectorAll('.section-group').forEach(g => g.style.display = 'none');
         document.getElementById(`section-${id}`).style.display = 'block';
         closeInspector();
     }
 
     function inspectTable(id) {
-        if (isEditMode) return; // Don't inspect while dragging
-        
+        if (isEditMode || isCombineMode) return;
         selectedTableId = id;
         const card = document.getElementById(`table-${id}`);
-        const name = card.dataset.name;
+        if (!card) return;
+
+        document.getElementById('inspector').classList.add('active');
+        document.getElementById('inspect-title').innerText = card.dataset.name;
+        
         const status = card.dataset.status;
         const orderId = card.dataset.orderId;
-        
-        // Update Sidebar UI
-        document.getElementById('inspector').classList.add('active');
-        document.getElementById('inspect-title').innerText = name;
-        
         const statusBadge = document.getElementById('inspect-status');
+        
         statusBadge.innerText = orderId ? 'Occupied' : status;
         statusBadge.style.background = orderId ? 'var(--status-occupied)' : 'var(--status-available)';
         
         document.getElementById('empty-state').style.display = 'none';
         document.getElementById('inspect-footer').style.display = 'flex';
         
-        if (orderId && activeOrders[id]) {
+        // Show Mark Available button if not already available
+        document.getElementById('mark-available-btn').style.display = (status !== 'available' || orderId) ? 'flex' : 'none';
+
+        // Show Ungroup button if this table is attached
+        const isAttached = card.classList.contains('is-attached') || card.querySelector('.merge-badge');
+        document.getElementById('split-btn').style.display = isAttached ? 'flex' : 'none';
+
+        if (orderId) {
             currentOrderId = orderId;
-            const order = activeOrders[id];
             document.getElementById('order-details').style.display = 'block';
-            document.getElementById('inspect-subtotal').innerText = "₹" + order.subtotal;
-            document.getElementById('inspect-total').innerText = "₹" + order.total;
             
-            const list = document.getElementById('items-list');
-            list.innerHTML = order.items.map(i => `
-                <div class="order-item-mini">
-                    <div><b>${i.qty}x</b> ${i.name}</div>
-                    <div>₹${(i.qty * i.price).toFixed(2)}</div>
-                </div>
-            `).join('');
-            
-            document.getElementById('print-btn').style.display = 'flex';
+            // Show associated tables if applicable
+            if (isAttached) {
+                document.getElementById('associated-tables').style.display = 'block';
+                document.getElementById('linked-list').innerText = "This table is part of a merged group.";
+            } else {
+                document.getElementById('associated-tables').style.display = 'none';
+            }
         } else {
             currentOrderId = null;
             document.getElementById('order-details').style.display = 'none';
-            document.getElementById('print-btn').style.display = 'none';
         }
     }
 
@@ -523,105 +615,89 @@
     }
 
     function goToPOS() {
-        if (currentOrderId) {
-            window.location.href = `/pos/?table_id=${selectedTableId}&order_id=${currentOrderId}`;
-        } else {
-            window.location.href = `/pos/?table_id=${selectedTableId}`;
-        }
+        if (!selectedTableId) return;
+        let url = `/pos/?table_id=${selectedTableId}`;
+        if (currentOrderId) url += `&order_id=${currentOrderId}`;
+        window.location.href = url;
     }
 
-    function printTableBill() {
-        if (currentOrderId) {
-            window.open(`/invoice/${currentOrderId}/`, '_blank', 'width=400,height=600');
-        }
-    }
-
-    // --- DRAG AND DROP ENGINE ---
     function toggleEditMode() {
         isEditMode = !isEditMode;
         const btn = document.getElementById('edit-layout-btn');
         const overlay = document.getElementById('edit-label');
+        const canvas = document.getElementById('canvas-container');
         
         if (isEditMode) {
             btn.classList.add('edit-mode-active');
-            btn.innerHTML = '<i class="fas fa-check"></i> Save Layout';
+            btn.innerHTML = '<i class="fas fa-check"></i> Save';
             overlay.style.display = 'block';
+            canvas.setAttribute('hx-disable', 'true'); // Disable polling in edit mode
             enableDragging();
         } else {
             btn.classList.remove('edit-mode-active');
             btn.innerHTML = '<i class="fas fa-arrows-up-down-left-right"></i> Edit Layout';
             overlay.style.display = 'none';
+            canvas.removeAttribute('hx-disable');
             disableDragging();
         }
     }
 
     function enableDragging() {
-        const tables = document.querySelectorAll('.table-card');
-        tables.forEach(table => {
-            table.setAttribute('draggable', true);
-            
-            table.onmousedown = function(e) {
+        const elements = document.querySelectorAll('.table-card, .decor-item');
+        elements.forEach(el => {
+            el.onmousedown = function(e) {
                 if (!isEditMode) return;
-                
-                let shiftX = e.clientX - table.getBoundingClientRect().left;
-                let shiftY = e.clientY - table.getBoundingClientRect().top;
+                let shiftX = e.clientX - el.getBoundingClientRect().left;
+                let shiftY = e.clientY - el.getBoundingClientRect().top;
                 const container = document.getElementById('canvas-container');
                 const containerRect = container.getBoundingClientRect();
 
-                table.classList.add('dragging');
+                el.classList.add('dragging');
 
                 function moveAt(pageX, pageY) {
                     let leftPct = ((pageX - containerRect.left - shiftX) / containerRect.width) * 100;
                     let topPct = ((pageY - containerRect.top - shiftY) / containerRect.height) * 100;
-                    
-                    // Clamp to boundaries
                     leftPct = Math.max(0, Math.min(leftPct, 95));
                     topPct = Math.max(0, Math.min(topPct, 95));
-                    
-                    table.style.left = leftPct + '%';
-                    table.style.top = topPct + '%';
+                    el.style.left = leftPct + '%';
+                    el.style.top = topPct + '%';
                 }
 
-                function onMouseMove(e) {
-                    moveAt(e.pageX, e.pageY);
-                }
-
+                function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
                 document.addEventListener('mousemove', onMouseMove);
 
-                table.onmouseup = async function() {
+                el.onmouseup = async function() {
                     document.removeEventListener('mousemove', onMouseMove);
-                    table.onmouseup = null;
-                    table.classList.remove('dragging');
+                    el.onmouseup = null;
+                    el.classList.remove('dragging');
                     
-                    // Auto-save this table's position
-                    const id = table.dataset.id;
-                    const x_pos = parseFloat(table.style.left);
-                    const y_pos = parseFloat(table.style.top);
+                    const id = el.dataset.id;
+                    const type = el.dataset.type;
+                    const x = Math.round(parseFloat(el.style.left));
+                    const y = Math.round(parseFloat(el.style.top));
+                    
+                    const apiUrl = type === 'table' ? `/tables/api/tables/${id}/` : `/tables/api/decor/${id}/`;
                     
                     try {
-                        await fetch(`/tables/api/tables/${id}/`, {
+                        await fetch(apiUrl, {
                             method: 'PATCH',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': '{{ csrf_token }}'
-                            },
-                            body: JSON.stringify({ x_pos: Math.round(x_pos), y_pos: Math.round(y_pos) })
+                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                            body: JSON.stringify({ x_pos: x, y_pos: y })
                         });
                     } catch (err) { console.error("Save failed", err); }
                 };
             };
-
-            table.ondragstart = function() { return false; };
+            el.ondragstart = () => false;
         });
     }
 
     function disableDragging() {
-        const tables = document.querySelectorAll('.table-card');
-        tables.forEach(table => {
-            table.removeAttribute('draggable');
-            table.onmousedown = null;
-        });
+        document.querySelectorAll('.table-card, .decor-item').forEach(el => el.onmousedown = null);
     }
 
+    // Re-initialize scripts after HTMX partial load
+    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+        if (isEditMode) disableDragging(); // Safety check
+    });
 </script>
 {% endblock %}

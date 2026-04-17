@@ -1,0 +1,78 @@
+{% for order in orders %}
+    <div class="order-ticket status-{{ order.status }}" id="ticket-{{ order.id }}">
+        <div class="ticket-header">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span class="ticket-id">#{{ order.order_number|slice:"-5:" }}</span>
+                <div class="ticket-timer" data-start="{{ order.created_at|date:'c' }}">
+                    <i class="far fa-clock"></i> <span class="elapsed">00:00</span>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+                <span class="ticket-type type-{{ order.order_type }}">{{ order.get_order_type_display }}</span>
+                {% if order.customer_name %}
+                    <span style="font-weight: 800; color: var(--accent-warning); font-size: 0.85rem; text-transform: uppercase;">
+                        <i class="fas fa-user"></i> {{ order.customer_name }}
+                    </span>
+                {% endif %}
+                {% if order.table %}
+                    <span style="font-weight: 900; color: white; font-size: 0.9rem;">TABLE {{ order.table.name }}</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="ticket-body">
+            {% for item in order.items.all %}
+                {# Filter items by station if a station is selected #}
+                {% if selected_station == 'all' or item.menu_item.category.kitchen_station == selected_station %}
+                <div class="ticket-item item-status-{{ item.status }}" id="item-{{ item.id }}">
+                    <input type="checkbox" class="item-checkpoint" 
+                           {% if item.status == 'ready' %}checked{% endif %}
+                           onclick="toggleItemStatus('{{ item.id }}', this.checked ? 'ready' : 'pending')">
+                    
+                    <span class="item-qty">{{ item.quantity }}</span>
+
+                    <div class="item-details">
+                        <span class="item-name">
+                            <i class="fas fa-circle diet-dot is-{{ item.menu_item.item_type }}"></i>
+                            {{ item.menu_item.name }}
+                        </span>
+                        {% if item.notes %}
+                            <div class="item-note">"{{ item.notes }}"</div>
+                        {% endif %}
+                    </div>
+
+                    {% if item.status == 'ready' %}
+                        <i class="fas fa-check-circle text-success" style="font-size: 1.2rem;"></i>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <div class="ticket-footer">
+            {% if order.status == 'kot_sent' %}
+                <button onclick="changeOrderStatus('{{ order.id }}', 'preparing')" class="action-btn btn-fire">
+                    <i class="fas fa-fire"></i> START ALL
+                </button>
+            {% endif %}
+            
+            {% if order.status != 'ready' %}
+                <button onclick="changeOrderStatus('{{ order.id }}', 'ready')" class="action-btn btn-ready">
+                    <i class="fas fa-check-double"></i> READY ALL
+                </button>
+            {% endif %}
+
+            {% if order.status == 'ready' %}
+                <button onclick="changeOrderStatus('{{ order.id }}', 'completed')" class="action-btn btn-serve">
+                    <i class="fas fa-hand-holding-heart"></i> SERVE
+                </button>
+            {% endif %}
+        </div>
+    </div>
+{% empty %}
+    <div class="empty-state">
+        <i class="fas fa-concierge-bell fa-4x mb-4"></i>
+        <h2 style="font-weight: 900; letter-spacing: 2px;">KITCHEN CLEAR</h2>
+        <p>Waiting for new orders...</p>
+    </div>
+{% endfor %}

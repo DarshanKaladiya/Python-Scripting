@@ -2,7 +2,14 @@ from django.db import models
 from inventory.models import RawMaterial
 
 class Category(models.Model):
+    STATION_CHOICES = (
+        ('kitchen', 'Main Kitchen'),
+        ('bar', 'Bar / Drinks'),
+        ('pantry', 'Pantry / Desserts'),
+        ('tandoor', 'Tandoor / Oven'),
+    )
     name = models.CharField(max_length=100)
+    kitchen_station = models.CharField(max_length=20, choices=STATION_CHOICES, default='kitchen')
     color_code = models.CharField(max_length=20, default="#f97316")
     order = models.IntegerField(default=0)
 

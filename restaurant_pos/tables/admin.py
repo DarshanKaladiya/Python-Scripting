@@ -1,9 +1,14 @@
 from django.contrib import admin
-from .models import FloorSection, Table
+from .models import FloorSection, Table, FloorDecor
 
 @admin.register(FloorSection)
 class FloorSectionAdmin(admin.ModelAdmin):
     list_display = ('name',)
+
+@admin.register(FloorDecor)
+class FloorDecorAdmin(admin.ModelAdmin):
+    list_display = ('decor_type', 'section', 'x_pos', 'y_pos')
+    list_filter = ('decor_type', 'section')
 
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):

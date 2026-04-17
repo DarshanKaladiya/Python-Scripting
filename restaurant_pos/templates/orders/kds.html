@@ -4,6 +4,7 @@
 
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Outfit:wght@400;600;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <style>
     :root {
         --kds-bg: #030712;
@@ -27,6 +28,39 @@
         min-height: 100vh;
         background: radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
                     radial-gradient(circle at 100% 100%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+    }
+
+    /* Station Filters */
+    .station-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .station-tab {
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.05);
+        color: var(--text-dim);
+        cursor: pointer;
+        font-weight: 800;
+        transition: all 0.3s;
+        border: 1px solid transparent;
+        white-space: nowrap;
+        text-decoration: none;
+    }
+
+    .station-tab.active {
+        background: var(--accent-primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .station-tab:hover:not(.active) {
+        background: rgba(255,255,255,0.1);
+        color: white;
     }
 
     /* Productivity Banner */
@@ -132,19 +166,48 @@
 
     .ticket-item {
         display: flex;
-        align-items: flex-start;
-        gap: 1rem;
-        margin-bottom: 1.25rem;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 12px;
+        transition: background 0.3s;
+        border: 1px solid transparent;
     }
+
+    .item-status-ready {
+        background: rgba(16, 185, 129, 0.05);
+        opacity: 0.6;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+    }
+
+    .item-checkpoint {
+        width: 1.25rem;
+        height: 1.25rem;
+        accent-color: var(--accent-success);
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    /* Dietary Icons */
+    .diet-dot { 
+        font-size: 0.5rem; 
+        margin-right: 4px;
+    }
+    .is-veg { color: #10b981; }
+    .is-non_veg { color: #ef4444; }
+    .is-egg { color: #f59e0b; }
 
     .item-qty {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 1.1rem;
+        font-size: 0.9rem;
         font-weight: 800;
         color: var(--accent-primary);
-        background: rgba(99, 102, 241, 0.1);
-        padding: 0.2rem 0.6rem;
-        border-radius: 8px;
+        background: rgba(99, 102, 241, 0.15);
+        padding: 0.1rem 0.5rem;
+        border-radius: 6px;
+        min-width: 1.8rem;
+        text-align: center;
     }
 
     .item-details { flex: 1; }
@@ -166,12 +229,6 @@
         margin-top: 0.5rem;
         border-left: 2px solid var(--accent-warning);
     }
-
-    /* Dietary Icons */
-    .diet-dot { font-size: 0.6rem; }
-    .is-veg { color: #10b981; }
-    .is-non_veg { color: #ef4444; }
-    .is-egg { color: #f59e0b; }
 
     .ticket-footer {
         padding: 1rem 1.5rem 1.5rem;
@@ -218,8 +275,6 @@
         border-radius: 8px;
     }
 
-    /* Urgency States */
-    .urgent-15 { border: 2px solid rgba(245, 158, 11, 0.5); box-shadow: 0 0 30px rgba(245, 158, 11, 0.15); }
     .critical-30 { border: 2px solid rgba(239, 68, 68, 0.5); animation: pulseCritical 2s infinite; }
 
     @keyframes pulseCritical {
@@ -242,15 +297,24 @@
 
 {% block content %}
 <div class="kds-container">
+    <!-- Station Filters -->
+    <div class="station-tabs">
+        <a href="?station=all" class="station-tab {% if selected_station == 'all' %}active{% endif %}">ALL STATIONS</a>
+        <a href="?station=kitchen" class="station-tab {% if selected_station == 'kitchen' %}active{% endif %}">MAIN KITCHEN</a>
+        <a href="?station=bar" class="station-tab {% if selected_station == 'bar' %}active{% endif %}">BAR / DRINKS</a>
+        <a href="?station=tandoor" class="station-tab {% if selected_station == 'tandoor' %}active{% endif %}">TANDOOR</a>
+        <a href="?station=pantry" class="station-tab {% if selected_station == 'pantry' %}active{% endif %}">PANTRY</a>
+    </div>
+
     <!-- Productivity Banner -->
-    <div class="metrics-ribbon">
+    <div class="metrics-ribbon" hx-get="{{ request.path }}?station={{ selected_station }}" hx-trigger="every 5s" hx-select=".metrics-ribbon" hx-swap="outerHTML">
         <div class="metric-card">
             <span class="metric-label">Incoming Orders</span>
-            <span class="metric-value" id="new-count">{{ new_count }}</span>
+            <span class="metric-value">{{ new_count }}</span>
         </div>
         <div class="metric-card">
             <span class="metric-label">In Preparation</span>
-            <span class="metric-value" id="prep-count">{{ prep_count }}</span>
+            <span class="metric-value">{{ prep_count }}</span>
         </div>
         <div class="metric-card" style="--progress: {{ load_percentage }}%">
             <span class="metric-label">Kitchen Load</span>
@@ -262,82 +326,36 @@
         </div>
     </div>
 
-    <div class="ticket-grid" id="main-grid">
-        {% for order in orders %}
-            <div class="order-ticket status-{{ order.status }}" id="ticket-{{ order.id }}">
-                <div class="ticket-header">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span class="ticket-id">#{{ order.order_number|slice:"-5:" }}</span>
-                        <div class="ticket-timer" data-start="{{ order.created_at|date:'c' }}">
-                            <i class="far fa-clock"></i> <span class="elapsed">00:00</span>
-                        </div>
-                    </div>
-                    <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
-                        <span class="ticket-type type-{{ order.order_type }}">{{ order.get_order_type_display }}</span>
-                        {% if order.customer_name %}
-                            <span style="font-weight: 800; color: var(--accent-warning); font-size: 0.85rem; text-transform: uppercase;">
-                                <i class="fas fa-user"></i> {{ order.customer_name }}
-                            </span>
-                        {% endif %}
-                        {% if order.table %}
-                            <span style="font-weight: 900; color: white; font-size: 0.9rem;">TABLE {{ order.table.name }}</span>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="ticket-body">
-                    {% for item in order.items.all %}
-                        <div class="ticket-item">
-                            <span class="item-qty">{{ item.quantity }}</span>
-                            <div class="item-details">
-                                <span class="item-name">
-                                    <i class="fas fa-square-full diet-dot is-{{ item.menu_item.item_type }}"></i>
-                                    {{ item.menu_item.name }}
-                                </span>
-                                {% if item.notes %}
-                                    <div class="item-note">"{{ item.notes }}"</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                
-                <div class="ticket-footer">
-                    {% if order.status == 'kot_sent' %}
-                        <button onclick="changeStatus('{{ order.id }}', 'preparing')" class="action-btn btn-fire">
-                            <i class="fas fa-fire"></i> START
-                        </button>
-                    {% endif %}
-                    
-                    {% if order.status == 'preparing' or order.status == 'kot_sent' %}
-                        <button onclick="changeStatus('{{ order.id }}', 'ready')" class="action-btn btn-ready">
-                            <i class="fas fa-check-double"></i> READY
-                        </button>
-                    {% endif %}
-
-                    {% if order.status == 'ready' %}
-                        <button onclick="changeStatus('{{ order.id }}', 'completed')" class="action-btn btn-serve">
-                            <i class="fas fa-hand-holding-heart"></i> SERVE
-                        </button>
-                    {% endif %}
-                </div>
-            </div>
-        {% empty %}
-            <div class="empty-state">
-                <i class="fas fa-concierge-bell fa-4x mb-4"></i>
-                <h2 style="font-weight: 900; letter-spacing: 2px;">KITCHEN CLEAR</h2>
-                <p>Waiting for new orders...</p>
-            </div>
-        {% endfor %}
+    <!-- Real-time Grid Polling -->
+    <div class="ticket-grid" 
+         hx-get="{{ request.path }}?station={{ selected_station }}" 
+         hx-trigger="every 5s" 
+         hx-swap="innerHTML"
+         id="main-grid">
+        {% include 'orders/includes/kds_grid.html' %}
     </div>
 </div>
 
 <audio id="new-order-sound" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
 
 <script>
-let lastOrderCount = {{ orders.count }};
+async function toggleItemStatus(itemId, newStatus) {
+    try {
+        const response = await fetch(`/api/orders/update_item_status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ item_id: itemId, status: newStatus })
+        });
+        if (response.ok) {
+            htmx.trigger('#main-grid', 'refresh');
+        }
+    } catch (err) { console.error(err); }
+}
 
-async function changeStatus(orderId, newStatus) {
+async function changeOrderStatus(orderId, newStatus) {
     try {
         const response = await fetch(`/api/orders/${orderId}/update_status/`, {
             method: 'POST',
@@ -348,42 +366,8 @@ async function changeStatus(orderId, newStatus) {
             body: JSON.stringify({ status: newStatus })
         });
         if (response.ok) {
-            const ticket = document.getElementById(`ticket-${orderId}`);
-            if (newStatus === 'ready') {
-                ticket.style.transform = 'translateY(-20px) scale(0.95)';
-                ticket.style.opacity = '0';
-                setTimeout(fetchKDSUpdate, 300);
-            } else {
-                fetchKDSUpdate();
-            }
+            htmx.trigger('#main-grid', 'refresh');
         }
-    } catch (err) { console.error(err); }
-}
-
-async function fetchKDSUpdate() {
-    try {
-        const response = await fetch(window.location.href);
-        const text = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(text, 'text/html');
-        
-        const newGrid = doc.getElementById('main-grid').innerHTML;
-        const currentOrders = doc.querySelectorAll('.order-ticket').length;
-        
-        // Sound check
-        if (currentOrders > lastOrderCount) {
-            document.getElementById('new-order-sound').play().catch(e => console.log("Sound blocked"));
-        }
-        lastOrderCount = currentOrders;
-
-        document.getElementById('main-grid').innerHTML = newGrid;
-        
-        // Update Metrics
-        ['new-count', 'prep-count'].forEach(id => {
-            document.getElementById(id).innerText = doc.getElementById(id).innerText;
-        });
-        
-        updateTimers();
     } catch (err) { console.error(err); }
 }
 
@@ -393,21 +377,21 @@ function updateTimers() {
         const diff = Math.floor((new Date() - start) / 1000);
         const mins = Math.floor(diff / 60);
         const secs = diff % 60;
-        
         timer.querySelector('.elapsed').innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
         
         const card = timer.closest('.order-ticket');
         if (mins >= 30) {
             card.classList.add('critical-30');
-            card.classList.remove('urgent-15');
-        } else if (mins >= 15) {
-            card.classList.add('urgent-15');
         }
     });
 }
 
 setInterval(updateTimers, 1000);
-setInterval(fetchKDSUpdate, 10000); // 10s auto-refresh
 updateTimers();
+
+// Listen for HTMX events to re-init timers
+document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+    updateTimers();
+});
 </script>
 {% endblock %}

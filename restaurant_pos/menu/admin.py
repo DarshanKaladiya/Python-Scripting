@@ -7,8 +7,8 @@ class RecipeIngredientInline(admin.TabularInline):
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'order', 'color_code')
-    list_editable = ('order',)
+    list_display = ('name', 'kitchen_station', 'order', 'color_code')
+    list_editable = ('kitchen_station', 'order')
 
 @admin.register(MenuItem)
 class MenuItemAdmin(admin.ModelAdmin):

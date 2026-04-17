@@ -1,0 +1,67 @@
+{% load table_extras %}
+
+{% for section in sections %}
+    <div id="section-{{ section.id }}" class="section-group" 
+         style="display: {% if forloop.first or section.id|slugify == active_section_id %}block{% else %}none{% endif %}; position: absolute; inset: 0;">
+        
+        <!-- Render Decor Items -->
+        {% for decor in section.decor_items.all %}
+            <div class="decor-item type-{{ decor.decor_type }} shape-{{ decor.shape }}"
+                 id="decor-{{ decor.id }}"
+                 data-id="{{ decor.id }}"
+                 data-type="decor"
+                 style="left: {{ decor.x_pos }}%; top: {{ decor.y_pos }}%; 
+                        width: {{ decor.width }}px; height: {{ decor.height }}px;
+                        border-radius: {% if decor.shape == 'circle' %}50%{% else %}8px{% endif %};">
+                
+                {% if decor.decor_type == 'plant' %}
+                    <i class="fas fa-leaf"></i>
+                {% elif decor.decor_type == 'wall' %}
+                    <div class="wall-texture"></div>
+                {% elif decor.decor_type == 'counter' %}
+                    <div class="counter-top"></div>
+                {% elif decor.decor_type == 'pillar' %}
+                    <i class="fas fa-columns"></i>
+                {% endif %}
+                
+                {% if decor.name %}
+                    <span class="decor-label">{{ decor.name }}</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <!-- Render Tables -->
+        {% for table in section.tables.all %}
+            {% with order=table_order_map|get_item:table.id %}
+            <div class="table-card {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %} {% if order and order.status == 'ready' %}food-ready-pulse{% endif %} {% if table.attached_to %}is-attached{% endif %}"
+                 id="table-{{ table.id }}"
+                 data-id="{{ table.id }}"
+                 data-type="table"
+                 data-name="{{ table.name }}"
+                 data-capacity="{{ table.capacity }}"
+                 data-status="{{ table.status }}"
+                 data-order-id="{{ order.id|default:'' }}"
+                 onclick="selectTable('{{ table.id }}')"
+                 style="left: {{ table.x_pos }}%; top: {{ table.y_pos }}%; 
+                        width: {{ table.width }}px; height: {{ table.height }}px; 
+                        border-radius: {% if table.shape == 'circle' %}50%{% elif table.attached_to %}0{% else %}20px{% endif %};">
+                
+                {% if table.attached_to %}
+                    <div class="merge-badge"><i class="fas fa-link"></i> GROUPED</div>
+                {% endif %}
+
+                <div class="status-dot {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"></div>
+                
+                <span class="table-name">{{ table.name }}</span>
+                <span class="table-meta">Cap: {{ table.capacity }}</span>
+                
+                {% if order and order.status == 'ready' %}
+                    <div class="ready-notification">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                {% endif %}
+            </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+{% endfor %}

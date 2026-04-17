@@ -43,6 +43,7 @@ class Order(models.Model):
     customer_phone = models.CharField(max_length=15, null=True, blank=True)
     
     table = models.ForeignKey(Table, null=True, blank=True, on_delete=models.SET_NULL)
+    additional_tables = models.ManyToManyField(Table, related_name='joined_orders', blank=True)
     waiter = models.ForeignKey(User, null=True, blank=True, related_name='taken_orders', on_delete=models.SET_NULL)
     customer_user = models.ForeignKey(User, null=True, blank=True, related_name='customer_orders', on_delete=models.SET_NULL)
     
@@ -85,14 +86,37 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('preparing', 'Preparing'),
+        ('ready', 'Ready'),
+    )
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     menu_item = models.ForeignKey(MenuItem, on_delete=models.PROTECT)
     quantity = models.IntegerField(default=1)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     notes = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
     def __str__(self):
         return f"{self.quantity}x {self.menu_item.name}"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        
+        # If item status changed to 'ready', check if all items in order are ready
+        if not is_new and self.status == 'ready':
+            order = self.order
+            if not order.items.filter(status__in=['pending', 'preparing']).exists():
+                if order.status != 'ready':
+                    order.status = 'ready'
+                    order.save()
+        elif not is_new and self.status == 'preparing':
+            order = self.order
+            if order.status == 'kot_sent':
+                order.status = 'preparing'
+                order.save()
 
 class KitchenOrderTicket(models.Model):
     order = models.ForeignKey(Order, related_name='kots', on_delete=models.CASCADE)

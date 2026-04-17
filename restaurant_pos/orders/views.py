@@ -92,6 +92,91 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response({'status': 'updated'})
         return Response({'error': 'invalid status'}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'])
+    def combine_tables(self, request):
+        primary_id = request.data.get('primary_table_id')
+        secondary_ids = request.data.get('secondary_table_ids', [])
+        
+        if not primary_id or not secondary_ids:
+            return Response({'error': 'Primary and secondary table IDs required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        primary_table = get_object_or_404(Table, id=primary_id)
+        secondary_tables = Table.objects.filter(id__in=secondary_ids)
+        
+        # 1. Get or Create Primary Order
+        active_statuses = ['draft', 'awaiting_confirmation', 'kot_sent', 'preparing', 'ready']
+        primary_order = Order.objects.filter(table=primary_table, status__in=active_statuses).first()
+        
+        if not primary_order:
+            # Create a new draft order if none exists
+            from django.utils import timezone
+            import random
+            order_num = f"ORD{int(timezone.now().timestamp())}{random.randint(100, 999)}"
+            primary_order = Order.objects.create(
+                order_number=order_num,
+                table=primary_table,
+                status='draft',
+                waiter=request.user if request.user.is_authenticated else None
+            )
+            primary_table.status = 'occupied'
+            primary_table.save()
+            
+        # 2. Merge Secondary Orders and Attach Tables
+        for table in secondary_tables:
+            # Find if this table has an active order
+            sec_order = Order.objects.filter(table=table, status__in=active_statuses).first()
+            if sec_order and sec_order.id != primary_order.id:
+                # Move items to primary order
+                for item in sec_order.items.all():
+                    item.order = primary_order
+                    item.save()
+                # Cancel the old empty order
+                sec_order.status = 'cancelled'
+                sec_order.save()
+            
+            # Link table to the primary order
+            primary_order.additional_tables.add(table)
+            
+            # Data for Snapping: Attach Table B to Table A
+            table.attached_to = primary_table
+            table.status = 'occupied'
+            
+            # Auto-Snap logic: Place Table B to the right of Table A
+            # Assuming average table width is ~15% of canvas width
+            table.y_pos = primary_table.y_pos
+            table.x_pos = primary_table.x_pos + 12 # 12% shift for snapping
+            
+            table.save()
+            
+        primary_order.calculate_totals()
+        return Response({'status': 'tables_combined', 'order_id': primary_order.id})
+
+    @action(detail=True, methods=['post'])
+    def split_tables(self, request, pk=None):
+        order = self.get_object()
+        
+        # 1. Clear all attachments and reset secondary table statuses
+        primary_table = order.table
+        secondary_tables = list(order.additional_tables.all())
+        
+        for table in secondary_tables:
+            if table:
+                table.attached_to = None
+                table.status = 'available' # Secondary tables become free
+                table.x_pos -= 2 # Move away slightly
+                table.save()
+        
+        # Reset primary table attachment but keep it occupied
+        if primary_table:
+            primary_table.attached_to = None
+            primary_table.save()
+        
+        # 2. Clear many-to-many relationship
+        order.additional_tables.clear()
+        order.save()
+        
+        return Response({'status': 'tables_split'})
+
     @action(detail=True, methods=['post'])
     def add_items(self, request, pk=None):
         order = self.get_object()
@@ -138,6 +223,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             'tracking_uuid': order.tracking_uuid
         })
 
+    @action(detail=False, methods=['post'])
+    def update_item_status(self, request):
+        item_id = request.data.get('item_id')
+        new_status = request.data.get('status')
+        
+        from .models import OrderItem
+        item = get_object_or_404(OrderItem, id=item_id)
+        
+        if new_status in dict(OrderItem.STATUS_CHOICES):
+            item.status = new_status
+            item.save()
+            return Response({'status': 'updated', 'new_status': new_status})
+        return Response({'error': 'invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['get'])
     def pending(self, request):
         """Returns orders that were placed by customers and are awaiting confirmation."""
@@ -176,21 +275,33 @@ class KDSView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        all_active = Order.objects.filter(status__in=['kot_sent', 'preparing', 'ready'])
+        station = self.request.GET.get('station', 'all')
         
-        context['orders'] = all_active.order_by('created_at')
+        # Filtering orders that have items in the selected station
+        active_statuses = ['kot_sent', 'preparing', 'ready']
+        orders_qs = Order.objects.filter(status__in=active_statuses)
+        
+        if station != 'all':
+            orders_qs = orders_qs.filter(items__menu_item__category__kitchen_station=station).distinct()
+        
+        context['orders'] = orders_qs.order_by('created_at').prefetch_related('items__menu_item__category')
+        context['selected_station'] = station
+        
+        all_active = Order.objects.filter(status__in=['kot_sent', 'preparing', 'ready'])
         context['new_count'] = all_active.filter(status='kot_sent').count()
         context['prep_count'] = all_active.filter(status='preparing').count()
         
         # Calculate Capacity Load
-        max_load = 20 # Threshold for high load
+        max_load = 20 
         load_score = (all_active.count() / max_load) * 100
         context['capacity_label'] = "HIGH" if load_score > 70 else "MEDIUM" if load_score > 30 else "OPTIMAL"
         context['load_percentage'] = min(load_score, 100)
-        
-        # Simulated Avg Prep Time (Real would use completed orders)
         context['avg_prep_time'] = "12:45" 
         
+        # HTMX Check
+        if self.request.headers.get('HX-Request'):
+            self.template_name = 'orders/includes/kds_grid.html'
+            
         return context
 
 class LiveOrderTrackerView(TemplateView):
