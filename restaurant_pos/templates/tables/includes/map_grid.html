@@ -11,21 +11,22 @@
                  data-id="{{ decor.id }}"
                  data-type="decor"
                  style="left: {{ decor.x_pos }}%; top: {{ decor.y_pos }}%; 
-                        width: {{ decor.width }}px; height: {{ decor.height }}px;
-                        border-radius: {% if decor.shape == 'circle' %}50%{% else %}8px{% endif %};">
+                        width: {{ decor.width }}px; height: {{ decor.height }}px;">
+                
+                <div class="decor-glow"></div>
                 
                 {% if decor.decor_type == 'plant' %}
-                    <i class="fas fa-leaf"></i>
+                    <i class="fas fa-leaf" style="font-size: 1.2rem; filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.5));"></i>
                 {% elif decor.decor_type == 'wall' %}
-                    <div class="wall-texture"></div>
+                    <div class="wall-texture" style="width: 100%; height: 100%; background: linear-gradient(rgba(255,255,255,0.05), transparent); border: 1px solid rgba(255,255,255,0.1);"></div>
                 {% elif decor.decor_type == 'counter' %}
-                    <div class="counter-top"></div>
+                    <div class="counter-top" style="width: 100%; height: 100%; border-bottom: 3px solid var(--accent-gold); background: rgba(255,255,255,0.05);"></div>
                 {% elif decor.decor_type == 'pillar' %}
-                    <i class="fas fa-columns"></i>
+                    <i class="fas fa-columns" style="font-size: 1.5rem; opacity: 0.5;"></i>
                 {% endif %}
                 
                 {% if decor.name %}
-                    <span class="decor-label">{{ decor.name }}</span>
+                    <span class="decor-label" style="font-size: 0.5rem; letter-spacing: 1px;">{{ decor.name }}</span>
                 {% endif %}
             </div>
         {% endfor %}
@@ -33,7 +34,7 @@
         <!-- Render Tables -->
         {% for table in section.tables.all %}
             {% with order=table_order_map|get_item:table.id %}
-            <div class="table-card {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %} {% if order and order.status == 'ready' %}food-ready-pulse{% endif %} {% if table.attached_to %}is-attached{% endif %}"
+            <div class="table-card {{ table.shape|default:'rectangle' }} shape-{{ table.shape|default:'rectangle' }} {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %} {% if order and order.status == 'ready' %}food-ready-pulse{% endif %} {% if table.attached_to %}is-attached{% endif %}"
                  id="table-{{ table.id }}"
                  data-id="{{ table.id }}"
                  data-type="table"
@@ -41,19 +42,20 @@
                  data-capacity="{{ table.capacity }}"
                  data-status="{{ table.status }}"
                  data-order-id="{{ order.id|default:'' }}"
+                 data-shape="{{ table.shape|default:'rectangle' }}"
                  onclick="selectTable('{{ table.id }}')"
                  style="left: {{ table.x_pos }}%; top: {{ table.y_pos }}%; 
-                        width: {{ table.width }}px; height: {{ table.height }}px; 
-                        border-radius: {% if table.shape == 'circle' %}50%{% elif table.attached_to %}0{% else %}20px{% endif %};">
+                        width: {{ table.width }}px; height: {{ table.height }}px;">
                 
-                {% if table.attached_to %}
-                    <div class="merge-badge"><i class="fas fa-link"></i> GROUPED</div>
-                {% endif %}
+                <div class="halo-ring {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"></div>
+                <div class="status-ribbon {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"></div>
 
-                <div class="status-dot {% if order or table.status == 'occupied' %}occupied{% elif table.status == 'reserved' %}reserved{% else %}available{% endif %}"></div>
+                {% if table.attached_to %}
+                    <div class="merge-badge"><i class="fas fa-crown"></i> GROUP</div>
+                {% endif %}
                 
-                <span class="table-name">{{ table.name }}</span>
-                <span class="table-meta">Cap: {{ table.capacity }}</span>
+                <span class="table-name" style="color: #ffffff; font-family: 'Outfit', sans-serif; font-size: 1rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); font-weight: 800;">{{ table.name }}</span>
+                <span class="table-meta" style="color: var(--accent-gold); opacity: 0.9; letter-spacing: 1.5px; font-size: 0.65rem; font-weight: 900; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">{{ table.capacity }} PERSONS</span>
                 
                 {% if order and order.status == 'ready' %}
                     <div class="ready-notification">

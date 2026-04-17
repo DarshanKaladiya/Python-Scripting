@@ -7,17 +7,17 @@
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <style>
     :root {
-        --floor-bg: #020617; /* Deep midnight blue */
-        --grid-line: rgba(56, 189, 248, 0.08); /* Electric blue grid */
-        --glass-bg: rgba(15, 23, 42, 0.6);
-        --glass-border: rgba(255, 255, 255, 0.12);
+        --floor-bg: #030408; /* Darker Midnight */
+        --accent-gold: #d4af37;
+        --grid-line: rgba(212, 175, 55, 0.12);
+        --glass-bg: rgba(15, 23, 42, 0.35); /* ARCHITECTURAL TRANSPARENCY */
+        --glass-border: rgba(212, 175, 55, 0.2);
+        --panel-bg: rgba(6, 9, 16, 0.7);
         
-        --status-available: #22d3ee; /* Cyan */
-        --status-occupied: #f97316; /* Orange */
-        --status-reserved: #818cf8; /* Indigo */
-        --status-ready: #d946ef; /* Magenta pulse */
-        
-        --panel-bg: rgba(2, 6, 23, 0.9);
+        --status-available: #d4af37;
+        --status-occupied: #ffffff;
+        --status-reserved: #94a3b8;
+        --status-ready: #fbbf24;
     }
 
     body {
@@ -39,10 +39,15 @@
         position: absolute;
         inset: 0;
         background: 
-            radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.05) 0%, transparent 40%),
-            radial-gradient(circle at 90% 90%, rgba(217, 70, 239, 0.05) 0%, transparent 40%);
-        filter: blur(80px);
+            radial-gradient(circle at 10% 20%, rgba(212, 175, 55, 0.03) 0%, transparent 40%),
+            radial-gradient(circle at 90% 80%, rgba(212, 175, 55, 0.02) 0%, transparent 40%);
+        filter: blur(100px);
         z-index: 0;
+    }
+
+    @keyframes drifting-light {
+        0% { transform: scale(1) translate(0, 0); }
+        100% { transform: scale(1.3) translate(5%, 5%); }
     }
 
     .main-canvas {
@@ -66,7 +71,8 @@
         display: flex;
         gap: 0.5rem;
         background: var(--panel-bg);
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(25px) saturate(180%);
+        -webkit-backdrop-filter: blur(25px) saturate(180%);
         padding: 0.4rem;
         border-radius: 50px;
         border: 1px solid var(--glass-border);
@@ -90,10 +96,10 @@
     }
 
     .tab-btn.active {
-        background: rgba(56, 189, 248, 0.2);
-        color: #38bdf8;
-        box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
-        border: 1px solid rgba(56, 189, 248, 0.3);
+        background: rgba(212, 175, 55, 0.2);
+        color: var(--accent-gold);
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.15);
+        border: 1px solid var(--accent-gold);
     }
 
     .controls {
@@ -129,37 +135,29 @@
         flex: 1;
         position: relative;
         background: var(--floor-bg);
-        border: 1px solid rgba(56, 189, 248, 0.2);
-        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 32px;
         overflow: hidden;
-        box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        box-shadow: 
+            0 25px 50px -12px rgba(0,0,0,0.5),
+            inset 0 0 100px rgba(0,0,0,0.9);
     }
 
     .grid-pattern {
         position: absolute;
         inset: 0;
-        background-size: 40px 40px;
+        background-size: 60px 60px;
         background-image:
             linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
             linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+        opacity: 0.5;
         pointer-events: none;
     }
 
-    .grid-pattern::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background-size: 200px 200px;
-        background-image:
-            linear-gradient(to right, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
-    }
-
-    /* Table Node - Premium Glassmorphism */
+    /* Table Node - Elite Neon Glass */
     .table-card {
         position: absolute;
         cursor: pointer;
-        user-select: none;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -167,32 +165,64 @@
         background: var(--glass-bg);
         backdrop-filter: blur(8px);
         border: 1px solid var(--glass-border);
-        box-shadow: 
-            0 10px 25px -5px rgba(0, 0, 0, 0.3),
-            inset 0 1px 1px rgba(255, 255, 255, 0.05);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         z-index: 10;
+        overflow: hidden;
     }
 
-    .table-card::after {
-        content: '';
+    /* Halo Ring for Circles (Fix for Orb Issue) */
+    .table-card.shape-circle {
+        overflow: visible;
+        border-radius: 50% !important;
+        background: rgba(15, 23, 42, 0.2) !important; /* Extra thin for circles */
+    }
+    .table-card.shape-circle .status-ribbon { display: none; }
+    
+    .table-card.shape-circle .halo-ring {
         position: absolute;
-        bottom: -10px;
-        width: 80%;
-        height: 10px;
-        background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 70%);
-        opacity: 0.5;
+        inset: -4px;
+        border-radius: 50%;
+        border: 3px solid transparent; /* THE RING */
         transition: all 0.3s;
+        z-index: -1;
     }
 
-    .table-card.available { border-top: 3px solid var(--status-available); }
-    .table-card.occupied { border-top: 3px solid var(--status-occupied); }
-    .table-card.reserved { border-top: 3px solid var(--status-reserved); }
+    /* Transparent Halo Rings (Fix for solid colors) */
+    .halo-ring.available { border-color: var(--accent-gold); box-shadow: 0 0 20px var(--accent-gold), inset 0 0 10px var(--accent-gold); }
+    .halo-ring.occupied { border-color: #ffffff; box-shadow: 0 0 20px #ffffff, inset 0 0 10px #ffffff; }
+    .halo-ring.reserved { border-color: rgba(255,255,255,0.2); }
+
+    /* Ribbons for Rectangles */
+    .status-ribbon {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        z-index: 2;
+    }
+    .status-ribbon.available { background: var(--accent-gold); box-shadow: 0 0 15px var(--accent-gold); }
+    .status-ribbon.occupied { background: #ffffff; box-shadow: 0 0 15px #ffffff; }
 
     .table-card:hover {
-        transform: translateY(-8px) scale(1.02);
-        border-color: rgba(255,255,255,0.4);
-        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.6);
+        transform: translateY(-8px) scale(1.03);
+        border-color: var(--accent-gold);
+        background: rgba(15, 23, 42, 0.5);
+    }
+
+    /* Decor Overlay Fixes */
+    .type-plant { 
+        background: radial-gradient(circle at center, rgba(34, 197, 94, 0.15), transparent);
+        border: none;
+        animation: plant-sway 6s ease-in-out infinite alternate;
+    }
+    @keyframes plant-sway { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
+
+    .type-wall { 
+        background: linear-gradient(to right, rgba(255,255,255,0.02), rgba(255,255,255,0.08)); 
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(255,255,255,0.05);
     }
 
     /* Food Ready Pulse - Technical Indicator */
@@ -206,18 +236,13 @@
         50% { box-shadow: 0 0 30px rgba(217, 70, 239, 0.5); background: rgba(217, 70, 239, 0.15); }
     }
 
-    .status-dot {
+    .status-ribbon {
         position: absolute;
-        top: 12px;
-        right: 12px;
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
     }
-
-    .status-dot.available { background: var(--status-available); box-shadow: 0 0 10px var(--status-available); }
-    .status-dot.occupied { background: var(--status-occupied); filter: drop-shadow(0 0 8px var(--status-occupied)); }
-    .status-dot.reserved { background: var(--status-reserved); box-shadow: 0 0 10px var(--status-reserved); }
     
     /* Attached / Combined Table Styles */
     .table-card.is-attached {
@@ -227,9 +252,9 @@
     }
     
     .table-card.selection-active {
-        outline: 3px solid #38bdf8;
+        outline: 2px solid var(--accent-gold);
         outline-offset: 4px;
-        box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.5);
         transform: scale(1.05);
     }
     
@@ -238,14 +263,15 @@
         top: -15px;
         left: 50%;
         transform: translateX(-50%);
-        background: #38bdf8;
-        color: white;
-        padding: 2px 8px;
-        border-radius: 20px;
-        font-size: 0.6rem;
-        font-weight: 800;
+        background: var(--accent-gold);
+        color: black;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.65rem;
+        font-weight: 900;
         z-index: 100;
         white-space: nowrap;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
     }
 
     .table-name { font-weight: 800; font-size: 1.1rem; color: white; margin-bottom: 2px; }
@@ -293,31 +319,79 @@
     .panel-content { flex: 1; padding: 2rem; overflow-y: auto; }
     .panel-footer { padding: 2rem; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 1rem; }
 
+    /* Inspector UI Components */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1.25rem;
+        border-radius: 100px;
+        font-size: 0.8rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: #000000 !important; /* Force visibility */
+        box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+        border: 1px solid rgba(0,0,0,0.1);
+        min-width: 100px;
+        line-height: 1;
+    }
+
     .order-item-mini {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         padding: 1.25rem;
-        background: rgba(255,255,255,0.05);
+        background: rgba(255,255,255,0.03);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 16px;
         margin-bottom: 0.75rem;
-        border: 1px solid rgba(255,255,255,0.1);
-        color: white;
+        transition: all 0.3s;
     }
+    .order-item-mini:hover {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,255,255,0.15);
+        transform: translateX(4px);
+    }
+
+    .item-price {
+        color: var(--accent-gold);
+        font-weight: 900;
+        font-size: 1.1rem;
+    }
+
+    .panel-header { 
+        padding: 2.5rem; 
+        background: linear-gradient(to bottom, rgba(234, 179, 8, 0.05), transparent);
+        border-bottom: 1px solid var(--glass-border); 
+        display: flex; /* Added for alignment */
+        justify-content: space-between;
+        align-items: center;
+    }
+    .panel-content { flex: 1; padding: 2.5rem; overflow-y: auto; }
+    .panel-footer { padding: 2.5rem; border-top: 1px solid var(--glass-border); display: flex; flex-direction: column; gap: 1rem; }
 
     .action-btn {
         width: 100%;
-        padding: 1.1rem;
-        border-radius: 16px;
-        border: none;
-        font-weight: 700;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        font-weight: 800;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-size: 0.75rem;
+        transition: all 0.3s;
     }
-    .btn-primary { background: #f97316; color: white; }
-    .btn-outline { background: transparent; border: 1px solid var(--glass-border); color: white; }
+    .btn-primary { background: var(--accent-gold); color: black; box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2); }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(212, 175, 55, 0.4); }
+    .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: white; }
+    .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: white; }
 
     .edit-overlay {
         position: absolute;
@@ -375,16 +449,18 @@
             </div>
         </div>
 
-        <div class="floor-canvas" id="canvas-container"
-             hx-get="{{ request.path }}" 
-             hx-trigger="every 10s" 
-             hx-swap="innerHTML"
-             hx-headers='{"HX-Request": "true"}'
-             hx-vals='js:{active_section_id: activeSectionId}'>
+        <div class="floor-canvas" id="canvas-container">
             <div class="grid-pattern"></div>
             <div class="edit-overlay" id="edit-label">LAYOUT MODE ACTIVE - DRAG ELEMENTS</div>
             
-            {% include 'tables/includes/map_grid.html' %}
+            <div id="dynamic-grid"
+                 hx-get="{{ request.path }}" 
+                 hx-trigger="every 10s" 
+                 hx-swap="innerHTML"
+                 hx-headers='{"HX-Request": "true"}'
+                 hx-vals='js:{active_section_id: activeSectionId}'>
+                {% include 'tables/includes/map_grid.html' %}
+            </div>
         </div>
     </div>
 
@@ -395,7 +471,7 @@
                 <h2 id="inspect-title" style="margin: 0; color: white;">Select a Table</h2>
                 <button onclick="closeInspector()" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.5rem;">&times;</button>
             </div>
-            <div id="inspect-status" style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: white;"></div>
+            <div id="inspect-status" class="status-badge"></div>
         </div>
         
         <div class="panel-content" id="panel-body">
@@ -566,7 +642,7 @@
         closeInspector();
     }
 
-    function inspectTable(id) {
+    async function inspectTable(id) {
         if (isEditMode || isCombineMode) return;
         selectedTableId = id;
         const card = document.getElementById(`table-${id}`);
@@ -592,6 +668,12 @@
         const isAttached = card.classList.contains('is-attached') || card.querySelector('.merge-badge');
         document.getElementById('split-btn').style.display = isAttached ? 'flex' : 'none';
 
+        // Reset details
+        const itemsList = document.getElementById('items-list');
+        itemsList.innerHTML = '<div style="opacity: 0.5; font-size: 0.8rem;">Loading items...</div>';
+        document.getElementById('inspect-subtotal').innerText = '₹0.00';
+        document.getElementById('inspect-total').innerText = '₹0.00';
+
         if (orderId) {
             currentOrderId = orderId;
             document.getElementById('order-details').style.display = 'block';
@@ -602,6 +684,38 @@
                 document.getElementById('linked-list').innerText = "This table is part of a merged group.";
             } else {
                 document.getElementById('associated-tables').style.display = 'none';
+            }
+
+            // Fetch Real Order Data
+            try {
+                const response = await fetch(`/api/orders/${orderId}/`);
+                const order = await response.json();
+                
+                // Populate items
+                itemsList.innerHTML = '';
+                if (order.items && order.items.length > 0) {
+                    order.items.forEach(item => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'order-item-mini';
+                        itemEl.innerHTML = `
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.95rem;">${item.menu_item_name}</div>
+                                <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 4px;">Qty: ${item.quantity} x ₹${item.price}</div>
+                            </div>
+                            <div class="item-price">₹${(item.price * item.quantity).toFixed(2)}</div>
+                        `;
+                        itemsList.appendChild(itemEl);
+                    });
+                } else {
+                    itemsList.innerHTML = '<div style="opacity: 0.5; font-size: 0.8rem;">No items ordered yet</div>';
+                }
+
+                document.getElementById('inspect-subtotal').innerText = `₹${parseFloat(order.subtotal).toFixed(2)}`;
+                document.getElementById('inspect-total').innerText = `₹${parseFloat(order.total_amount).toFixed(2)}`;
+
+            } catch (err) {
+                console.error("Order fetch failed", err);
+                itemsList.innerHTML = '<div style="color: #ef4444; font-size: 0.8rem;">Error loading items</div>';
             }
         } else {
             currentOrderId = null;
@@ -642,62 +756,64 @@
         }
     }
 
-    function enableDragging() {
-        const elements = document.querySelectorAll('.table-card, .decor-item');
-        elements.forEach(el => {
-            el.onmousedown = function(e) {
-                if (!isEditMode) return;
-                let shiftX = e.clientX - el.getBoundingClientRect().left;
-                let shiftY = e.clientY - el.getBoundingClientRect().top;
-                const container = document.getElementById('canvas-container');
-                const containerRect = container.getBoundingClientRect();
+    // Event Delegation for Dragging (Fixed for HTMX)
+    const canvasContainer = document.getElementById('canvas-container');
+    
+    canvasContainer.addEventListener('mousedown', function(e) {
+        if (!isEditMode) return;
+        
+        const el = e.target.closest('.table-card, .decor-item');
+        if (!el) return;
+        
+        e.preventDefault();
+        
+        let shiftX = e.clientX - el.getBoundingClientRect().left;
+        let shiftY = e.clientY - el.getBoundingClientRect().top;
+        const containerRect = canvasContainer.getBoundingClientRect();
 
-                el.classList.add('dragging');
+        el.classList.add('dragging');
 
-                function moveAt(pageX, pageY) {
-                    let leftPct = ((pageX - containerRect.left - shiftX) / containerRect.width) * 100;
-                    let topPct = ((pageY - containerRect.top - shiftY) / containerRect.height) * 100;
-                    leftPct = Math.max(0, Math.min(leftPct, 95));
-                    topPct = Math.max(0, Math.min(topPct, 95));
-                    el.style.left = leftPct + '%';
-                    el.style.top = topPct + '%';
-                }
+        function moveAt(pageX, pageY) {
+            let leftPct = ((pageX - containerRect.left - shiftX) / containerRect.width) * 100;
+            let topPct = ((pageY - containerRect.top - shiftY) / containerRect.height) * 100;
+            leftPct = Math.max(0, Math.min(leftPct, 95));
+            topPct = Math.max(0, Math.min(topPct, 95));
+            el.style.left = leftPct + '%';
+            el.style.top = topPct + '%';
+        }
 
-                function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
-                document.addEventListener('mousemove', onMouseMove);
+        function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
+        document.addEventListener('mousemove', onMouseMove);
 
-                el.onmouseup = async function() {
-                    document.removeEventListener('mousemove', onMouseMove);
-                    el.onmouseup = null;
-                    el.classList.remove('dragging');
-                    
-                    const id = el.dataset.id;
-                    const type = el.dataset.type;
-                    const x = Math.round(parseFloat(el.style.left));
-                    const y = Math.round(parseFloat(el.style.top));
-                    
-                    const apiUrl = type === 'table' ? `/tables/api/tables/${id}/` : `/tables/api/decor/${id}/`;
-                    
-                    try {
-                        await fetch(apiUrl, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                            body: JSON.stringify({ x_pos: x, y_pos: y })
-                        });
-                    } catch (err) { console.error("Save failed", err); }
-                };
-            };
-            el.ondragstart = () => false;
-        });
-    }
+        document.onmouseup = async function() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.onmouseup = null;
+            el.classList.remove('dragging');
+            
+            const id = el.dataset.id;
+            const type = el.dataset.type;
+            const x = Math.round(parseFloat(el.style.left));
+            const y = Math.round(parseFloat(el.style.top));
+            
+            const apiUrl = type === 'table' ? `/tables/api/tables/${id}/` : `/tables/api/decor/${id}/`;
+            
+            try {
+                await fetch(apiUrl, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
+                    body: JSON.stringify({ x_pos: x, y_pos: y })
+                });
+            } catch (err) { console.error("Save failed", err); }
+        };
+    });
 
-    function disableDragging() {
-        document.querySelectorAll('.table-card, .decor-item').forEach(el => el.onmousedown = null);
-    }
+    // Remove legacy dragging init
+    function enableDragging() {}
+    function disableDragging() {}
 
     // Re-initialize scripts after HTMX partial load
     document.body.addEventListener('htmx:afterOnLoad', function(evt) {
-        if (isEditMode) disableDragging(); // Safety check
+        // No longer needed thanks to event delegation
     });
 </script>
 {% endblock %}
